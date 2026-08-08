@@ -1,0 +1,38 @@
+{
+  "fixtureVersion": 1,
+  "fixtureId": "mobile-overbed-table-v1",
+  "notForOrdering": true,
+  "coordinateSystem": {
+    "x": "left-right-cross-bed",
+    "y": "front-back-movement",
+    "z": "height-from-floor",
+    "lengthUnit": "mm"
+  },
+  "obstacle": {
+    "outerWidthMm": 2100,
+    "mattressTopHeightMm": 500
+  },
+  "clearance": {
+    "leftMm": 25,
+    "rightMm": 25
+  },
+  "frame": {
+    "uprightWidthXMm": 40,
+    "mobility": "casters-along-y",
+    "mainConnection": null,
+    "casterDefinition": null
+  },
+  "tabletop": {
+    "material": "marine-plywood",
+    "depthMm": 500,
+    "thicknessMm": 18,
+    "finishedHeightMm": 750,
+    "leftOverhangMm": 20,
+    "rightOverhangMm": 20
+  },
+  "environment": {
+    "floor": "wood",
+    "spaceEachSideMm": 1000
+  },
+  "loads": ["laptop", "meal", "small-projector"]
+}

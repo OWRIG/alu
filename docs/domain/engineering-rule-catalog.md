@@ -1,0 +1,132 @@
+# 铝型材工程规则目录
+
+本文件记录可编码的领域知识。它不是结构设计规范，也不替代型材厂家额定数据、连接件说明或专业结构复核。
+
+## 规则数据
+
+每条检查结果至少包含：
+
+```ts
+type RuleFinding = {
+  ruleId: string
+  severity: "error" | "warning" | "info"
+  entityIds: string[]
+  message: string
+  rationale: string
+  evidence: {
+    kind: "vendor" | "standard" | "calculation" | "field-guide" | "user"
+    reference: string
+    confidence: "high" | "medium" | "low"
+  }[]
+  suggestedActions?: string[]
+}
+```
+
+严重级别：
+
+- `error`：数据自相矛盾、引用缺失、接口确定不兼容，或订单级产物必需信息缺失。
+- `warning`：经验风险、需要实测或缺厂家数据；允许继续建模，但导出时必须可见。
+- `info`：装配顺序、测量和复紧提示。
+
+## A. 坐标与尺寸链
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `geometry.positive-length` | error | 型材、板材或运动尺寸必须有限且大于 0。 |
+| `geometry.references-exist` | error | 实体、端点、连接和 definition 引用必须存在。 |
+| `dimension.boundary-kinds-explicit` | warning | 同一参数不能同时代表障碍外沿、内净空、骨架外尺寸或面板尺寸。 |
+| `dimension.clearance-chain-consistent` | error | `内净空 = 障碍外沿 + 两侧余量` 等已声明公式必须与当前参数一致。 |
+| `dimension.connection-topology-explicit` | error | 横梁切长依赖“夹在立柱间”或“覆盖端面”；未选择拓扑时不允许生成订单级切长。 |
+| `dimension.panel-derived-from-frame` | warning | 误差敏感面板若只来自理论尺寸，提示先装框架实测。 |
+
+固定坐标：X 左右/横跨，Y 前后/移动，Z 高度。任何 UI 视角变化都不能改变工程轴含义。
+
+## B. 型材选型与载荷路径
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `structure.load-path-described` | warning | 订单级导出前，主承重构件应有用途/载荷路径说明。 |
+| `structure.long-span-review` | warning | 家具主梁跨度达到初始经验阈值 `1500 mm`，且没有厂家挠度数据或已验证计算时，提示增加截面高度、双梁或中间支撑。阈值只触发复核，不得输出安全结论。 |
+| `structure.profile-series-advisory` | warning | 20/30/40 系只作为轻载/常规/人身或大跨度结构的起点建议，不作为合格判定。 |
+| `structure.section-orientation` | warning | 长梁的较大截面高度没有朝主要弯曲方向时提示复核。 |
+| `structure.mobile-side-sway` | warning | 移动结构没有横向中梁、三角撑、大角板或等效抗侧摆措施时提示。 |
+| `safety.human-load-review` | warning | 床、悬空重物、儿童攀爬或人身承载项目必须要求结构工程复核。 |
+
+`1500 mm` 是家具工具的低置信度初始提醒值，进入真实结构计算前必须由厂家截面属性或试验数据替换；它不能阻止建模，也不能生成额定载荷。
+
+## C. 连接与加工
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `connection.endpoint-count` | error | 连接件所需端点数量必须满足 definition。 |
+| `connection.interface-compatible` | error | 系列、槽宽、中心孔、螺纹或安装面明确不兼容时拒绝。 |
+| `connection.main-node-strength` | warning | 主承重/抗摇摆节点只使用低刚度定位件时提示改用端面攻丝螺栓、足量外置角码或厂家高强连接。 |
+| `connection.single-set-screw-not-sole-bracing` | warning | 单顶丝内置角槽不能作为移动桌或长跨结构唯一抗侧摆节点。 |
+| `connection.flat-plate-secondary-only` | warning | 共面连接板被标为唯一主连接时提示它只能辅助加固。 |
+| `connection.slot-occupancy-conflict` | error | 连接件、滑轨、面板、螺母或线缆附件占用同一槽位并发生物理冲突。 |
+| `connection.fastener-complete` | error | 订单级 BOM 缺连接件所需螺栓、螺母或垫片时拒绝导出完整状态。 |
+| `machining.bound-to-profile-end` | error | 孔、沉孔、通孔和攻丝必须绑定型材 ID、端点与基准。 |
+| `machining.catalog-capability-confirmed` | warning | 供应商加工能力或孔位未确认时标记待确认，不生成虚构 SKU。 |
+
+连接策略按节点分配，不要求全工程只用一种连接件。外观面可隐藏，背面和底面优先可靠与可调。
+
+## D. 面板
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `panel.mount-method-explicit` | error | 面板必须选择槽内嵌、层板托平嵌或外接等安装方式。 |
+| `panel.slot-insertion-catalog-bound` | warning | 槽内插入量、槽条和板厚没有对应目录依据时，不套用 7–9 mm 等案例值。 |
+| `panel.fastener-length-check` | warning | 木板螺钉需同时核对板厚、连接件厚度和有效咬合深度。 |
+| `panel.marine-plywood-edge-seal` | info | 海洋板切边与孔壁需要封闭处理，减少从裸边进潮。 |
+| `panel.long-edge-support` | warning | 大跨度层板或桌板中部没有型材支撑时提示，不把全部载荷交给板材。 |
+
+## E. 脚轮与运动件
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `caster.mount-interface-known` | error | 脚轮安装方式、孔型/螺纹和安装总高缺失时，不能计算立柱订单长度。 |
+| `caster.wood-floor-soft-tread` | warning | 木地板使用硬尼龙或未知轮面时，建议软质聚氨酯/橡胶轮。 |
+| `caster.brake-accessibility` | warning | 有刹车但脚踩不可达，或移动家具没有足够制动轮时提示。 |
+| `caster.support-polygon` | warning | 高而窄结构的重心运动范围可能越出脚轮支撑多边形时提示扩大底座。 |
+| `caster.preload-nuts-before-close` | info | 板式脚轮和槽内螺母应在型材端部封闭前预埋。 |
+| `motion.envelope-clear` | error | 脚轮、滑轨、被褥、踢脚线或家具的运动包络明确碰撞。 |
+| `motion.cable-routing-safe` | warning | 投影仪或电器线缆进入脚轮路径时提示设置挂点或拖链。 |
+
+## F. BOM 与订单完整性
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `bom.profile-cut-complete` | error | 型材行必须有编号、规格、切长、数量、朝向和用途。 |
+| `bom.machining-complete` | error | 每项加工必须有型材 ID、端点、尺寸、孔位和基准。 |
+| `bom.accessories-complete` | error | 连接件、紧固件、脚轮、端盖和槽条按设计引用完整。 |
+| `bom.definition-revision-locked` | error | 工程引用的 definition 缺精确 revision 或内嵌快照。 |
+| `bom.unknown-vendor-data-visible` | warning | SKU、价格或厂家能力未知时显示“待当前目录确认”，不留空装作完整。 |
+| `bom.manual-adjustment-traceable` | error | 人工替换/排除/增量必须保留目标和原因来源。 |
+
+## G. 装配与验收
+
+| Rule ID | 级别 | 判据与输出 |
+| --- | --- | --- |
+| `assembly.preload-before-close` | info | 内置角槽、滑块螺母和封闭槽零件在封口前预埋。 |
+| `assembly.initial-tightening` | info | 初装约八成紧，校正水平、垂直和对角线后终拧。 |
+| `assembly.frame-before-sensitive-panels` | info | 先装框架并实测，再定误差敏感的门板、抽屉面或嵌板。 |
+| `assembly.progressive-load-test` | info | 移动家具低位渐进试载，检查制动、抬轮、挠度和节点松动。 |
+| `assembly.retighten` | info | 完成试载与使用一段时间后复紧连接。 |
+
+## 跨床桌模板的附加检查
+
+输入必须包含床/床架最外沿宽 `B`、床垫上表面高度 `M`、两侧动态余量 `G`、成品高 `H`、桌面深度 `D`、板厚 `P`、脚轮安装总高 `C` 和顶/底框 Z 向占高。
+
+```text
+内净宽 I = B + 左余量 + 右余量
+骨架外宽 F = I + 左立柱宽 + 右立柱宽
+桌板宽 T = F + 左外挑 + 右外挑
+立柱切长 L = H - P - 顶框占高 - 底座占高 - C
+床垫上方净高 = H - P - M
+```
+
+`C`、连接拓扑或框架占高缺任一项时，允许完成概念模型，但不得输出真实立柱下单长度。
+
+## 证据升级
+
+经验规则进入代码时必须带来源和置信度。获得厂家截面属性、连接件额定数据、公开标准或真实试验后，新增 evidence 并通过 changeset 调整规则；不能直接把“网上经验”改写成高置信度结论。

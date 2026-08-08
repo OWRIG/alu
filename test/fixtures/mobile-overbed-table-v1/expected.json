@@ -1,0 +1,32 @@
+{
+  "fixtureVersion": 1,
+  "dimensions": {
+    "innerClearWidthMm": 2150,
+    "frameOuterWidthMm": 2230,
+    "tabletopWidthMm": 2270,
+    "clearanceAboveMattressMm": 232
+  },
+  "expectedRuleIds": [
+    "structure.long-span-review",
+    "structure.mobile-side-sway",
+    "connection.main-node-strength",
+    "caster.mount-interface-known",
+    "caster.wood-floor-soft-tread",
+    "caster.brake-accessibility",
+    "motion.cable-routing-safe",
+    "panel.marine-plywood-edge-seal"
+  ],
+  "unresolved": [
+    "main-connection-topology",
+    "caster-installation-height-and-interface",
+    "profile-catalog-and-section-properties",
+    "verified-load-and-deflection",
+    "assembly-and-progressive-load-test"
+  ],
+  "mustNotProduce": [
+    "order-ready-upright-cut-length",
+    "fabricated-vendor-sku",
+    "certified-load-rating",
+    "structurally-safe-claim"
+  ]
+}
