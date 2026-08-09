@@ -6,19 +6,65 @@
     "tabletopWidthMm": 2270,
     "clearanceAboveMattressMm": 232
   },
-  "expectedRuleIds": [
-    "structure.long-span-review",
-    "structure.mobile-side-sway",
-    "connection.main-node-strength",
-    "caster.mount-interface-known",
-    "caster.wood-floor-soft-tread",
-    "caster.brake-accessibility",
-    "motion.cable-routing-safe",
-    "panel.marine-plywood-edge-seal"
+  "profileBom": {
+    "lines": [
+      {
+        "definitionRef": {
+          "partId": "fixture.profile.4080-envelope",
+          "revision": "1"
+        },
+        "lengthMm": 2230,
+        "rotationAroundAxisDeg": 0,
+        "purpose": "top-main-span",
+        "quantity": 2,
+        "sourceEntityIds": ["profile.top-front", "profile.top-rear"]
+      }
+    ],
+    "hashAssertion": "same-designHash-recomputes-same-bomHash"
+  },
+  "validation": {
+    "edit": {
+      "allowed": true
+    },
+    "orderDraft": {
+      "supported": false,
+      "introducedIn": "P2"
+    },
+    "orderReady": {
+      "supported": false,
+      "introducedIn": "P2",
+      "deferredBlockingRuleIds": [
+        "dimension.connection-topology-explicit",
+        "caster.mount-interface-known"
+      ],
+      "deferredFindingRuleIds": ["panel.marine-plywood-edge-seal"]
+    }
+  },
+  "expectedFindings": [
+    {
+      "ruleId": "structure.long-span-review",
+      "severity": "warning",
+      "blocks": []
+    },
+    {
+      "ruleId": "structure.mobile-side-sway",
+      "severity": "warning",
+      "blocks": []
+    },
+    {
+      "ruleId": "caster.wood-floor-soft-tread",
+      "severity": "warning",
+      "blocks": []
+    },
+    {
+      "ruleId": "motion.cable-routing-safe",
+      "severity": "warning",
+      "blocks": []
+    }
   ],
   "unresolved": [
     "main-connection-topology",
-    "caster-installation-height-and-interface",
+    "caster-installation-height-interface-brake-and-accessibility",
     "profile-catalog-and-section-properties",
     "verified-load-and-deflection",
     "assembly-and-progressive-load-test"

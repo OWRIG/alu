@@ -7,7 +7,7 @@
 
 1. 产品中文名为“铝”，英文/代码名为 `ALU`，目录 `alu`，工程文件 `.alu`。
 2. 聚焦工业铝型材结构，不做通用 CAD。
-3. Electron + electron-vite + React + Three.js + Zustand + Zod + Tailwind CSS 4。
+3. Electron + electron-vite + React + Three.js + Zustand + Zod；P1 使用普通 CSS，不保留未使用的 Tailwind 构建插件。
 4. 单包三进程，核心 domain 框架无关。
 5. Three.js 是视图，ProjectDocument 是真相。
 6. BOM 分 derived/manual/adjustment 三层。

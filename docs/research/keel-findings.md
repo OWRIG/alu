@@ -76,15 +76,15 @@ Keel `src/main/index.ts` 因业务成熟而承担大量装配。ALU 从第一天
 
 ## 对 ALU 的具体影响
 
-| Keel 经验 | ALU 落点 |
-| --- | --- |
-| runtime SDK firewall | vendor/domain/renderer import firewall |
-| partner profile parser | `.alu` schema + catalog parser + visible errors |
-| product-spec | 当前行为/changeset/memo/roadmap 四层 |
-| isolated Electron fixture | 临时 userData 的保存重开 E2E |
-| Tailwind 只在 renderer | `electron.vite.config.ts` renderer plugin |
-| security window tests | `contextIsolation/sandbox/nodeIntegration/webviewTag` 回归 |
-| packaging file filters | P5 app.asar 内容与体积回归 |
+| Keel 经验                 | ALU 落点                                                   |
+| ------------------------- | ---------------------------------------------------------- |
+| runtime SDK firewall      | vendor/domain/renderer import firewall                     |
+| partner profile parser    | `.alu` schema + catalog parser + visible errors            |
+| product-spec              | 当前行为/changeset/memo/roadmap 四层                       |
+| isolated Electron fixture | 临时 userData 的保存重开 E2E                               |
+| 样式依赖只在 renderer     | P1 直接使用普通 CSS，不增加未使用的构建插件                |
+| security window tests     | `contextIsolation/sandbox/nodeIntegration/webviewTag` 回归 |
+| packaging file filters    | P5 app.asar 内容与体积回归                                 |
 
 ## 结论
 

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#18222d"/>
+      <stop offset="1" stop-color="#05080c"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="260" y1="216" x2="752" y2="824" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5f8fa"/>
+      <stop offset="0.24" stop-color="#9aa9b4"/>
+      <stop offset="0.5" stop-color="#e9eef1"/>
+      <stop offset="0.78" stop-color="#71818e"/>
+      <stop offset="1" stop-color="#cbd4da"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="328" y1="268" x2="688" y2="744" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#41a7ff"/>
+      <stop offset="1" stop-color="#086cc8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="28" stdDeviation="28" flood-color="#000" flood-opacity=".55"/>
+    </filter>
+  </defs>
+  <rect x="52" y="52" width="920" height="920" rx="212" fill="url(#bg)"/>
+  <path d="M174 254h676" stroke="#263746" stroke-width="8" opacity=".72"/>
+  <path d="M174 770h676" stroke="#101922" stroke-width="8" opacity=".9"/>
+  <g filter="url(#shadow)">
+    <path d="M228 746 444 248c13-31 36-46 68-46s55 15 68 46l216 498h-136l-48-120H412l-48 120H228Zm226-228h116l-58-150-58 150Z" fill="url(#metal)"/>
+    <path d="M412 626h200l-27-68H439l-27 68Z" fill="url(#edge)"/>
+    <path d="M512 202v166" stroke="#ffffff" stroke-width="8" opacity=".34"/>
+    <path d="M444 248 228 746h52l206-480c7-17 15-29 26-37v-27c-32 0-55 15-68 46Z" fill="#fff" opacity=".12"/>
+  </g>
+</svg>

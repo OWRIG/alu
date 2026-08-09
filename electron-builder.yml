@@ -1,0 +1,45 @@
+appId: com.haojun.alu
+productName: ALU
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**/*
+  - package.json
+asar: true
+compression: normal
+electronLanguages:
+  - en-US
+  - zh-CN
+electronFuses:
+  runAsNode: false
+  enableCookieEncryption: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  loadBrowserProcessSpecificV8Snapshot: false
+  grantFileProtocolExtraPrivileges: false
+fileAssociations:
+  - ext: alu
+    name: ALU Project
+    role: Editor
+mac:
+  category: public.app-category.graphics-design
+  icon: build/icon.icns
+  darkModeSupport: true
+  hardenedRuntime: true
+  minimumSystemVersion: "12.0"
+  target:
+    - dmg
+    - zip
+  artifactName: ALU-${version}-${arch}.${ext}
+dmg:
+  title: ALU ${version}
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications

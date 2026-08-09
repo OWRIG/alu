@@ -1,0 +1,21 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.node.json",
+  "include": [
+    "electron.vite.config.ts",
+    "playwright.config.ts",
+    "src/domain/**/*",
+    "src/main/**/*",
+    "src/preload/**/*",
+    "src/shared/**/*",
+    "src/test-support/**/*",
+    "e2e/**/*",
+    "vitest.config.ts"
+  ],
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": true,
+    "noImplicitAny": true,
+    "allowImportingTsExtensions": true,
+    "types": ["electron-vite/node", "node", "vitest/globals"]
+  }
+}

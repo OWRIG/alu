@@ -1,0 +1,13 @@
+{
+  "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
+  "include": ["src/domain/**/*", "src/renderer/src/**/*", "src/preload/*.d.ts", "src/shared/**/*"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.test.tsx", "src/test-support/**/*"],
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": true,
+    "noImplicitAny": true,
+    "allowImportingTsExtensions": true,
+    "jsx": "react-jsx",
+    "types": ["vite/client", "vitest/globals"]
+  }
+}

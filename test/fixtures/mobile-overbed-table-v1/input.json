@@ -2,37 +2,190 @@
   "fixtureVersion": 1,
   "fixtureId": "mobile-overbed-table-v1",
   "notForOrdering": true,
-  "coordinateSystem": {
-    "x": "left-right-cross-bed",
-    "y": "front-back-movement",
-    "z": "height-from-floor",
-    "lengthUnit": "mm"
-  },
-  "obstacle": {
-    "outerWidthMm": 2100,
-    "mattressTopHeightMm": 500
-  },
-  "clearance": {
-    "leftMm": 25,
-    "rightMm": 25
-  },
-  "frame": {
-    "uprightWidthXMm": 40,
-    "mobility": "casters-along-y",
-    "mainConnection": null,
-    "casterDefinition": null
-  },
-  "tabletop": {
-    "material": "marine-plywood",
-    "depthMm": 500,
-    "thicknessMm": 18,
-    "finishedHeightMm": 750,
-    "leftOverhangMm": 20,
-    "rightOverhangMm": 20
-  },
-  "environment": {
-    "floor": "wood",
-    "spaceEachSideMm": 1000
-  },
-  "loads": ["laptop", "meal", "small-projector"]
+  "project": {
+    "formatVersion": 1,
+    "projectId": "fixture.mobile-overbed-table-v1",
+    "revision": 0,
+    "meta": {
+      "name": "移动跨床桌 v1 黄金样例",
+      "createdAt": "2026-08-09T00:00:00.000Z",
+      "updatedAt": "2026-08-09T00:00:00.000Z",
+      "appVersion": "fixture",
+      "units": "mm"
+    },
+    "context": {
+      "usage": ["overbed-table"],
+      "humanLoad": false,
+      "childAccess": "unknown",
+      "mobility": "casters",
+      "floor": "wood",
+      "loads": ["laptop", "meal", "small-projector"],
+      "notes": "海洋板桌面；P1 不建模 panel、caster 或 connection。"
+    },
+    "parameters": {
+      "inputs": {
+        "bedOuterWidth": {
+          "valueMm": 2100,
+          "label": "床架最外沿宽",
+          "boundaryKind": "obstacle-outer"
+        },
+        "mattressTopHeight": {
+          "valueMm": 500,
+          "label": "床垫上表面离地",
+          "boundaryKind": "height"
+        },
+        "clearanceLeft": {
+          "valueMm": 25,
+          "label": "左动态余量",
+          "boundaryKind": "clearance"
+        },
+        "clearanceRight": {
+          "valueMm": 25,
+          "label": "右动态余量",
+          "boundaryKind": "clearance"
+        },
+        "uprightWidthX": {
+          "valueMm": 40,
+          "label": "单侧立柱 X 向包络宽",
+          "boundaryKind": "generic"
+        },
+        "tabletopLeftOverhang": {
+          "valueMm": 20,
+          "label": "桌板左外挑",
+          "boundaryKind": "panel"
+        },
+        "tabletopRightOverhang": {
+          "valueMm": 20,
+          "label": "桌板右外挑",
+          "boundaryKind": "panel"
+        },
+        "tabletopDepth": {
+          "valueMm": 500,
+          "label": "桌板前后深度",
+          "boundaryKind": "panel"
+        },
+        "tabletopThickness": {
+          "valueMm": 18,
+          "label": "桌板厚度",
+          "boundaryKind": "panel"
+        },
+        "finishedHeight": {
+          "valueMm": 750,
+          "label": "桌面成品离地高度",
+          "boundaryKind": "height"
+        },
+        "spaceEachSide": {
+          "valueMm": 1000,
+          "label": "床每侧可用空间",
+          "boundaryKind": "clearance"
+        }
+      },
+      "derived": {
+        "innerClearWidth": {
+          "label": "结构内净宽",
+          "terms": [
+            { "param": "bedOuterWidth", "coef": 1 },
+            { "param": "clearanceLeft", "coef": 1 },
+            { "param": "clearanceRight", "coef": 1 }
+          ],
+          "constantMm": 0
+        },
+        "frameOuterWidth": {
+          "label": "骨架外宽",
+          "terms": [
+            { "param": "innerClearWidth", "coef": 1 },
+            { "param": "uprightWidthX", "coef": 2 }
+          ],
+          "constantMm": 0
+        },
+        "tabletopWidth": {
+          "label": "桌板宽",
+          "terms": [
+            { "param": "frameOuterWidth", "coef": 1 },
+            { "param": "tabletopLeftOverhang", "coef": 1 },
+            { "param": "tabletopRightOverhang", "coef": 1 }
+          ],
+          "constantMm": 0
+        },
+        "clearanceAboveMattress": {
+          "label": "桌板下表面离床垫",
+          "terms": [
+            { "param": "finishedHeight", "coef": 1 },
+            { "param": "tabletopThickness", "coef": -1 },
+            { "param": "mattressTopHeight", "coef": -1 }
+          ],
+          "constantMm": 0
+        }
+      }
+    },
+    "bindings": [
+      {
+        "entityId": "profile.top-front",
+        "field": "lengthMm",
+        "param": "frameOuterWidth"
+      },
+      {
+        "entityId": "profile.top-rear",
+        "field": "lengthMm",
+        "param": "frameOuterWidth"
+      }
+    ],
+    "entities": {
+      "profile.top-front": {
+        "id": "profile.top-front",
+        "kind": "profile",
+        "definitionRef": {
+          "partId": "fixture.profile.4080-envelope",
+          "revision": "1"
+        },
+        "origin": { "x": 0, "y": 40, "z": 692 },
+        "axis": "x",
+        "lengthMm": 2230,
+        "rotationAroundAxisDeg": 0,
+        "purpose": "top-main-span",
+        "endCutA": { "kind": "square" },
+        "endCutB": { "kind": "square" }
+      },
+      "profile.top-rear": {
+        "id": "profile.top-rear",
+        "kind": "profile",
+        "definitionRef": {
+          "partId": "fixture.profile.4080-envelope",
+          "revision": "1"
+        },
+        "origin": { "x": 0, "y": 460, "z": 692 },
+        "axis": "x",
+        "lengthMm": 2230,
+        "rotationAroundAxisDeg": 0,
+        "purpose": "top-main-span",
+        "endCutA": { "kind": "square" },
+        "endCutB": { "kind": "square" }
+      }
+    },
+    "embeddedParts": {
+      "fixture.profile.4080-envelope@1": {
+        "definition": {
+          "id": "fixture.profile.4080-envelope",
+          "revision": "1",
+          "kind": "profile",
+          "name": "Fixture 4080 rectangular envelope",
+          "unit": "millimeter",
+          "section": {
+            "envelopeUMm": 40,
+            "envelopeVMm": 80,
+            "representation": "rectangular-envelope",
+            "referencePoint": "envelope-center"
+          },
+          "evidence": [
+            {
+              "kind": "user",
+              "reference": "mobile-overbed-table-v1 fixture only",
+              "confidence": "low"
+            }
+          ]
+        },
+        "definitionHash": "1bbf56ec6279747f8d93680ef23d433bf24d9f543b30f48e5d7fdc3b98f5e3c0"
+      }
+    }
+  }
 }

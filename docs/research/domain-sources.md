@@ -36,7 +36,7 @@
 
 - 尺寸与接口字段有可追溯来源。
 - 许可允许随应用或工程包分发。
-- 有 revision 与内容哈希，旧工程可锁定。
+- 有 revision 与 definitionHash，旧工程可锁定。
 - 缺失字段显式为 unknown，不用猜测补齐。
 - 至少有 parse fixture、schema test 和一个 BOM/连接测试消费该 definition。
 

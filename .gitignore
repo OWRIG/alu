@@ -2,14 +2,10 @@ node_modules/
 dist/
 out/
 release/
-coverage/
-playwright-report/
 test-results/
-.vite/
-.electron-vite/
-.DS_Store
+playwright-report/
+coverage/
 *.log
-
-# Local development state and generated project packages
-.alu-dev/
-*.alu.tmp
+.DS_Store
+*.tmp
+*.tsbuildinfo

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title description">
+  <title id="title">ALU flush inset tabletop dimension chain</title>
+  <desc id="description">A wood panel sits inside a four-sided aluminum top frame with a nominal two millimetre gap on each side.</desc>
+  <defs>
+    <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#edf2f5"/>
+      <stop offset=".5" stop-color="#71808b"/>
+      <stop offset="1" stop-color="#cfd7dc"/>
+    </linearGradient>
+    <linearGradient id="wood" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#a86c3d"/>
+      <stop offset=".5" stop-color="#734625"/>
+      <stop offset="1" stop-color="#bd8150"/>
+    </linearGradient>
+    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4ea7ff"/>
+    </marker>
+  </defs>
+  <rect width="1200" height="520" rx="28" fill="#0a0e13"/>
+  <text x="72" y="72" fill="#f2f5f7" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="28" font-weight="650">平嵌桌板 / Flush inset panel</text>
+  <text x="72" y="108" fill="#8797a3" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="18">桌板落入四边顶框形成的卡槽，不是盖在型材上方</text>
+  <rect x="130" y="170" width="940" height="240" rx="4" fill="url(#frame)"/>
+  <rect x="194" y="234" width="812" height="112" rx="2" fill="#111820"/>
+  <rect x="202" y="242" width="796" height="96" rx="2" fill="url(#wood)"/>
+  <path d="M218 258c90 20 150-20 240 0s150-20 240 0 150-20 270 0" fill="none" stroke="#d9a875" stroke-width="4" opacity=".38"/>
+  <line x1="194" y1="206" x2="1006" y2="206" stroke="#4ea7ff" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="600" y="198" fill="#8fc6ff" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="17">顶框槽内净宽 2,250 mm</text>
+  <line x1="202" y1="376" x2="998" y2="376" stroke="#4ea7ff" stroke-width="2" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="600" y="400" fill="#8fc6ff" text-anchor="middle" font-family="ui-monospace,SFMono-Regular,monospace" font-size="17">桌板 2,246 mm = 2,250 − 2 × 2 mm</text>
+  <line x1="194" y1="296" x2="202" y2="296" stroke="#ffb35a" stroke-width="3" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <line x1="998" y1="296" x2="1006" y2="296" stroke="#ffb35a" stroke-width="3" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+  <text x="600" y="462" fill="#ffbf72" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,sans-serif" font-size="18">名义安装缝：每边 2 mm；组框校方后实测再下板</text>
+</svg>
