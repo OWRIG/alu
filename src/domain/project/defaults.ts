@@ -43,7 +43,7 @@ export function snapshotDefinition(definition: ProfileDefinition): EmbeddedProfi
 }
 
 function newProjectMeta(name: string, now: string) {
-  return { name, createdAt: now, updatedAt: now, appVersion: "0.2.0", units: "mm" as const };
+  return { name, createdAt: now, updatedAt: now, appVersion: "0.2.1", units: "mm" as const };
 }
 
 export function createBlankProject(options?: {

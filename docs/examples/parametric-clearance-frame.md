@@ -2,6 +2,8 @@
 
 [简体中文](parametric-clearance-frame.zh-CN.md)
 
+> ALU starts in Simplified Chinese on a new local profile. Click the globe icon in the top toolbar and choose `English`; use the same menu to return to `简体中文`. The saved choice also controls native file dialogs.
+
 This walkthrough uses the bundled example to show ALU's core loop: capture measured constraints, derive a frame, inspect deterministic outputs, and hand off the unresolved work. The obstacle can represent equipment, furniture, storage, or any other keep-out envelope.
 
 ![Parametric Clearance Frame in ALU](../images/editor-en.png)

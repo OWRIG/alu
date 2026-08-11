@@ -1,13 +1,12 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
-import { APP_LOCALES, type AppLocale } from "../../../shared/i18n/locale";
+import { APP_LOCALES, DEFAULT_APP_LOCALE, type AppLocale } from "../../../shared/i18n/locale";
 import { enUS, zhCN, type MessageKey, type MessageValues } from "./messages";
 
 export const supportedLocales = APP_LOCALES;
 export type Locale = AppLocale;
 export type Translator = (key: MessageKey, values?: MessageValues) => string;
 
-const DEFAULT_LOCALE: Locale = "en-US";
 const STORAGE_KEY = "alu.locale";
 const dictionaries = { "en-US": enUS, "zh-CN": zhCN } as const;
 
@@ -24,12 +23,12 @@ export function translate(locale: Locale, key: MessageKey, values: MessageValues
 }
 
 function initialLocale(): Locale {
-  if (typeof window === "undefined") return DEFAULT_LOCALE;
+  if (typeof window === "undefined") return DEFAULT_APP_LOCALE;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
-    return isLocale(stored) ? stored : DEFAULT_LOCALE;
+    return isLocale(stored) ? stored : DEFAULT_APP_LOCALE;
   } catch {
-    return DEFAULT_LOCALE;
+    return DEFAULT_APP_LOCALE;
   }
 }
 

@@ -1,60 +1,59 @@
 # ALU
 
-[简体中文](README.zh-CN.md)
+[English](README.en.md)
 
-**An agent-friendly workspace for industrial aluminum-extrusion design.**
+**面向 Agent 的工业铝型材设计工作台。**
 
-ALU turns measured constraints into an inspectable frame model, a deterministic profile cut list, and explicit engineering review items. Its strict `.alu` project format keeps stable IDs, revisions, inputs, derived dimensions, member geometry, and evidence together, so a person and an agent can reason about the same design state.
+ALU 把实测约束转换为可检查的框架模型、确定性的型材切料清单和明确的工程复核项。严格的 `.alu` 工程格式把稳定 ID、版本、输入、派生尺寸、构件几何和证据保存在一起，让人和 Agent 基于同一份设计状态沟通。
 
-![ALU editor in English](docs/images/editor-en.png)
+![ALU 简体中文界面](docs/images/editor-zh.png)
 
-> ALU 0.2.0 alpha adds a traceable ideal-beam deflection screen. It is still not an order, fabrication drawing, complete structural analysis, rated load, or safety approval.
+> ALU 0.2.1 alpha 提供可追溯的理想梁挠度筛选，但仍不是订单、施工图、完整结构分析、额定载荷或安全认证。
 
-## Why ALU is agent-friendly
+## 为什么对 Agent 友好
 
-- **One inspectable project truth.** `.alu` v1 is validated JSON with explicit units, stable entity IDs, project revisions, and a deterministic design hash.
-- **Inputs stay separate from results.** Measured constraints, linear derived dimensions, and member bindings remain traceable instead of collapsing into anonymous mesh geometry.
-- **Outputs are reproducible.** The same project produces the same grouped profile cut list and rule findings; stale saved projections are recalculated on open.
-- **Profile choice is derived, not guessed.** Structured kg load cases, effective span, exact vendor inertia, section-height and interface-family constraints, self-weight, formulas, and candidate rejection reasons stay together in the project.
-- **Warnings carry context.** Findings expose a stable rule ID, rationale, evidence type, confidence, affected entities, and suggested follow-up.
-- **The workflow is versioned with the product.** The bundled [`design-with-alu`](skills/design-with-alu/SKILL.md) Skill teaches an agent what to inspect, what to report, and where the alpha boundary is.
-- **Humans can verify every step.** The desktop UI shows the constraints, model, members, cut list, and checks that an agent references in its handoff.
+- **工程真相只有一份。** `.alu` v1 是经过校验的 JSON，显式保存单位、稳定实体 ID、工程 revision 与确定性的 design hash。
+- **输入与结果分开。** 实测约束、线性派生尺寸和构件绑定均可追溯，不会被压成一团匿名网格。
+- **结果可以复现。** 同一工程得到相同的型材切料分组与规则结论；打开旧快照时会按当前设计重算。
+- **型材选择来自推导，不靠猜。** kg 载荷、有效跨度、具体厂家惯性矩、截面高度与接口体系约束、自重、公式和候选排除原因保存在同一工程中。
+- **警告带上下文。** 每条 finding 都有稳定 rule ID、原因、证据类型、置信度、关联实体与下一步。
+- **工作流随产品一起版本化。** 仓库内置 [`design-with-alu`](skills/design-with-alu/SKILL.md) Skill，告诉 Agent 应该检查什么、如何交接，以及 alpha 的能力边界。
+- **人可以逐项核对。** 桌面端把 Agent 交接中引用的约束、模型、构件、下料与检查同时展示出来。
 
-```mermaid
-flowchart LR
-  A["Design brief"] --> B["$design-with-alu<br/>workflow + guardrails"]
-  B --> C["ALU desktop UI<br/>validated edits"]
-  C <--> D[".alu v1<br/>canonical project data"]
-  D --> E["3D projection<br/>beam sizing<br/>cut list<br/>rule findings"]
-  E --> F["Agent-readable handoff"]
-```
+当前 Skill 负责指导桌面工作流；v0.2.1 尚无受支持的 headless 写入接口。不要绕过校验手改 `.alu` 文件。
 
-The current Skill guides desktop work; v0.2.0 does not yet provide a supported headless mutation API. Do not bypass validation by hand-editing `.alu` files.
+## 当前能力
 
-## What ships now
+- 障碍物包络、动态余量、完成高度、框架占位和平嵌板安装缝的参数化输入。
+- 内置跨障碍框架示例；修改输入后，绑定构件在一次领域命令中同步更新。
+- 同一毫米坐标系中的只读 3D 复核，以及四边围框形成的平嵌板卡槽。
+- 矩形型材构件的新增、删除、选择与数值编辑。
+- 按型材 revision、切长、朝向和用途确定性聚合的切料清单。
+- 可编辑的台面、均布和集中载荷；按简支梁公式叠加，比较具体米思米候选快照、过滤高度与接口体系并选择最小质量项。
+- 可解释的工程检查，不把现场经验提示写成结构证明。
+- 严格 `.alu` v1 校验、原子保存、最近工程和重开时 BOM 重算。
+- 首次启动默认简体中文，保留完整英文入口；renderer 与原生文件弹窗使用同一语言。
+- 受限 Electron 边界：renderer 无 Node/Electron 权限，IPC 范围窄且校验输入，生产环境使用限制性 CSP、ASAR 与 fuses。
 
-- Parametric constraints for obstacle envelope, working clearance, finished height, frame occupancy, and inset-panel fit.
-- A bundled clearance-frame example whose inputs update bound members in one domain command.
-- Read-only 3D review in a millimeter coordinate system, with a four-sided flush inset-panel pocket.
-- Add, remove, select, and numerically edit rectangular profile members.
-- Deterministic profile cut-list grouping by definition revision, length, orientation, and purpose.
-- Editable panel, distributed, and point loads with simply supported beam superposition, exact MISUMI candidate snapshots, height/interface filtering, and minimum-mass selection.
-- Explainable design checks without presenting field-guide heuristics as structural proof.
-- Strict `.alu` v1 validation, atomic save, recent projects, and BOM recalculation on reopen.
-- English-first interface with a complete Simplified Chinese entry, including native file dialogs.
-- A constrained Electron boundary: no Node/Electron access in the renderer, narrow validated IPC, restrictive production CSP, ASAR, and fuses.
+## 界面语言
 
-## Install
+新用户首次启动使用简体中文。ALU 如果已经保存过语言选择，则继续使用原来的设置。
+
+点击顶部工具栏的地球图标，再选择 `English` 或 `简体中文`。语言选择保存在本机，重载和重启后仍然有效；打开、保存和未保存提醒等原生弹窗也会跟随切换。工程数据、稳定 ID、单位、SKU、文件名和用户输入不会被翻译。
+
+![界面语言菜单](docs/images/language-menu-zh.png)
+
+## 安装
 
 ### macOS Apple Silicon
 
-Download `ALU-0.2.0-arm64.dmg` from the [v0.2.0 prerelease](https://github.com/OWRIG/alu/releases/tag/v0.2.0), then drag ALU into Applications.
+从 [v0.2.1 prerelease](https://github.com/OWRIG/alu/releases/tag/v0.2.1) 下载 `ALU-0.2.1-arm64.dmg`，拖入 Applications。
 
-The build is Developer ID signed but not Apple-notarized. Gatekeeper may block the first launch. Verify the release SHA-256 and source before using the documented open procedure.
+当前构建已做 Developer ID 签名，但尚未 Apple 公证。Gatekeeper 可能阻止首次打开；使用发布说明中的方法前，先核对 SHA-256 与源码。
 
-### Run from source
+### 从源码运行
 
-Requires Node.js 22+ and pnpm 10.
+需要 Node.js 22+ 与 pnpm 10。
 
 ```bash
 git clone https://github.com/OWRIG/alu.git
@@ -63,31 +62,31 @@ pnpm install
 pnpm dev
 ```
 
-## Five-minute design loop
+## 五分钟闭环
 
-The bundled example starts with a generic obstacle envelope rather than a furniture category:
+内置示例从通用障碍物包络开始，不把某一种家具当成产品主语：
 
-1. Set `Obstacle outer width` to `2200 mm` and keep `25 mm` working clearance on each side.
-2. ALU derives a `2250 mm` clear opening and a `2330 mm` outer frame.
-3. With a nominal `2 mm` gap per side, the inset panel becomes `2246 × 416 × 18 mm`.
-4. In Sizing, review the `12 kg` panel, `30 kg` distributed, and `15 kg` point-load assumptions. ALU compares seven exact SKUs and selects `NFSL8-4080` under the current `80 mm` height and Japanese 8-series interface constraints.
-5. Review the 3D pocket, four profile cut groups, ten source members, and every unresolved check.
-6. Save the `.alu` project and hand off its geometry, loads, candidate derivation, cut list, findings, and remaining real-world measurements.
+1. 把“障碍物最外沿宽”改为 `2200 mm`，左右动态余量各保留 `25 mm`。
+2. ALU 得到 `2250 mm` 结构内净宽与 `2330 mm` 框架外宽。
+3. 按每边 `2 mm` 名义安装缝，平嵌板尺寸为 `2246 × 416 × 18 mm`。
+4. 在“选型”页核对 `12 kg` 台面、`30 kg` 均布与 `15 kg` 集中载荷假设；ALU 比较 7 个具体 SKU，并在当前 `80 mm` 高度与日标 8 系列接口约束下选出 `NFSL8-4080`。
+5. 核对 3D 卡槽、4 个型材切料组、10 根来源构件和全部未决检查。
+6. 保存 `.alu`，交接几何、载荷、候选推导、下料摘要、findings 与仍需现场测量的项目。
 
-![Traceable beam-sizing study](docs/images/example-sizing-en.png)
+![可追溯的梁选型研究](docs/images/example-sizing.png)
 
-See the [illustrated parametric clearance-frame example](docs/examples/parametric-clearance-frame.md).
+完整步骤见[参数化跨障碍框架图文示例](docs/examples/parametric-clearance-frame.zh-CN.md)。
 
-## Use the Agent Skill
+## 使用 Agent Skill
 
-Install from the repository:
+从仓库安装：
 
 ```bash
 mkdir -p ~/.codex/skills
 cp -R skills/design-with-alu ~/.codex/skills/
 ```
 
-Then invoke it explicitly:
+安装后可直接说：
 
 ```text
 Use $design-with-alu to inspect this .alu project and return its constraints,
@@ -95,35 +94,35 @@ derived dimensions, structural load assumptions, beam candidates, cut groups,
 unresolved checks, and required field measurements.
 ```
 
-The release also includes `design-with-alu-0.2.0.zip` as a standalone download.
+Release 同时提供可独立下载的 `design-with-alu-0.2.1.zip`。
 
-## Boundaries that matter
+## 明确边界
 
-- 3D 4040/4080 definitions remain simplified rectangular envelopes. The beam study snapshots exact catalog properties separately; verify the current vendor revision before procurement.
-- The inset-panel dimensions are nominal. Assemble and square the frame, then measure the actual pocket before ordering a tolerance-sensitive panel.
-- The v0.2.0 cut list excludes connectors, machining, fasteners, casters, panels, and accessories. It is not order-ready.
-- Beam results cover ideal simply supported deflection only. Interface-family filtering does not validate exact connector SKUs; elastic stress is reported but not checked against an allowable value. Joints, sway, tipping, casters, impact, fatigue, and proof testing remain unresolved.
-- Dragging, snapping, joints, complete procurement BOMs, custom catalogs, and the headless Agent interface remain later roadmap work.
+- 3D 中的 4040/4080 仍是简化矩形包络；梁研究另存具体目录属性，采购前仍须核对厂家最新 revision。
+- 平嵌板尺寸是名义值。先组框、校正对角线并实测卡槽，再订购误差敏感的板材。
+- v0.2.1 切料清单不含连接件、加工、紧固件、脚轮、板材和附件，不能直接下单。
+- 梁结果只覆盖理想简支挠度；接口体系过滤不等于具体连接件 SKU 验证，弹性应力也只报告、不按许用值判定。节点、侧摆、倾覆、脚轮、冲击、疲劳和实物验证仍未覆盖。
+- 拖拽吸附、节点、完整采购 BOM、自定义目录与 headless Agent 接口仍在后续路线图中。
 
-## Verify and package
+## 验证与打包
 
 ```bash
-pnpm ready           # types, lint, format, boundaries, spec gate, tests, build
-pnpm test:e2e        # real Electron locale, edit, cut-list, save, reopen flow
-pnpm package:mac     # Apple Silicon DMG, ZIP, and unpacked ALU.app
-pnpm package:verify  # ASAR, locale packs, executable, and size limits
-pnpm test:package    # repeat the critical flow against the packaged app
+pnpm ready           # 类型、lint、格式、边界、规格门禁、测试与构建
+pnpm test:e2e        # 真实 Electron：语言、编辑、下料、保存与重开
+pnpm package:mac     # Apple Silicon DMG、ZIP 与解包后的 ALU.app
+pnpm package:verify  # ASAR、语言包、可执行文件与体积上限
+pnpm test:package    # 对真实安装包复跑关键闭环
 ```
 
-## Documentation
+## 文档
 
-- [Illustrated clearance-frame example](docs/examples/parametric-clearance-frame.md)
-- [Current product behavior](docs/product-spec/specs/README.md)
-- [Architecture](docs/engineering/architecture.md)
-- [Domain model and `.alu` format](docs/engineering/domain-model.md)
-- [Beam sizing, formulas, candidates, and evidence](docs/engineering/structural-sizing.md)
-- [Testing strategy](docs/engineering/testing-strategy.md)
-- [Engineering-rule catalog](docs/domain/engineering-rule-catalog.md)
-- [Roadmap](docs/product-spec/roadmap.md)
+- [参数化跨障碍框架图文示例](docs/examples/parametric-clearance-frame.zh-CN.md)
+- [当前产品行为](docs/product-spec/specs/README.md)
+- [总体架构](docs/engineering/architecture.md)
+- [领域模型与 `.alu` 格式](docs/engineering/domain-model.md)
+- [梁选型、公式、候选与证据](docs/engineering/structural-sizing.md)
+- [测试与质量门](docs/engineering/testing-strategy.md)
+- [工程规则目录](docs/domain/engineering-rule-catalog.md)
+- [路线图](docs/product-spec/roadmap.md)
 
-The earlier overbed-table request remains available as a [domain-specific fixture walkthrough](docs/examples/mobile-overbed-table.md); it is an example, not ALU's product positioning.
+早期跨床桌需求仍保留为[领域 fixture 说明](docs/examples/mobile-overbed-table.md)，但不再承担产品定位。

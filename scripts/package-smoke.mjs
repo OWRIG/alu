@@ -106,12 +106,11 @@ try {
   running = await launch();
   const { page } = running;
 
-  await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
-  await page.getByTestId("language-menu").click();
-  await page.getByTestId("locale-zh-CN").click();
   await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
+  await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("zh-CN");
   await page.getByTestId("language-menu").click();
   await page.getByTestId("locale-en-US").click();
+  await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
 
   const widthInput = page.getByTestId("param-input-obstacleOuterWidth");
   await widthInput.fill("2200");

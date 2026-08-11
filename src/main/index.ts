@@ -20,7 +20,7 @@ import {
 import { registerProjectIpc } from "./features/project/register-project-ipc";
 import { registerSettingsIpc } from "./features/settings/register-settings-ipc";
 import { getNativeCopy } from "./i18n/native-copy";
-import type { AppLocale } from "../shared/i18n/locale";
+import { DEFAULT_APP_LOCALE, type AppLocale } from "../shared/i18n/locale";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 
@@ -104,7 +104,7 @@ app.whenReady().then(() => {
   if (trustedRendererUrl === PACKAGED_RENDERER_URL) {
     handleRendererScheme(path.join(currentDirectory, "../renderer"));
   }
-  let interfaceLocale: AppLocale = "en-US";
+  let interfaceLocale: AppLocale = DEFAULT_APP_LOCALE;
   const getLocale = () => interfaceLocale;
   registerSettingsIpc({
     trustedRendererUrl,

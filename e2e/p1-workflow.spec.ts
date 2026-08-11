@@ -71,26 +71,18 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     running = await launchAlu(userDataPath, savePath);
     const { page } = running;
 
-    await expect(page.getByText("Concept model · Not order-ready")).toBeVisible();
-    await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
-    await expect(page.getByText("Space envelope", { exact: true })).toBeVisible();
-    await expect(page.getByText("Parametric Clearance Frame", { exact: true })).toBeVisible();
+    await expect(page.getByText("概念模型 · 不可下单")).toBeVisible();
+    await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
+    await expect(page.getByText("空间边界", { exact: true })).toBeVisible();
+    await expect(page.locator(".project-heading strong")).toHaveText("参数化跨障碍框架");
     await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,230");
     await expect(page.getByTestId("derived-tabletopWidth")).toContainText("2,146");
-    await expect(page.getByText("FLUSH PANEL · 2 MM GAP PER SIDE")).toBeVisible();
+    await expect(page.getByText("平嵌桌板 · 单边缝 2 mm")).toBeVisible();
     await expect(page.getByTestId("derived-disclosure")).not.toHaveAttribute("open", "");
     await page.getByTestId("derived-disclosure").locator("summary").click();
-    await expect(page.getByText("Top-frame inner width", { exact: true })).toBeVisible();
+    await expect(page.getByText("顶框槽内净宽", { exact: true })).toBeVisible();
     await page.getByTestId("derived-disclosure").locator("summary").click();
     await expect(page.getByText("Dimension System", { exact: true })).toHaveCount(0);
-    await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("en-US");
-    const englishInterface = (await page.locator(".app-shell").innerText()).replaceAll("铝", "");
-    expect(englishInterface).not.toMatch(/[\u3400-\u9fff]/u);
-
-    await page.getByTestId("language-menu").click();
-    await page.getByTestId("locale-zh-CN").click();
-    await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
-    await expect(page.locator(".project-heading strong")).toHaveText("参数化跨障碍框架");
     await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("zh-CN");
     await page.getByTestId("save-project").click();
     await expect(page.getByText("已保存 roundtrip.alu")).toBeVisible();
@@ -101,6 +93,8 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await page.getByTestId("locale-en-US").click();
     await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
     await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("en-US");
+    const englishInterface = (await page.locator(".app-shell").innerText()).replaceAll("铝", "");
+    expect(englishInterface).not.toMatch(/[\u3400-\u9fff]/u);
     await page.getByTestId("save-project").click();
     await expect(page.getByText("Saved roundtrip.alu")).toBeVisible();
     await expect(page.locator(".busy-line")).toHaveCount(0);

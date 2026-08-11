@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 
 import { localizeKnownProjectName, localizeProjectName } from "../i18n/domain-copy";
-import { useI18n } from "../i18n/i18n";
+import { supportedLocales, useI18n } from "../i18n/i18n";
 import {
   selectCanRedo,
   selectCanUndo,
@@ -204,7 +204,7 @@ export function TopToolbar() {
           </summary>
           <div className="popover-panel popover-panel--language">
             <div className="popover-title">{t("toolbar.language")}</div>
-            {(["en-US", "zh-CN"] as const).map((item) => (
+            {supportedLocales.map((item) => (
               <button
                 className="locale-option"
                 data-testid={`locale-${item}`}

@@ -28,7 +28,7 @@ Use the ALU desktop editor as the source of truth for project state. Keep every 
    - sizing: inputs, formulas, candidate exclusions, selected SKU, and calculation boundary remain consistent;
    - cut list: lengths and source-member counts match the model;
    - checks: every warning is either resolved or recorded as an explicit follow-up.
-8. Save through ALU. Do not hand-edit `.alu` JSON: v0.2.0 has no supported headless write interface, and manual edits bypass UI validation.
+8. Save through ALU. Do not hand-edit `.alu` JSON: v0.2.1 has no supported headless write interface, and manual edits bypass UI validation.
 9. Report the constraints, load assumptions, effective span, candidate comparison, selected SKU and its scope, derived frame envelope, inset-panel fit, cut-list summary, unresolved checks, and saved file path.
 
 ## Decision Rules

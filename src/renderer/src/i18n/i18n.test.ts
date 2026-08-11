@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createParametricClearanceFrameDemo } from "../../../domain/project/defaults";
 import { evaluateRules } from "../../../domain/rules/evaluate";
+import { DEFAULT_APP_LOCALE } from "../../../shared/i18n/locale";
 import {
   localizeError,
   localizeFinding,
@@ -17,6 +18,10 @@ function placeholders(message: string) {
 }
 
 describe("renderer i18n", () => {
+  it("uses Simplified Chinese as the first-launch default", () => {
+    expect(DEFAULT_APP_LOCALE).toBe("zh-CN");
+  });
+
   it("keeps both dictionaries structurally identical", () => {
     expect(Object.keys(enUS).sort()).toEqual(Object.keys(zhCN).sort());
     for (const key of Object.keys(zhCN) as MessageKey[]) {

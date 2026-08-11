@@ -81,7 +81,7 @@ src/
 | ---------- | ---------------------------- | --------------------------------------------------- |
 | 桌面运行时 | Electron                     | macOS/Windows 使用统一 Chromium                     |
 | 构建       | electron-vite                | main/preload/renderer 一份配置                      |
-| UI         | React + 普通 CSS             | 英文优先、完整简中入口；P1 不为样式引入额外构建插件 |
+| UI         | React + 普通 CSS             | 简中优先、完整英文入口；P1 不为样式引入额外构建插件 |
 | 3D         | Three.js + React Three Fiber | 只消费领域投影；不持久化 Three 对象                 |
 | 状态       | Zustand                      | 工程、编辑器 UI、目录分 store；不建全局万能 store   |
 | 校验       | Zod                          | 工程、命令与 Main IPC 入参/输出均校验               |
