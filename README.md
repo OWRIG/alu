@@ -1,54 +1,104 @@
-# ALU
+<h1 align="center">
+  <img src="build/icon.svg" alt="ALU" width="64" valign="middle" /> ALU
+</h1>
 
-[English](README.en.md)
+<p align="center">
+  <a href="https://github.com/OWRIG/alu"><img src="https://img.shields.io/github/stars/OWRIG/alu?style=flat&amp;label=%E2%98%85&amp;color=4EA7FF" alt="GitHub stars" /></a>
+  <a href="https://github.com/OWRIG/alu/releases"><img src="https://img.shields.io/github/v/release/OWRIG/alu?include_prereleases&amp;sort=semver&amp;label=release&amp;color=4EA7FF" alt="Latest release" /></a>
+  <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-15191E?style=flat" alt="Platform: macOS Apple Silicon" />
+  <img src="https://img.shields.io/badge/status-alpha-F2A65A?style=flat" alt="Status: alpha" />
+</p>
 
-**面向 Agent 的工业铝型材设计工作台。**
+<p align="center">
+  <sub><strong>简体中文</strong> · <a href="README.en.md">English</a></sub>
+</p>
 
-ALU 把实测约束转换为可检查的框架模型、确定性的型材切料清单和明确的工程复核项。严格的 `.alu` 工程格式把稳定 ID、版本、输入、派生尺寸、构件几何和证据保存在一起，让人和 Agent 基于同一份设计状态沟通。
+<p align="center">
+  <strong>面向 Agent 的工业铝型材设计工作台</strong><br />
+  把实测约束、精确型材 SKU、3D 模型和下料结果放进同一份可验证工程。
+</p>
 
-![ALU 简体中文界面](docs/images/editor-zh.png)
+<p align="center">
+  <kbd>Agent Skill</kbd>&nbsp;
+  <kbd>.alu v1</kbd>&nbsp;
+  <kbd>参数尺寸链</kbd>&nbsp;
+  <kbd>精确 SKU</kbd>&nbsp;
+  <kbd>确定性 BOM</kbd>&nbsp;
+  <kbd>离线优先</kbd>
+</p>
+
+<h3 align="center">
+  <a href="https://github.com/OWRIG/alu/releases/tag/v0.2.1"><ins>下载 macOS 版 ALU</ins></a>
+</h3>
+
+<p align="center">
+  <img src="docs/images/editor-zh.png" alt="ALU 简体中文编辑器" width="1200" />
+</p>
 
 > ALU 0.2.1 alpha 提供可追溯的理想梁挠度筛选，但仍不是订单、施工图、完整结构分析、额定载荷或安全认证。
 
-## 为什么对 Agent 友好
+## 功能
 
-- **工程真相只有一份。** `.alu` v1 是经过校验的 JSON，显式保存单位、稳定实体 ID、工程 revision 与确定性的 design hash。
-- **输入与结果分开。** 实测约束、线性派生尺寸和构件绑定均可追溯，不会被压成一团匿名网格。
-- **结果可以复现。** 同一工程得到相同的型材切料分组与规则结论；打开旧快照时会按当前设计重算。
-- **型材选择来自推导，不靠猜。** kg 载荷、有效跨度、具体厂家惯性矩、截面高度与接口体系约束、自重、公式和候选排除原因保存在同一工程中。
-- **警告带上下文。** 每条 finding 都有稳定 rule ID、原因、证据类型、置信度、关联实体与下一步。
-- **工作流随产品一起版本化。** 仓库内置 [`design-with-alu`](skills/design-with-alu/SKILL.md) Skill，告诉 Agent 应该检查什么、如何交接，以及 alpha 的能力边界。
-- **人可以逐项核对。** 桌面端把 Agent 交接中引用的约束、模型、构件、下料与检查同时展示出来。
+<table>
+<tr>
+<td width="50%" valign="top">
+<h3>参数尺寸链</h3>
 
-当前 Skill 负责指导桌面工作流；v0.2.1 尚无受支持的 headless 写入接口。不要绕过校验手改 `.alu` 文件。
+创建、编辑和安全删除实测输入与线性派生参数。参数绑定到构件字段后，尺寸变化会同步更新几何和切长。
 
-## 当前能力
+</td>
+<td width="50%" valign="top">
+<h3>单一工程数据</h3>
 
-- 可创建、编辑和安全删除输入参数与线性派生参数；不再局限于内置模板的十个值。
-- 障碍物包络、动态余量、完成高度、脚轮安装总高、框架占位和平嵌板安装缝的参数化输入。
-- 内置跨障碍框架示例；修改输入后，绑定构件在一次领域命令中同步更新。
-- 同一毫米坐标系中的只读 3D 复核，以及四边围框形成的平嵌板卡槽。
-- 矩形型材构件的新增、删除、选择与数值编辑。
-- 按型材 revision、切长、朝向和用途确定性聚合的切料清单。
-- 可编辑的台面、均布和集中载荷；按简支梁公式叠加，比较具体米思米候选快照、过滤高度与可选接口体系并选择最小质量项；确认后可把 SKU 显式应用到模型与下料。
-- 可解释的工程检查，不把现场经验提示写成结构证明。
-- 严格 `.alu` v1 校验、原子保存、最近工程和重开时 BOM 重算。
-- 首次启动默认简体中文，保留完整英文入口；renderer 与原生文件弹窗使用同一语言。
-- 受限 Electron 边界：renderer 无 Node/Electron 权限，IPC 范围窄且校验输入，生产环境使用限制性 CSP、ASAR 与 fuses。
+`.alu` v1 保存单位、稳定 ID、工程版本号、参数、构件、选型证据和规则结论。3D 只是投影，不是隐藏的数据源。
 
-## 界面语言
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h3>精确 SKU 选型</h3>
 
-新用户首次启动使用简体中文。ALU 如果已经保存过语言选择，则继续使用原来的设置。
+输入台面、均布和集中载荷，按有效跨度、厂家惯性矩、截面高度、自重和接口约束比较具体候选。确认后把 SKU 显式应用到模型与下料。
 
-点击顶部工具栏的地球图标，再选择 `English` 或 `简体中文`。语言选择保存在本机，重载和重启后仍然有效；打开、保存和未保存提醒等原生弹窗也会跟随切换。工程数据、稳定 ID、单位、SKU、文件名和用户输入不会被翻译。
+</td>
+<td width="50%" valign="top">
+<h3>可复核输出</h3>
+
+同一工程确定性生成型材切料清单与工程检查。每条检查项都带稳定 rule ID、原因、证据边界和下一步。
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h3>四边平嵌卡槽</h3>
+
+桌板落入四边顶框形成的槽内。名义安装缝进入尺寸链；下板前仍需组框、校方并实测槽口。
+
+</td>
+<td width="50%" valign="top">
+<h3>移动结构高度链</h3>
+
+脚轮安装总高会抬高框架底部并等量缩短立柱，完成面高度保持不变。未知值保留为 `0 / 待确认`，不会猜测具体脚轮。
+
+</td>
+</tr>
+</table>
+
+## 选型闭环
+
+ALU 先给出当前候选集里的最小质量合格项，再由用户决定是否写回。载荷变化不会静默替换已经应用的型材。
+
+<p align="center">
+  <img src="docs/images/example-sizing.png" alt="ALU 梁选型与精确 SKU 写回" width="1200" />
+</p>
 
 ## 安装
 
 ### macOS Apple Silicon
 
-从 [v0.2.1 prerelease](https://github.com/OWRIG/alu/releases/tag/v0.2.1) 下载 `ALU-0.2.1-arm64.dmg`，拖入 Applications。
+从 [v0.2.1 prerelease](https://github.com/OWRIG/alu/releases/tag/v0.2.1) 下载 `ALU-0.2.1-arm64.dmg`，打开后把 ALU 拖入 Applications。
 
-当前构建已做 Developer ID 签名，但尚未 Apple 公证。Gatekeeper 可能阻止首次打开；使用发布说明中的方法前，先核对 SHA-256 与源码。
+当前构建已做 Developer ID 签名，但尚未 Apple 公证。Gatekeeper 可能阻止首次打开；操作前请核对发布页中的 SHA-256 与源码。
 
 ### 从源码运行
 
@@ -61,31 +111,28 @@ pnpm install
 pnpm dev
 ```
 
-## 五分钟闭环
+## 五分钟示例
 
-内置示例从通用障碍物包络开始，不把某一种家具当成产品主语：
+内置示例使用通用障碍物包络，不把某一种家具写进产品模型：
 
 1. 把“障碍物最外沿宽”改为 `2200 mm`，左右动态余量各保留 `25 mm`。
-2. ALU 得到 `2250 mm` 结构内净宽与 `2330 mm` 框架外宽。
-3. 按每边 `2 mm` 名义安装缝，平嵌板尺寸为 `2246 × 416 × 18 mm`。
-4. 选定脚轮后填写实际安装总高；ALU 等量抬高底框、缩短立柱，并保持 `750 mm` 完成面不变。未知时保留 `0 / 待确认`，不能定稿立柱订单长度。
-5. 在“选型”页核对 `12 kg` 台面、`30 kg` 均布与 `15 kg` 集中载荷假设；ALU 比较 7 个具体 SKU，并在当前 `80 mm` 高度与日标 8 系列接口约束下选出 `NFSL8-4080`。点击“应用到模型与下料”，让 3D 与 BOM 使用同一厂家 snapshot。
-6. 核对 3D 卡槽、型材切料、全部未决检查并保存 `.alu`。
-
-![可追溯的梁选型研究](docs/images/example-sizing.png)
+2. ALU 得到 `2250 mm` 结构内净宽、`2330 mm` 框架外宽，以及 `2246 × 416 × 18 mm` 名义平嵌板尺寸。
+3. 选定脚轮后填写实际安装总高；ALU 保持 `750 mm` 完成面不变并重算立柱切长。
+4. 在“选型”页核对 `12 kg` 台面、`30 kg` 均布与 `15 kg` 集中载荷，检查 7 个具体候选的推导与排除原因。
+5. 确认 `NFSL8-4080` 后点击“应用到模型与下料”，再核对 3D、切料、未决检查并保存 `.alu`。
 
 完整步骤见[参数化跨障碍框架图文示例](docs/examples/parametric-clearance-frame.zh-CN.md)。
 
-## 使用 Agent Skill
+## Agent Skill
 
-从仓库安装：
+仓库内置 [`design-with-alu`](skills/design-with-alu/SKILL.md)，用于约束 Agent 的读取、复核和交接流程。
 
 ```bash
 mkdir -p ~/.codex/skills
 cp -R skills/design-with-alu ~/.codex/skills/
 ```
 
-安装后可直接说：
+安装后可以直接说：
 
 ```text
 Use $design-with-alu to inspect this .alu project and return its constraints,
@@ -93,34 +140,29 @@ derived dimensions, structural load assumptions, beam candidates, cut groups,
 unresolved checks, and required field measurements.
 ```
 
-Release 同时提供可独立下载的 `design-with-alu-0.2.1.zip`。
+当前 Skill 通过桌面界面工作；v0.2.1 尚无受支持的无界面写入接口。不要绕过校验手改 `.alu`。发布页同时提供 `design-with-alu-0.2.1.zip`。
 
-## 明确边界
+## 当前边界
 
-- 3D 仍使用简化矩形包络；应用梁选型后会写入具体厂家 SKU 与精确包络，但采购前仍须核对厂家最新 revision。
-- 平嵌板尺寸是名义值。先组框、校正对角线并实测卡槽，再订购误差敏感的板材。
-- v0.2.1 切料清单不含连接件、加工、紧固件、脚轮、板材和附件，不能直接下单。
-- 梁结果只覆盖理想简支挠度；接口体系过滤不等于具体连接件 SKU 验证，弹性应力也只报告、不按许用值判定。节点、侧摆、倾覆、脚轮、冲击、疲劳和实物验证仍未覆盖。
-- 拖拽吸附、节点、完整采购 BOM、自定义目录与 headless Agent 接口仍在后续路线图中。
+- 3D 使用简化矩形包络；采购前仍须核对厂家最新 revision。
+- 切料清单不含连接件、加工、紧固件、脚轮、板材和附件，不能直接下单。
+- 梁结果只覆盖理想简支挠度。节点刚度、许用应力、侧摆、倾覆、冲击、疲劳和实物验证尚未覆盖。
+- 拖拽吸附、完整采购 BOM、自定义目录与无界面 Agent 接口仍在后续路线图中。
 
-## 验证与打包
+## 开发与文档
 
 ```bash
 pnpm ready           # 类型、lint、格式、边界、测试与构建
 pnpm test:e2e        # 真实 Electron：语言、编辑、下料、保存与重开
-pnpm package:mac     # Apple Silicon DMG、ZIP 与解包后的 ALU.app
+pnpm package:mac     # Apple Silicon DMG、ZIP 与 ALU.app
 pnpm package:verify  # ASAR、语言包、可执行文件与体积上限
 pnpm test:package    # 对真实安装包复跑关键闭环
 ```
 
-## 文档
-
-- [参数化跨障碍框架图文示例](docs/examples/parametric-clearance-frame.zh-CN.md)
+- [图文示例](docs/examples/parametric-clearance-frame.zh-CN.md)
 - [当前产品行为](docs/product-spec/specs/README.md)
-- [总体架构](docs/engineering/architecture.md)
-- [领域模型与 `.alu` 格式](docs/engineering/domain-model.md)
-- [梁选型、公式、候选与证据](docs/engineering/structural-sizing.md)
-- [测试与质量门](docs/engineering/testing-strategy.md)
+- [架构与领域模型](docs/engineering/architecture.md)
+- [梁选型公式、候选与证据](docs/engineering/structural-sizing.md)
 - [工程规则目录](docs/domain/engineering-rule-catalog.md)
 - [路线图](docs/product-spec/roadmap.md)
 

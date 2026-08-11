@@ -1,66 +1,104 @@
-# ALU
+<h1 align="center">
+  <img src="build/icon.svg" alt="ALU" width="64" valign="middle" /> ALU
+</h1>
 
-[简体中文](README.md)
+<p align="center">
+  <a href="https://github.com/OWRIG/alu"><img src="https://img.shields.io/github/stars/OWRIG/alu?style=flat&amp;label=%E2%98%85&amp;color=4EA7FF" alt="GitHub stars" /></a>
+  <a href="https://github.com/OWRIG/alu/releases"><img src="https://img.shields.io/github/v/release/OWRIG/alu?include_prereleases&amp;sort=semver&amp;label=release&amp;color=4EA7FF" alt="Latest release" /></a>
+  <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-15191E?style=flat" alt="Platform: macOS Apple Silicon" />
+  <img src="https://img.shields.io/badge/status-alpha-F2A65A?style=flat" alt="Status: alpha" />
+</p>
 
-**An agent-friendly workspace for industrial aluminum-extrusion design.**
+<p align="center">
+  <sub><a href="README.md">简体中文</a> · <strong>English</strong></sub>
+</p>
 
-ALU turns measured constraints into an inspectable frame model, a deterministic profile cut list, and explicit engineering review items. Its strict `.alu` project format keeps stable IDs, revisions, inputs, derived dimensions, member geometry, and evidence together, so a person and an agent can reason about the same design state.
+<p align="center">
+  <strong>An agent-friendly workspace for industrial aluminum-extrusion design</strong><br />
+  Keep measured constraints, exact profile SKUs, the 3D model, and cut-list output in one validated project.
+</p>
 
-> ALU 0.2.1 alpha adds a traceable ideal-beam deflection screen. It is still not an order, fabrication drawing, complete structural analysis, rated load, or safety approval.
+<p align="center">
+  <kbd>Agent Skill</kbd>&nbsp;
+  <kbd>.alu v1</kbd>&nbsp;
+  <kbd>Dimension chains</kbd>&nbsp;
+  <kbd>Exact SKUs</kbd>&nbsp;
+  <kbd>Deterministic BOM</kbd>&nbsp;
+  <kbd>Offline-first</kbd>
+</p>
 
-## Why ALU is agent-friendly
+<h3 align="center">
+  <a href="https://github.com/OWRIG/alu/releases/tag/v0.2.1"><ins>Download ALU for macOS</ins></a>
+</h3>
 
-- **One inspectable project truth.** `.alu` v1 is validated JSON with explicit units, stable entity IDs, project revisions, and a deterministic design hash.
-- **Inputs stay separate from results.** Measured constraints, linear derived dimensions, and member bindings remain traceable instead of collapsing into anonymous mesh geometry.
-- **Outputs are reproducible.** The same project produces the same grouped profile cut list and rule findings; stale saved projections are recalculated on open.
-- **Profile choice is derived, not guessed.** Structured kg load cases, effective span, exact vendor inertia, section-height and interface-family constraints, self-weight, formulas, and candidate rejection reasons stay together in the project.
-- **Warnings carry context.** Findings expose a stable rule ID, rationale, evidence type, confidence, affected entities, and suggested follow-up.
-- **The workflow is versioned with the product.** The bundled [`design-with-alu`](skills/design-with-alu/SKILL.md) Skill teaches an agent what to inspect, what to report, and where the alpha boundary is.
-- **Humans can verify every step.** The desktop UI shows the constraints, model, members, cut list, and checks that an agent references in its handoff.
+<p align="center">
+  <img src="docs/images/editor-zh.png" alt="ALU desktop editor" width="1200" />
+</p>
 
-```mermaid
-flowchart LR
-  A["Design brief"] --> B["$design-with-alu<br/>workflow + guardrails"]
-  B --> C["ALU desktop UI<br/>validated edits"]
-  C <--> D[".alu v1<br/>canonical project data"]
-  D --> E["3D projection<br/>beam sizing<br/>cut list<br/>rule findings"]
-  E --> F["Agent-readable handoff"]
-```
+> ALU 0.2.1 alpha provides a traceable ideal-beam deflection screen. It is not an order, fabrication drawing, complete structural analysis, rated load, or safety approval.
 
-The current Skill guides desktop work; v0.2.1 does not yet provide a supported headless mutation API. Do not bypass validation by hand-editing `.alu` files.
+## Features
 
-## What ships now
+<table>
+<tr>
+<td width="50%" valign="top">
+<h3>Dimension chains</h3>
 
-- Create, edit, and safely remove measured inputs and explicit linear derived parameters instead of being limited to one template.
-- Parametric constraints for obstacle envelope, working clearance, finished height, caster installed height, frame occupancy, and inset-panel fit.
-- A bundled clearance-frame example whose inputs update bound members in one domain command.
-- Read-only 3D review in a millimeter coordinate system, with a four-sided flush inset-panel pocket.
-- Add, remove, select, and numerically edit rectangular profile members.
-- Deterministic profile cut-list grouping by definition revision, length, orientation, and purpose.
-- Editable panel, distributed, and point loads with simply supported beam superposition, exact MISUMI candidate snapshots, height/optional-interface filtering, minimum-mass selection, and explicit application to the model and cut list.
-- Explainable design checks without presenting field-guide heuristics as structural proof.
-- Strict `.alu` v1 validation, atomic save, recent projects, and BOM recalculation on reopen.
-- Simplified Chinese is the first-launch default, with a complete English interface including native file dialogs.
-- A constrained Electron boundary: no Node/Electron access in the renderer, narrow validated IPC, restrictive production CSP, ASAR, and fuses.
+Create, edit, and safely remove measured inputs and linear derived parameters. Bind them to member fields so geometry and cut lengths stay synchronized.
 
-## Interface language
+</td>
+<td width="50%" valign="top">
+<h3>One design truth</h3>
 
-ALU starts in Simplified Chinese on a new local profile. If ALU has already saved a language choice, it restores that choice instead.
+`.alu` v1 stores units, stable IDs, project revision, parameters, members, sizing evidence, and rule findings. The 3D view is a projection, not a hidden data source.
 
-To switch the interface to English:
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h3>Exact-SKU sizing</h3>
 
-1. Click the globe icon in the top toolbar. Its tooltip reads `界面语言` in Chinese or `Interface language` in English.
-2. Choose `English`.
+Compare specific profiles using panel, distributed, and point loads; effective span; vendor inertia; section limits; self-weight; and optional interface constraints. Apply the confirmed SKU to the model and cut list.
 
-To switch back, open the same menu and choose `简体中文`. The choice is saved locally, survives reloads and restarts, and also controls ALU's native open, save, and unsaved-changes dialogs. Project data, IDs, units, SKUs, filenames, and user-entered text are not translated.
+</td>
+<td width="50%" valign="top">
+<h3>Reviewable output</h3>
+
+The same project deterministically produces profile cut groups and engineering findings. Each finding carries a stable rule ID, rationale, evidence boundary, and next action.
+
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
+<h3>Four-sided inset pocket</h3>
+
+The panel sits inside the top frame instead of covering it. Nominal installation gaps live in the dimension chain; measure the squared assembly before ordering the panel.
+
+</td>
+<td width="50%" valign="top">
+<h3>Mobile-frame height chain</h3>
+
+Caster installed height raises the frame base and shortens the uprights by the same amount while preserving finished height. Unknown data stays `0 / unresolved`; ALU does not invent a caster SKU.
+
+</td>
+</tr>
+</table>
+
+## Sizing loop
+
+ALU first selects the lowest-mass eligible candidate in the current set. The user then decides whether to write it into the design. A load change never silently replaces an applied profile.
+
+<p align="center">
+  <img src="docs/images/example-sizing.png" alt="ALU beam sizing and exact-SKU application" width="1200" />
+</p>
 
 ## Install
 
 ### macOS Apple Silicon
 
-Download `ALU-0.2.1-arm64.dmg` from the [v0.2.1 prerelease](https://github.com/OWRIG/alu/releases/tag/v0.2.1), then drag ALU into Applications.
+Download `ALU-0.2.1-arm64.dmg` from the [v0.2.1 prerelease](https://github.com/OWRIG/alu/releases/tag/v0.2.1), open it, and drag ALU into Applications.
 
-The build is Developer ID signed but not Apple-notarized. Gatekeeper may block the first launch. Verify the release SHA-256 and source before using the documented open procedure.
+The build is Developer ID signed but not Apple-notarized. Gatekeeper may block the first launch; verify the release SHA-256 and source before following the documented open procedure.
 
 ### Run from source
 
@@ -73,22 +111,21 @@ pnpm install
 pnpm dev
 ```
 
-## Five-minute design loop
+## Five-minute example
 
-The bundled example starts with a generic obstacle envelope rather than a furniture category:
+The bundled example starts from a generic obstacle envelope instead of a furniture category:
 
 1. Set `Obstacle outer width` to `2200 mm` and keep `25 mm` working clearance on each side.
-2. ALU derives a `2250 mm` clear opening and a `2330 mm` outer frame.
-3. With a nominal `2 mm` gap per side, the inset panel becomes `2246 × 416 × 18 mm`.
-4. After choosing a caster, enter its measured installed height. ALU raises the frame base, shortens the uprights by the same amount, and keeps the `750 mm` finished surface fixed. `0` remains explicitly unresolved.
-5. In Sizing, review the `12 kg` panel, `30 kg` distributed, and `15 kg` point-load assumptions. ALU compares seven exact SKUs and selects `NFSL8-4080` under the current constraints. Click **Apply to model and cut list** so 3D and BOM use the same vendor snapshot.
-6. Review the pocket, profile cut list, every unresolved check, and save the `.alu` project.
+2. ALU derives a `2250 mm` clear opening, a `2330 mm` outer frame, and a nominal `2246 × 416 × 18 mm` inset panel.
+3. Enter the measured caster installed height; ALU preserves the `750 mm` finished surface and recalculates upright cut length.
+4. In Sizing, review the `12 kg` panel, `30 kg` distributed, and `15 kg` point load plus the derivation and rejection reason for all seven candidates.
+5. Confirm `NFSL8-4080`, click **Apply to model and cut list**, then review 3D, cut groups, unresolved checks, and save the `.alu` project.
 
 See the [illustrated parametric clearance-frame example](docs/examples/parametric-clearance-frame.md).
 
-## Use the Agent Skill
+## Agent Skill
 
-Install from the repository:
+The bundled [`design-with-alu`](skills/design-with-alu/SKILL.md) constrains how an agent reads, reviews, and hands off an ALU project.
 
 ```bash
 mkdir -p ~/.codex/skills
@@ -103,35 +140,30 @@ derived dimensions, structural load assumptions, beam candidates, cut groups,
 unresolved checks, and required field measurements.
 ```
 
-The release also includes `design-with-alu-0.2.1.zip` as a standalone download.
+The current Skill works through the desktop UI; v0.2.1 has no supported headless mutation API. Do not bypass validation by hand-editing `.alu`. The release also includes `design-with-alu-0.2.1.zip`.
 
-## Boundaries that matter
+## Current boundaries
 
-- 3D still uses simplified rectangular envelopes. Applying a beam selection writes the exact vendor SKU and envelope into the design, but the current catalog revision still needs procurement-time verification.
-- The inset-panel dimensions are nominal. Assemble and square the frame, then measure the actual pocket before ordering a tolerance-sensitive panel.
-- The v0.2.1 cut list excludes connectors, machining, fasteners, casters, panels, and accessories. It is not order-ready.
-- Beam results cover ideal simply supported deflection only. Interface-family filtering does not validate exact connector SKUs; elastic stress is reported but not checked against an allowable value. Joints, sway, tipping, casters, impact, fatigue, and proof testing remain unresolved.
-- Dragging, snapping, joints, complete procurement BOMs, custom catalogs, and the headless Agent interface remain later roadmap work.
+- 3D uses simplified rectangular envelopes; verify the latest vendor revision before procurement.
+- The cut list excludes connectors, machining, fasteners, casters, panels, and accessories. It is not order-ready.
+- Beam results cover ideal simply supported deflection only. Joint stiffness, allowable stress, sway, tipping, impact, fatigue, and physical validation remain unresolved.
+- Dragging, snapping, complete procurement BOMs, custom catalogs, and the headless Agent interface remain roadmap work.
 
-## Verify and package
+## Development and docs
 
 ```bash
 pnpm ready           # types, lint, format, boundaries, tests, build
 pnpm test:e2e        # real Electron locale, edit, cut-list, save, reopen flow
-pnpm package:mac     # Apple Silicon DMG, ZIP, and unpacked ALU.app
+pnpm package:mac     # Apple Silicon DMG, ZIP, and ALU.app
 pnpm package:verify  # ASAR, locale packs, executable, and size limits
 pnpm test:package    # repeat the critical flow against the packaged app
 ```
 
-## Documentation
-
-- [Illustrated clearance-frame example](docs/examples/parametric-clearance-frame.md)
+- [Illustrated example](docs/examples/parametric-clearance-frame.md)
 - [Current product behavior](docs/product-spec/specs/README.md)
-- [Architecture](docs/engineering/architecture.md)
-- [Domain model and `.alu` format](docs/engineering/domain-model.md)
-- [Beam sizing, formulas, candidates, and evidence](docs/engineering/structural-sizing.md)
-- [Testing strategy](docs/engineering/testing-strategy.md)
+- [Architecture and domain model](docs/engineering/architecture.md)
+- [Beam-sizing formulas, candidates, and evidence](docs/engineering/structural-sizing.md)
 - [Engineering-rule catalog](docs/domain/engineering-rule-catalog.md)
 - [Roadmap](docs/product-spec/roadmap.md)
 
-The earlier overbed-table request remains available as a [domain-specific fixture walkthrough](docs/examples/mobile-overbed-table.md); it is an example, not ALU's product positioning.
+The earlier overbed-table request remains available as a [domain fixture walkthrough](docs/examples/mobile-overbed-table.md), but it does not define ALU's product positioning.
