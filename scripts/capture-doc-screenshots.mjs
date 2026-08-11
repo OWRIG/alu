@@ -8,6 +8,24 @@ import { _electron as electron } from "@playwright/test";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "docs", "images");
 const temporary = await mkdtemp(path.join(os.tmpdir(), "alu-docs-"));
+const nativeChromeOverlay = `
+  .topbar {
+    position: relative;
+  }
+
+  .topbar::before {
+    position: absolute;
+    top: 19px;
+    left: 16px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow: 20px 0 0 #febc2e, 40px 0 0 #28c840;
+    content: "";
+    pointer-events: none;
+  }
+`;
 const application = await electron.launch({
   args: ["."],
   cwd: root,
@@ -26,6 +44,9 @@ try {
   await page.getByTestId("model-viewport").waitFor({ state: "visible" });
   await page.locator("canvas").waitFor({ state: "visible" });
   await page.waitForTimeout(4_200);
+  // Playwright captures only the renderer. Restore the native macOS controls that occupy
+  // the top bar's reserved inset so documentation screenshots match the real window.
+  await page.addStyleTag({ content: nativeChromeOverlay });
 
   await page.screenshot({ path: path.join(output, "editor-zh.png") });
   await page.getByTestId("language-menu").click();
