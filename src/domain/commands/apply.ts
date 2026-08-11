@@ -1,20 +1,24 @@
 import { evaluateParameters } from "../params/evaluate";
 import { compareCanonicalText, quantizeMm } from "../project/canonical";
 import { DomainError } from "../project/error";
-import { computeDefinitionHash } from "../project/hash";
+import { computeDefinitionHash, hashJson } from "../project/hash";
 import { assertProjectSemantics, getBoundField, partKey } from "../project/parse";
 import {
   ProfileInstanceSchema,
   ProjectDocumentV1Schema,
   type BindingField,
   type JsonValue,
+  type ParameterSet,
+  type ProfileDefinition,
   type ProfileInstance,
   type ProjectDocumentV1,
 } from "../project/schema";
+import { evaluateStructuralSizing } from "../structural/evaluate";
 import {
   getStructuralSizingStudy,
   STRUCTURAL_SIZING_EXTENSION_KEY,
   StructuralSizingStudySchema,
+  type BeamCandidate,
 } from "../structural/schema";
 import { CommandEnvelopeSchema, type CommandEnvelope, type DomainCommand } from "./schema";
 
@@ -47,21 +51,25 @@ function requireProfile(project: ProjectDocumentV1, entityId: string): ProfileIn
   return profile;
 }
 
-function applySetParameters(
+function pruneEmbeddedParts(
+  entities: ProjectDocumentV1["entities"],
+  embeddedParts: ProjectDocumentV1["embeddedParts"],
+) {
+  const referencedDefinitions = new Set(
+    Object.values(entities).map((profile) =>
+      partKey(profile.definitionRef.partId, profile.definitionRef.revision),
+    ),
+  );
+  return Object.fromEntries(
+    Object.entries(embeddedParts).filter(([key]) => referencedDefinitions.has(key)),
+  );
+}
+
+function applyParameterDefinitions(
   project: ProjectDocumentV1,
-  values: Record<string, number>,
+  parameters: ParameterSet,
 ): ProjectDocumentV1 {
   const oldValues = evaluateParameters(project.parameters);
-  for (const id of Object.keys(values)) {
-    if (!project.parameters.inputs[id]) {
-      throw new DomainError({
-        code: "dimension.input-missing",
-        message: `找不到输入参数 ${id}`,
-        path: `/parameters/inputs/${id}`,
-      });
-    }
-  }
-
   const synchronizedBindings = project.bindings.filter((binding) => {
     const profile = requireProfile(project, binding.entityId);
     return (
@@ -69,12 +77,6 @@ function applySetParameters(
       BINDING_TOLERANCE_MM
     );
   });
-
-  const inputs = { ...project.parameters.inputs };
-  for (const [id, value] of Object.entries(values)) {
-    inputs[id] = { ...inputs[id], valueMm: quantizeMm(value) };
-  }
-  const parameters = { ...project.parameters, inputs };
   const nextValues = evaluateParameters(parameters);
   let entities = project.entities;
   for (const binding of synchronizedBindings) {
@@ -88,10 +90,242 @@ function applySetParameters(
   return { ...project, parameters, entities };
 }
 
+function applySetParameters(
+  project: ProjectDocumentV1,
+  values: Record<string, number>,
+): ProjectDocumentV1 {
+  for (const id of Object.keys(values)) {
+    if (!project.parameters.inputs[id]) {
+      throw new DomainError({
+        code: "dimension.input-missing",
+        message: `找不到输入参数 ${id}`,
+        path: `/parameters/inputs/${id}`,
+      });
+    }
+  }
+
+  const inputs = { ...project.parameters.inputs };
+  for (const [id, value] of Object.entries(values)) {
+    inputs[id] = { ...inputs[id], valueMm: quantizeMm(value) };
+  }
+  const parameters = { ...project.parameters, inputs };
+  return applyParameterDefinitions(project, parameters);
+}
+
+function assertParameterCanBeRemoved(project: ProjectDocumentV1, id: string) {
+  for (const [derivedId, definition] of Object.entries(project.parameters.derived)) {
+    if (derivedId !== id && definition.terms.some((term) => term.param === id)) {
+      throw new DomainError({
+        code: "dimension.parameter-in-use",
+        message: `参数 ${id} 仍被派生参数 ${derivedId} 引用`,
+        path: `/parameters/derived/${derivedId}/terms`,
+        suggestion: "先修改引用它的派生公式",
+      });
+    }
+  }
+  const binding = project.bindings.find((item) => item.param === id);
+  if (binding) {
+    throw new DomainError({
+      code: "dimension.parameter-in-use",
+      message: `参数 ${id} 仍被构件 ${binding.entityId} 绑定`,
+      path: "/bindings",
+      entityIds: [binding.entityId],
+      suggestion: "先解除字段绑定",
+    });
+  }
+  const study = getStructuralSizingStudy(project);
+  const studyParams = study
+    ? [
+        study.effectiveSpanParam,
+        study.maximumSectionHeightParam,
+        study.appliedSectionWidthParam,
+        study.appliedSectionHeightParam,
+      ]
+    : [];
+  if (studyParams.includes(id)) {
+    throw new DomainError({
+      code: "dimension.parameter-in-use",
+      message: `参数 ${id} 仍被梁选型研究引用`,
+      path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}`,
+      suggestion: "先修改或移除梁选型研究",
+    });
+  }
+}
+
+function candidateDefinition(candidate: BeamCandidate): ProfileDefinition {
+  const revision = `study-${hashJson(candidate as unknown as JsonValue).slice(0, 16)}`;
+  return {
+    id: candidate.id,
+    revision,
+    kind: "profile",
+    name: `${candidate.vendor} ${candidate.sku}`,
+    unit: "meter",
+    section: {
+      envelopeUMm: candidate.sectionWidthMm,
+      envelopeVMm: candidate.sectionHeightMm,
+      representation: "rectangular-envelope",
+      referencePoint: "envelope-center",
+    },
+    procurement: {
+      vendor: candidate.vendor,
+      sku: candidate.sku,
+      productUrl: candidate.source.url,
+    },
+    evidence: [
+      {
+        kind: "vendor",
+        reference: candidate.source.url,
+        confidence: "high",
+      },
+    ],
+    extensions: {
+      material: candidate.material,
+      massKgPerM: candidate.massKgPerM,
+      inertiaMm4: candidate.inertiaMm4,
+      compatibilityGroup: candidate.compatibilityGroup,
+      catalogPage: candidate.source.catalogPage,
+    },
+  };
+}
+
+function applyStructuralSizingSelection(project: ProjectDocumentV1): ProjectDocumentV1 {
+  const result = evaluateStructuralSizing(project);
+  if (!result) {
+    throw new DomainError({
+      code: "structure.sizing-study-missing",
+      message: "当前工程没有有效的梁选型研究",
+      path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}`,
+    });
+  }
+  if (!result.selected) {
+    throw new DomainError({
+      code: "structure.sizing-selection-missing",
+      message: "当前候选集中没有可应用的入选型材",
+      path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/candidates`,
+      suggestion: "先调整明确的载荷或空间约束",
+    });
+  }
+
+  const { study, selected } = result;
+  const sectionValues: Record<string, number> = {};
+  for (const [param, value] of [
+    [study.appliedSectionWidthParam, selected.candidate.sectionWidthMm],
+    [study.appliedSectionHeightParam, selected.candidate.sectionHeightMm],
+  ] as const) {
+    if (!param) continue;
+    if (!project.parameters.inputs[param]) {
+      throw new DomainError({
+        code: "structure.section-parameter-not-input",
+        message: `实际截面参数 ${param} 必须是可编辑输入参数`,
+        path: `/parameters/inputs/${param}`,
+      });
+    }
+    sectionValues[param] = value;
+  }
+  let next =
+    Object.keys(sectionValues).length > 0 ? applySetParameters(project, sectionValues) : project;
+
+  const definition = candidateDefinition(selected.candidate);
+  const definitionSnapshot = {
+    definition,
+    definitionHash: computeDefinitionHash(definition),
+  };
+  const definitionRef = { partId: definition.id, revision: definition.revision };
+  const entities = { ...next.entities };
+  for (const entityId of study.beamEntityIds) {
+    const profile = requireProfile(next, entityId);
+    const rotationAroundAxisDeg =
+      selected.candidate.orientation === "strong-axis-vertical"
+        ? profile.axis === "x"
+          ? 0
+          : profile.axis === "y"
+            ? 90
+            : profile.rotationAroundAxisDeg
+        : profile.rotationAroundAxisDeg;
+    entities[entityId] = ProfileInstanceSchema.parse({
+      ...profile,
+      definitionRef,
+      rotationAroundAxisDeg,
+    });
+  }
+  const key = partKey(definition.id, definition.revision);
+  const existing = next.embeddedParts[key];
+  if (existing && existing.definitionHash !== definitionSnapshot.definitionHash) {
+    throw new DomainError({
+      code: "catalog.definition-conflict",
+      message: `definition ${key} 与工程内快照冲突`,
+      path: `/embeddedParts/${key}`,
+    });
+  }
+  const embeddedParts = pruneEmbeddedParts(entities, {
+    ...next.embeddedParts,
+    [key]: definitionSnapshot,
+  });
+  next = { ...next, entities, embeddedParts };
+  return next;
+}
+
 function applySingle(project: ProjectDocumentV1, command: DomainCommand): ProjectDocumentV1 {
   switch (command.type) {
     case "parameters.set":
       return applySetParameters(project, command.values);
+    case "parameter.input.upsert": {
+      if (project.parameters.derived[command.id]) {
+        throw new DomainError({
+          code: "dimension.parameter-kind-conflict",
+          message: `参数 ${command.id} 已是派生参数`,
+          path: `/parameters/derived/${command.id}`,
+        });
+      }
+      const parameters = {
+        ...project.parameters,
+        inputs: {
+          ...project.parameters.inputs,
+          [command.id]: {
+            ...command.definition,
+            valueMm: quantizeMm(command.definition.valueMm),
+          },
+        },
+      };
+      return applyParameterDefinitions(project, parameters);
+    }
+    case "parameter.derived.upsert": {
+      if (project.parameters.inputs[command.id]) {
+        throw new DomainError({
+          code: "dimension.parameter-kind-conflict",
+          message: `参数 ${command.id} 已是输入参数`,
+          path: `/parameters/inputs/${command.id}`,
+        });
+      }
+      const parameters = {
+        ...project.parameters,
+        derived: {
+          ...project.parameters.derived,
+          [command.id]: {
+            ...command.definition,
+            constantMm: quantizeMm(command.definition.constantMm),
+          },
+        },
+      };
+      return applyParameterDefinitions(project, parameters);
+    }
+    case "parameter.remove": {
+      const exists =
+        project.parameters.inputs[command.id] || project.parameters.derived[command.id];
+      if (!exists) {
+        throw new DomainError({
+          code: "ref.parameter-missing",
+          message: `找不到参数 ${command.id}`,
+          path: `/parameters/${command.id}`,
+        });
+      }
+      assertParameterCanBeRemoved(project, command.id);
+      const inputs = { ...project.parameters.inputs };
+      const derived = { ...project.parameters.derived };
+      delete inputs[command.id];
+      delete derived[command.id];
+      return { ...project, parameters: { inputs, derived } };
+    }
     case "profile.add": {
       if (project.entities[command.profile.id]) {
         throw new DomainError({
@@ -166,14 +400,7 @@ function applySingle(project: ProjectDocumentV1, command: DomainCommand): Projec
       requireProfile(project, command.entityId);
       const entities = { ...project.entities };
       delete entities[command.entityId];
-      const referencedDefinitions = new Set(
-        Object.values(entities).map((profile) =>
-          partKey(profile.definitionRef.partId, profile.definitionRef.revision),
-        ),
-      );
-      const embeddedParts = Object.fromEntries(
-        Object.entries(project.embeddedParts).filter(([key]) => referencedDefinitions.has(key)),
-      );
+      const embeddedParts = pruneEmbeddedParts(entities, project.embeddedParts);
       return {
         ...project,
         entities,
@@ -256,6 +483,8 @@ function applySingle(project: ProjectDocumentV1, command: DomainCommand): Projec
         },
       };
     }
+    case "structural-sizing.selection.apply":
+      return applyStructuralSizingSelection(project);
   }
 }
 

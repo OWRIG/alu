@@ -79,4 +79,28 @@ describe("project file schema", () => {
       }),
     );
   });
+
+  it("C-structural-study-open-evidence accepts empty field evidence and custom systems", () => {
+    const project = createParametricClearanceFrameDemo();
+    const structuralSizing = project.extensions?.structuralSizing as Record<string, unknown>;
+    const reopened = parseProjectDocument({
+      ...project,
+      extensions: {
+        ...project.extensions,
+        structuralSizing: {
+          ...structuralSizing,
+          requiredCompatibilityGroup: "vendor.custom-slot-10",
+          constructionEvidence: [],
+          scope: "custom.bridge-frame",
+          assumptionIds: ["user.verified-support-model"],
+        },
+      },
+    });
+
+    expect(reopened.extensions?.structuralSizing).toMatchObject({
+      requiredCompatibilityGroup: "vendor.custom-slot-10",
+      constructionEvidence: [],
+      scope: "custom.bridge-frame",
+    });
+  });
 });

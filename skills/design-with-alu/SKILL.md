@@ -17,19 +17,25 @@ Use the ALU desktop editor as the source of truth for project state. Keep every 
    - finished surface height and usable depth;
    - floor, mobility, expected load, cables, and human or child access.
 4. Open ALU. From source, run `pnpm install` once and then `pnpm dev`; for a packaged build, open `ALU.app` or a `.alu` file.
-5. Prefer the left-side constraint inputs for the bundled parametric clearance frame. Edit individual members only when no input owns the required field.
+5. Build the dimension chain before editing repeated member coordinates:
+   - create measured values as input parameters;
+   - create derived values as explicit linear terms plus a constant;
+   - bind member fields to those parameters;
+   - edit individual members only when no parameter owns the field.
+     For mobile frames, include a measured `casterInstalledHeight`; `0` means unresolved and must not be treated as a finished cut length.
 6. For a long beam, define the loads before selecting a profile:
    - enter measured panel mass, distributed payload, and the required concentrated payload;
    - verify effective support span rather than reusing cut length;
    - verify per-beam load shares, section-height constraint, required interface family, candidate orientation, and exact vendor source;
    - choose only from candidates that meet deflection, geometry, and interface-family constraints, then minimize mass within that eligible set.
-7. Verify all four outputs after every material change:
+7. After reviewing the result, explicitly apply the selected SKU to the studied beams. A recommendation that still leaves `Concept 4080 Envelope` in the model or cut list has not completed the design loop. Never auto-apply a new SKU just because loads changed.
+8. Verify all four outputs after every material change:
    - model: the frame clears the obstacle and any inset panel sits inside the four-sided pocket;
    - sizing: inputs, formulas, candidate exclusions, selected SKU, and calculation boundary remain consistent;
    - cut list: lengths and source-member counts match the model;
    - checks: every warning is either resolved or recorded as an explicit follow-up.
-8. Save through ALU. Do not hand-edit `.alu` JSON: v0.2.1 has no supported headless write interface, and manual edits bypass UI validation.
-9. Report the constraints, load assumptions, effective span, candidate comparison, selected SKU and its scope, derived frame envelope, inset-panel fit, cut-list summary, unresolved checks, and saved file path.
+9. Save through ALU. Do not hand-edit `.alu` JSON: ALU has no supported headless write interface yet, and manual edits bypass command validation.
+10. Report the constraints, load assumptions, effective span, candidate comparison, applied SKU and its scope, derived frame envelope, caster-height status, inset-panel fit, cut-list summary, unresolved checks, and saved file path.
 
 ## Decision Rules
 
@@ -37,11 +43,11 @@ Use the ALU desktop editor as the source of truth for project state. Keep every 
 - Treat a green beam result as an ideal simply supported deflection screen only. It does not validate allowable material stress, exact connector SKUs, joint flexibility, panel composite action, sway, tipping, casters, impact, fatigue, or the complete frame.
 - Do not choose by series name. Require exact SKU, mass per meter, strong-axis inertia, section height, interface family, source URL, effective span, load shares, and formulas.
 - “Recommended” means lowest mass among the current eligible candidates. State the candidate-set, geometry, and interface-family boundaries; switching to a taller or different-system profile requires a new study and node design.
-- Use Xiaohongshu and field videos for topology and assembly evidence only. Never convert qualitative claims such as “very stable” into a numeric load.
+- Field videos are optional construction evidence, regardless of platform. Never convert qualitative claims such as “very stable” into a numeric load or make one platform a prerequisite for beam calculation.
 - Measure an assembled, squared pocket before ordering an error-sensitive panel. The configured gap is nominal.
 - Do not infer connector, machining, caster, fastener, or panel procurement quantities; v0.2 does not model them as orderable BOM lines.
 - Keep stable IDs, units, file names, and user-authored names unchanged when switching UI language.
-- Treat `.alu` as inspectable project data, not as a supported agent mutation API. Human or desktop automation must still perform writes through ALU.
+- Treat `.alu` as inspectable project data, not as a supported agent mutation API. Human or desktop automation must still perform writes through ALU until the headless command interface ships.
 - If a requested operation exceeds current capabilities, state the gap and propose the smallest manual follow-up instead of inventing data.
 
 ## Example Requests

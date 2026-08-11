@@ -79,7 +79,7 @@ E2E 每次使用独立临时 `userData`，不得污染真实零件库和最近�
 - 尺寸公式直接落成派生参数定义，P1 参数求值纯函数直接消费，不依赖 UI。
 - 断言内净宽、骨架外宽、桌面宽、桌板下表面离床垫距离。
 - 断言两根同聚合键的主梁生成一行 profile BOM、数量 2、来源实体完整，并在重复重算时保持 bomHash。
-- 断言结构化研究取代通用长跨警告，并稳定得到计算型 finding；侧摆、木地板脚轮选择和线缆路径提示仍存在。
+- 断言结构化研究取代通用长跨警告，并稳定得到计算型 finding；脚轮安装总高缺失会阻断订单目标，侧摆、木地板轮面和线缆边界仍可见。
 - 断言 7 个具体厂家候选的挠度、高度、接口体系、质量排序与默认 `NFSL8-4080` 结果。
 - P1 断言 `order-draft` / `order-ready` 尚不支持；`dimension.connection-topology-explicit` 与 `caster.mount-interface-known` 的阻断断言延后到 P2 节点 fixture。
 - 断言未选连接不会误触发 `connection.main-node-strength`，未选脚轮不会误触发 `caster.brake-accessibility`。
@@ -101,7 +101,7 @@ E2E 每次使用独立临时 `userData`，不得污染真实零件库和最近�
 | `editor.locale-system`、`editor.task-oriented-layout`                              | `src/renderer/src/i18n/i18n.test.ts` + Electron E2E                                       |
 | `desktop.native-locale`、`desktop.ipc-origin`                                      | Electron E2E + `src/main/core/ipc-security.test.ts`                                       |
 | `distribution.macos-arm64`                                                         | `package:verify` + 打包应用 Playwright workflow                                           |
-| `distribution.docs-and-skill`                                                      | 截图生成脚本 + Skill validator + 图文样例人工复核                                         |
+| `distribution.docs-and-skill`                                                      | 两张核心截图生成 + Skill validator + 图文样例人工复核                                     |
 | `editor.connection-modeling`、`model.panel-and-caster`、`bom.complete-order-draft` | P2 connection/interface/BOM fixture matrix                                                |
 | `bom.manual-and-adjustments`                                                       | `src/domain/bom/__tests__/adjustments.test.ts`                                            |
 | `catalog.custom-parts`                                                             | catalog parser/service integration test                                                   |
@@ -116,14 +116,13 @@ pnpm typecheck       # node 与 renderer 两套 tsconfig
 pnpm lint            # oxlint
 pnpm format:check    # oxfmt --check
 pnpm boundaries      # 进程、domain、vendor import 防火墙
-pnpm spec-gate       # 产品行为账本 diff 约束
 pnpm test:run        # Vitest 全量非 watch
 pnpm build           # electron-vite build
 pnpm test:e2e        # Playwright Electron 关键闭环
 pnpm package:mac     # macOS arm64 DMG + ZIP + .app
 pnpm package:verify  # ASAR、可执行文件、语言包与体积回归
 pnpm test:package    # 对打包后的 .app 重跑关键闭环
-pnpm check           # typecheck + lint + format + boundaries + spec-gate
+pnpm check           # typecheck + lint + format + boundaries
 pnpm ready           # check + test:run + build；发包前再显式加 e2e
 ```
 

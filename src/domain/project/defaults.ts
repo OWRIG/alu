@@ -123,9 +123,19 @@ export function createParametricClearanceFrameDemo(options?: {
           label: "Frame and upright width",
           boundaryKind: "generic",
         },
+        topBeamWidth: {
+          valueMm: 40,
+          label: "Applied top-beam width",
+          boundaryKind: "generic",
+        },
         topFrameHeight: {
           valueMm: 80,
-          label: "Top-frame profile height",
+          label: "Applied top-beam height",
+          boundaryKind: "generic",
+        },
+        topBeamMaximumHeight: {
+          valueMm: 80,
+          label: "Maximum allowed top-beam height",
           boundaryKind: "generic",
         },
         topFrameOuterDepth: {
@@ -146,6 +156,11 @@ export function createParametricClearanceFrameDemo(options?: {
         finishedHeight: {
           valueMm: 750,
           label: "Finished surface height",
+          boundaryKind: "height",
+        },
+        casterInstalledHeight: {
+          valueMm: 0,
+          label: "Caster installed height",
           boundaryKind: "height",
         },
       },
@@ -187,7 +202,7 @@ export function createParametricClearanceFrameDemo(options?: {
           label: "Top-frame inner depth",
           terms: [
             { param: "topFrameOuterDepth", coef: 1 },
-            { param: "uprightWidthX", coef: -2 },
+            { param: "topBeamWidth", coef: -2 },
           ],
           constantMm: 0,
         },
@@ -230,12 +245,14 @@ export function createParametricClearanceFrameDemo(options?: {
           terms: [
             { param: "finishedHeight", coef: 1 },
             { param: "topFrameHeight", coef: -1 },
+            { param: "casterInstalledHeight", coef: -1 },
           ],
           constantMm: 0,
         },
         topBeamCenterZ: {
           label: "Top-beam center height",
           terms: [
+            { param: "casterInstalledHeight", coef: 1 },
             { param: "uprightLength", coef: 1 },
             { param: "topFrameHeight", coef: 0.5 },
           ],
@@ -264,14 +281,14 @@ export function createParametricClearanceFrameDemo(options?: {
         },
         frontTopBeamCenterY: {
           label: "Front top-beam center Y",
-          terms: [{ param: "uprightWidthX", coef: 0.5 }],
+          terms: [{ param: "topBeamWidth", coef: 0.5 }],
           constantMm: 0,
         },
         rearTopBeamCenterY: {
           label: "Rear top-beam center Y",
           terms: [
             { param: "topFrameOuterDepth", coef: 1 },
-            { param: "uprightWidthX", coef: -0.5 },
+            { param: "topBeamWidth", coef: -0.5 },
           ],
           constantMm: 0,
         },
@@ -290,12 +307,15 @@ export function createParametricClearanceFrameDemo(options?: {
         },
         topSideRailStartY: {
           label: "Top side-rail start Y",
-          terms: [{ param: "uprightWidthX", coef: 1 }],
+          terms: [{ param: "topBeamWidth", coef: 1 }],
           constantMm: 0,
         },
         baseRailCenterZ: {
           label: "Base side-rail center height",
-          terms: [{ param: "uprightWidthX", coef: 0.5 }],
+          terms: [
+            { param: "casterInstalledHeight", coef: 1 },
+            { param: "uprightWidthX", coef: 0.5 },
+          ],
           constantMm: 0,
         },
       },
@@ -319,6 +339,26 @@ export function createParametricClearanceFrameDemo(options?: {
       { entityId: "profile.upright-left-rear", field: "lengthMm", param: "uprightLength" },
       { entityId: "profile.upright-right-front", field: "lengthMm", param: "uprightLength" },
       { entityId: "profile.upright-right-rear", field: "lengthMm", param: "uprightLength" },
+      {
+        entityId: "profile.upright-left-front",
+        field: "origin.z",
+        param: "casterInstalledHeight",
+      },
+      {
+        entityId: "profile.upright-left-rear",
+        field: "origin.z",
+        param: "casterInstalledHeight",
+      },
+      {
+        entityId: "profile.upright-right-front",
+        field: "origin.z",
+        param: "casterInstalledHeight",
+      },
+      {
+        entityId: "profile.upright-right-rear",
+        field: "origin.z",
+        param: "casterInstalledHeight",
+      },
       { entityId: "profile.upright-left-front", field: "origin.x", param: "leftUprightCenterX" },
       { entityId: "profile.upright-left-rear", field: "origin.x", param: "leftUprightCenterX" },
       { entityId: "profile.upright-right-front", field: "origin.x", param: "rightUprightCenterX" },

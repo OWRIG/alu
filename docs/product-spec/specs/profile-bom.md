@@ -4,18 +4,19 @@
 
 P1 BOM 是从当前工程型材实体与内嵌 definition snapshot 计算的纯函数结果。聚合键由 definition ID、精确 revision、量化到 0.01 mm 的切长、截面朝向和用途组成。
 
-输出按规格名、切长、朝向、用途和 definition ID 稳定排序。每行保留来源实体 ID，`bomHash` 只覆盖规范化后的 BOM 行，因此相同设计重复计算得到相同结果。
+输出按规格名、切长、朝向、用途和 definition ID 稳定排序。每行保留来源实体 ID，`bomHash` 只覆盖规范化后的 BOM 行，因此相同设计重复计算得到相同结果。梁筛选不会自动污染 BOM；用户显式应用入选项后，关联梁引用带厂家与 SKU 的精确 definition，BOM 同步显示该规格名。
 
 界面持续显示“P1 型材切料清单”和“不可直接下单”，避免把局部 BOM 冒充订单。
 
 ## Cases
 
-| Case                        | 已验证结果                                                     |
-| --------------------------- | -------------------------------------------------------------- |
-| `C-profile-bom-aggregation` | 相同聚合键的黄金样例两根主梁合并为数量 2；任一键字段不同则分行 |
-| `C-bom-source-trace`        | 聚合行包含排序后的 `sourceEntityIds`                           |
-| `C-bom-recompute-stable`    | 相同工程重复计算得到相同行顺序与 `bomHash`                     |
-| `C-bom-snapshot-drift`      | 文件快照只作缓存证据，打开后以当前纯函数重算为准               |
+| Case                              | 已验证结果                                                     |
+| --------------------------------- | -------------------------------------------------------------- |
+| `C-profile-bom-aggregation`       | 相同聚合键的黄金样例两根主梁合并为数量 2；任一键字段不同则分行 |
+| `C-bom-source-trace`              | 聚合行包含排序后的 `sourceEntityIds`                           |
+| `C-bom-recompute-stable`          | 相同工程重复计算得到相同行顺序与 `bomHash`                     |
+| `C-bom-snapshot-drift`            | 文件快照只作缓存证据，打开后以当前纯函数重算为准               |
+| `C-sizing-apply-to-model-and-bom` | 应用梁选型后，关联梁和切料行引用同一厂家 SKU snapshot          |
 
 ## 不包含
 

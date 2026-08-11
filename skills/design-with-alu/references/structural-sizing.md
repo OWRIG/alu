@@ -5,11 +5,12 @@ Read this reference when a project contains `extensions.structuralSizing` or the
 ## Required inspection
 
 1. Read `effectiveSpanParam` and resolve it from the project dimension chain. Do not substitute member cut length.
-2. Read `maximumSectionHeightParam` and `requiredCompatibilityGroup`; treat them as hard geometry and interface-family filters for the current study.
+2. Read `maximumSectionHeightParam` as a hard geometry filter. Apply `requiredCompatibilityGroup` only when it is non-null; a null value deliberately disables that filter.
 3. Report all load inputs in kg and both per-beam shares. Distinguish panel dead load, distributed payload, concentrated payload, and candidate self-weight.
 4. For every candidate, report exact SKU, vertical orientation, mass per meter, inertia, interface family, catalog source, calculated deflection, section-height fit, compatibility fit, and eligibility.
 5. Confirm that selection filters for deflection, height, and interface family first, then minimizes mass per meter. Do not silently remove failed or constrained candidates from the handoff.
-6. Read `constructionEvidence` separately. Use it to explain load-path and assembly decisions, never to assign numeric capacity.
+6. Read `constructionEvidence` separately when present. It is optional and platform-neutral; use it to explain load-path and assembly decisions, never to assign numeric capacity.
+7. Compare the selected candidate with the actual definitions used by every `beamEntityId`. If their procurement SKU differs, report the selection as advisory until the user applies it.
 
 ## Current formulas
 
@@ -27,7 +28,7 @@ The result superposes component deflections. Candidate self-weight changes `w`, 
 
 - `passesDeflection` means calculated ideal-beam deflection is no greater than the stored criterion.
 - `fitsSectionHeight` means the candidate does not exceed the current height constraint.
-- `fitsCompatibilityGroup` means the candidate belongs to the interface family required by the current frame.
+- `fitsCompatibilityGroup` means the candidate belongs to the required interface family, or that the study deliberately has no interface-family filter.
 - `eligible` requires all three.
 - `selected` is the lowest-mass eligible candidate in the embedded set, not a universal optimum.
 - `centerPointMassLimitKgUnderBaseLoad` is inverted from the deflection limit with current uniform loads. Never call it rated capacity.

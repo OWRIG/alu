@@ -81,7 +81,7 @@ describe("beam structural sizing", () => {
 
   it("does not cross-select an incompatible accessory system when the height envelope grows", () => {
     const project = createParametricClearanceFrameDemo();
-    project.parameters.inputs.topFrameHeight.valueMm = 120;
+    project.parameters.inputs.topBeamMaximumHeight.valueMm = 120;
 
     const result = evaluateStructuralSizing(project);
 

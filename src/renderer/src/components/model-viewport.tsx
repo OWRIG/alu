@@ -98,7 +98,8 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
   const insetPanel =
     values.topFrameOuterDepth !== undefined && values.panelFitClearance !== undefined;
   const topFrameOuterDepth = values.topFrameOuterDepth ?? values.tabletopDepth;
-  const frameRailWidth = values.uprightWidthX;
+  const frameSideRailWidth = values.uprightWidthX;
+  const topBeamWidth = values.topBeamWidth ?? frameSideRailWidth;
   const panelFitClearance = values.panelFitClearance ?? 0;
   const tabletopWidth = values.tabletopWidth;
   const tabletopDepth = values.tabletopDepth;
@@ -109,7 +110,8 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
       obstacleWidth,
       obstacleHeight,
       frameOuterWidth,
-      frameRailWidth,
+      frameSideRailWidth,
+      topBeamWidth,
       tabletopWidth,
       tabletopDepth,
       tabletopThickness,
@@ -120,31 +122,32 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
   }
 
   const obstacleStartX = (values.uprightWidthX + values.clearanceLeft) * MM_TO_M;
-  const obstacleDepth = 1.9;
+  const obstacleDepth = topFrameOuterDepth * MM_TO_M;
   const panelCenterX = insetPanel
-    ? (frameRailWidth + panelFitClearance + tabletopWidth * 0.5) * MM_TO_M
+    ? (frameSideRailWidth + panelFitClearance + tabletopWidth * 0.5) * MM_TO_M
     : (frameOuterWidth + (values.tabletopRightOverhang ?? 0) - (values.tabletopLeftOverhang ?? 0)) *
       0.5 *
       MM_TO_M;
   const panelCenterY = insetPanel
-    ? (frameRailWidth + panelFitClearance + tabletopDepth * 0.5) * MM_TO_M
+    ? (topBeamWidth + panelFitClearance + tabletopDepth * 0.5) * MM_TO_M
     : tabletopDepth * MM_TO_M * 0.5;
   const supportWidth = 10;
   const supportThickness = 4;
   const supportCenterZ = (finishedHeight - tabletopThickness - supportThickness * 0.5) * MM_TO_M;
-  const frontSupportCenterY = (frameRailWidth + panelFitClearance + supportWidth * 0.5) * MM_TO_M;
+  const frontSupportCenterY = (topBeamWidth + panelFitClearance + supportWidth * 0.5) * MM_TO_M;
   const rearSupportCenterY =
-    (topFrameOuterDepth - frameRailWidth - panelFitClearance - supportWidth * 0.5) * MM_TO_M;
-  const leftSupportCenterX = (frameRailWidth + panelFitClearance + supportWidth * 0.5) * MM_TO_M;
+    (topFrameOuterDepth - topBeamWidth - panelFitClearance - supportWidth * 0.5) * MM_TO_M;
+  const leftSupportCenterX =
+    (frameSideRailWidth + panelFitClearance + supportWidth * 0.5) * MM_TO_M;
   const rightSupportCenterX =
-    (frameOuterWidth - frameRailWidth - panelFitClearance - supportWidth * 0.5) * MM_TO_M;
+    (frameOuterWidth - frameSideRailWidth - panelFitClearance - supportWidth * 0.5) * MM_TO_M;
   return (
     <group>
       <mesh
         position={[
           obstacleStartX + obstacleWidth * MM_TO_M * 0.5,
           obstacleHeight * MM_TO_M - 0.09,
-          0.25,
+          obstacleDepth * 0.5,
         ]}
         receiveShadow
       >

@@ -11,6 +11,7 @@ describe("P1 engineering rules", () => {
       new Set([
         "structure.long-span-review",
         "structure.mobile-side-sway",
+        "caster.installed-height-required",
         "caster.wood-floor-soft-tread",
         "motion.cable-routing-safe",
       ]),
@@ -32,5 +33,42 @@ describe("P1 engineering rules", () => {
       true,
     );
     expect(findings.some((finding) => finding.ruleId === "structure.long-span-review")).toBe(false);
+  });
+
+  it("C-caster-height-required blocks ordering until the installed height is explicit", () => {
+    const project = createParametricClearanceFrameDemo();
+    const finding = evaluateRules(project).find(
+      (item) => item.ruleId === "caster.installed-height-required",
+    );
+    expect(finding).toMatchObject({
+      severity: "error",
+      blocks: ["order-draft", "order-ready"],
+    });
+
+    project.parameters.inputs.casterInstalledHeight.valueMm = 100;
+    expect(
+      evaluateRules(project).some((item) => item.ruleId === "caster.installed-height-required"),
+    ).toBe(false);
+  });
+
+  it("C-section-parameter-consistency detects a physical-section mismatch", () => {
+    const project = createParametricClearanceFrameDemo();
+    project.parameters.inputs.topFrameHeight.valueMm = 60;
+    const findings = evaluateRules(project).filter(
+      (item) => item.ruleId === "structure.section-parameter-mismatch",
+    );
+    expect(findings).toHaveLength(2);
+    expect(findings[0]).toMatchObject({
+      severity: "error",
+      blocks: ["order-draft", "order-ready"],
+    });
+  });
+
+  it("C-rule-role-not-in-purpose-copy does not infer structure from a label", () => {
+    const project = loadOverbedFixture();
+    const before = evaluateRules(project).map((finding) => finding.ruleId);
+    project.entities["profile.top-front"].purpose = "brace main-span 主梁 横撑";
+    const after = evaluateRules(project).map((finding) => finding.ruleId);
+    expect(after).toEqual(before);
   });
 });

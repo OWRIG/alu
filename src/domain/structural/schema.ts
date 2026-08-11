@@ -7,11 +7,7 @@ const NonnegativeNumberSchema = FiniteNumberSchema.nonnegative();
 const PositiveNumberSchema = FiniteNumberSchema.positive();
 const LoadShareSchema = PositiveNumberSchema.max(1);
 
-export const ProfileCompatibilityGroupSchema = z.enum([
-  "misumi-jp-series-6",
-  "misumi-jp-series-8",
-  "misumi-euro-slot-8",
-]);
+export const ProfileCompatibilityGroupSchema = EntityIdSchema;
 
 export const StructuralLoadInputsSchema = z.strictObject({
   panelMassKg: NonnegativeNumberSchema,
@@ -49,27 +45,20 @@ export const BeamCandidateSchema = z.strictObject({
 
 export const StructuralSizingStudySchema = z.strictObject({
   version: z.literal(1),
-  scope: z.literal("twin-longitudinal-top-beams"),
+  scope: EntityIdSchema,
   beamEntityIds: z.array(EntityIdSchema).min(1).max(16),
   effectiveSpanParam: EntityIdSchema,
   maximumSectionHeightParam: EntityIdSchema,
-  requiredCompatibilityGroup: ProfileCompatibilityGroupSchema,
+  appliedSectionWidthParam: EntityIdSchema.optional(),
+  appliedSectionHeightParam: EntityIdSchema.optional(),
+  requiredCompatibilityGroup: ProfileCompatibilityGroupSchema.nullable(),
   beamCount: z.number().int().positive().max(16),
   gravityNPerKg: PositiveNumberSchema,
   elasticModulusNPerMm2: PositiveNumberSchema,
   deflectionLimitRatio: PositiveNumberSchema,
   loads: StructuralLoadInputsSchema,
   candidates: z.array(BeamCandidateSchema).min(1).max(64),
-  assumptionIds: z
-    .array(
-      z.enum([
-        "ideal-simply-supported",
-        "linear-elastic",
-        "no-panel-composite-action",
-        "connections-excluded",
-      ]),
-    )
-    .min(1),
+  assumptionIds: z.array(EntityIdSchema).min(1).max(32),
   calculationSources: z
     .array(
       z.strictObject({
@@ -83,19 +72,15 @@ export const StructuralSizingStudySchema = z.strictObject({
   constructionEvidence: z
     .array(
       z.strictObject({
-        id: z.enum([
-          "flush-inset-panel",
-          "continuous-main-members",
-          "reinforced-load-joints",
-          "preloaded-connectors-and-side-rails",
-        ]),
-        platform: z.literal("xiaohongshu"),
-        noteId: EntityIdSchema,
+        id: EntityIdSchema,
+        title: z.string().min(1).max(200).optional(),
+        platform: z.string().min(1).max(80).optional(),
+        noteId: z.string().min(1).max(200).optional(),
         url: z.url(),
       }),
     )
-    .min(1)
-    .max(16),
+    .max(16)
+    .default([]),
 });
 
 export type StructuralLoadInputs = z.infer<typeof StructuralLoadInputsSchema>;

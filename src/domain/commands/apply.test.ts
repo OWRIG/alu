@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { deriveProfileBom } from "../bom/derive";
+import { evaluateParameters } from "../params/evaluate";
 import {
   createBlankProject,
   createParametricClearanceFrameDemo,
@@ -218,5 +219,93 @@ describe("domain commands", () => {
     expect(next.extensions?.structuralSizing).toMatchObject({
       loads: { centerPointPayloadKg: 20, distributedPayloadKg: 30 },
     });
+  });
+
+  it("C-parameter-definition-authoring creates inputs and linear derived parameters", () => {
+    const project = createBlankProject();
+    const withInput = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [
+        {
+          type: "parameter.input.upsert",
+          id: "clearWidth",
+          definition: { valueMm: 1200, label: "Clear width", boundaryKind: "inner-clear" },
+        },
+      ]),
+    );
+    const withDerived = applyCommandEnvelope(
+      withInput,
+      createCommandEnvelope(withInput, [
+        {
+          type: "parameter.derived.upsert",
+          id: "outerWidth",
+          definition: {
+            label: "Outer width",
+            terms: [{ param: "clearWidth", coef: 1 }],
+            constantMm: 80,
+          },
+        },
+      ]),
+    );
+
+    expect(evaluateParameters(withDerived.parameters)).toMatchObject({
+      clearWidth: 1200,
+      outerWidth: 1280,
+    });
+  });
+
+  it("C-parameter-remove-reference-safe refuses implicit cascading deletion", () => {
+    const project = createParametricClearanceFrameDemo();
+    expect(() =>
+      applyCommandEnvelope(
+        project,
+        createCommandEnvelope(project, [{ type: "parameter.remove", id: "obstacleOuterWidth" }]),
+      ),
+    ).toThrowError(
+      expect.objectContaining<Partial<DomainError>>({ code: "dimension.parameter-in-use" }),
+    );
+  });
+
+  it("C-caster-height-in-vertical-chain keeps the top fixed and moves the floor interface", () => {
+    const project = createParametricClearanceFrameDemo();
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [
+        { type: "parameters.set", values: { casterInstalledHeight: 100 } },
+      ]),
+    );
+    const values = evaluateParameters(next.parameters);
+
+    expect(values.uprightLength).toBe(570);
+    expect(values.baseRailCenterZ).toBe(120);
+    expect(values.topBeamCenterZ).toBe(710);
+    expect(next.entities["profile.upright-left-front"]).toMatchObject({
+      origin: { z: 100 },
+      lengthMm: 570,
+    });
+    expect(next.entities["profile.base-left"].origin.z).toBe(120);
+    expect(next.entities["profile.top-front"].origin.z).toBe(710);
+  });
+
+  it("C-sizing-apply-to-model-and-bom writes the selected SKU into the design truth", () => {
+    const project = createParametricClearanceFrameDemo();
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [{ type: "structural-sizing.selection.apply" }]),
+    );
+    const front = next.entities["profile.top-front"];
+    const snapshot =
+      next.embeddedParts[`${front.definitionRef.partId}@${front.definitionRef.revision}`];
+    const beamLine = deriveProfileBom(next).lines.find((line) =>
+      line.sourceEntityIds.includes("profile.top-front"),
+    );
+
+    expect(snapshot.definition.procurement).toMatchObject({
+      vendor: "MISUMI",
+      sku: "NFSL8-4080",
+    });
+    expect(snapshot.definition.section).toMatchObject({ envelopeUMm: 40, envelopeVMm: 80 });
+    expect(next.entities["profile.top-rear"].definitionRef).toEqual(front.definitionRef);
+    expect(beamLine?.definitionName).toBe("MISUMI NFSL8-4080");
   });
 });

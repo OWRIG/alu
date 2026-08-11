@@ -11,7 +11,10 @@ const parameterKeys: Record<string, MessageKey> = {
   clearanceLeft: "parameter.clearanceLeft",
   clearanceRight: "parameter.clearanceRight",
   uprightWidthX: "parameter.uprightWidthX",
+  topBeamWidth: "parameter.topBeamWidth",
   topFrameHeight: "parameter.topFrameHeight",
+  topBeamMaximumHeight: "parameter.topBeamMaximumHeight",
+  casterInstalledHeight: "parameter.casterInstalledHeight",
   topBeamEffectiveSpan: "parameter.topBeamEffectiveSpan",
   topFrameOuterDepth: "parameter.topFrameOuterDepth",
   panelFitClearance: "parameter.panelFitClearance",
@@ -254,6 +257,12 @@ export function localizeFinding(
         rationale: t("rule.orientation.rationale"),
         suggestedActions: [t("rule.orientation.action1")],
       };
+    case "structure.section-parameter-mismatch":
+      return {
+        message: t("rule.sectionMismatch.message", { purpose }),
+        rationale: t("rule.sectionMismatch.rationale"),
+        suggestedActions: [t("rule.sectionMismatch.action1"), t("rule.sectionMismatch.action2")],
+      };
     case "structure.mobile-side-sway":
       return {
         message: t("rule.sideSway.message"),
@@ -265,6 +274,12 @@ export function localizeFinding(
         message: t("rule.softTread.message"),
         rationale: t("rule.softTread.rationale"),
         suggestedActions: [t("rule.softTread.action1")],
+      };
+    case "caster.installed-height-required":
+      return {
+        message: t("rule.casterHeight.message"),
+        rationale: t("rule.casterHeight.rationale"),
+        suggestedActions: [t("rule.casterHeight.action1"), t("rule.casterHeight.action2")],
       };
     case "motion.cable-routing-safe":
       return {
@@ -330,6 +345,10 @@ const errorKeys: Record<string, MessageKey> = {
   "catalog.definition-hash-mismatch": "error.definitionConflict",
   "catalog.definition-conflict": "error.definitionConflict",
   "binding.missing": "error.bindingMissing",
+  "dimension.parameter-in-use": "error.parameterInUse",
+  "dimension.parameter-kind-conflict": "error.parameterKindConflict",
+  "structure.sizing-selection-missing": "error.selectionMissing",
+  "structure.section-parameter-not-input": "error.sectionParameterNotInput",
   "internal.unexpected": "error.unexpected",
 };
 

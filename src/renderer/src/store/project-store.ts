@@ -19,6 +19,8 @@ import { asDomainError, DomainError } from "../../../domain/project/error";
 import { computeDesignHash } from "../../../domain/project/hash";
 import type {
   BindingField,
+  DerivedParameter,
+  ParameterInput,
   ProfileInstance,
   ProjectDocumentV1,
 } from "../../../domain/project/schema";
@@ -51,7 +53,11 @@ type ProjectStore = {
   recentProjects: RecentProject[];
   dispatch: (commands: DomainCommand[], selectedEntityId?: string | null) => boolean;
   setParameter: (id: string, valueMm: number) => boolean;
+  upsertInputParameter: (id: string, definition: ParameterInput) => boolean;
+  upsertDerivedParameter: (id: string, definition: DerivedParameter) => boolean;
+  removeParameter: (id: string) => boolean;
   setStructuralLoads: (patch: StructuralLoadPatch) => boolean;
+  applyStructuralSelection: () => boolean;
   addProfile: () => boolean;
   updateProfile: (entityId: string, patch: UpdateProfilePatch) => boolean;
   removeEntity: (entityId: string) => boolean;
@@ -198,8 +204,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     return get().dispatch([{ type: "parameters.set", values: { [id]: valueMm } }]);
   },
 
+  upsertInputParameter(id, definition) {
+    return get().dispatch([{ type: "parameter.input.upsert", id, definition }]);
+  },
+
+  upsertDerivedParameter(id, definition) {
+    return get().dispatch([{ type: "parameter.derived.upsert", id, definition }]);
+  },
+
+  removeParameter(id) {
+    return get().dispatch([{ type: "parameter.remove", id }]);
+  },
+
   setStructuralLoads(patch) {
     return get().dispatch([{ type: "structural-sizing.loads.set", patch }]);
+  },
+
+  applyStructuralSelection() {
+    return get().dispatch([{ type: "structural-sizing.selection.apply" }]);
   },
 
   addProfile() {

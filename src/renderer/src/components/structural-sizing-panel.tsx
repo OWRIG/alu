@@ -1,33 +1,37 @@
-import { AlertTriangle, BookOpen, Calculator, CheckCircle2, Database, XCircle } from "lucide-react";
+import {
+  AlertTriangle,
+  BookOpen,
+  Calculator,
+  CheckCircle2,
+  Database,
+  PackageCheck,
+  XCircle,
+} from "lucide-react";
 
 import { evaluateStructuralSizing } from "../../../domain/structural/evaluate";
-import type {
-  ProfileCompatibilityGroup,
-  StructuralSizingStudy,
-} from "../../../domain/structural/schema";
+import type { ProfileCompatibilityGroup } from "../../../domain/structural/schema";
 import { useI18n, type Translator } from "../i18n/i18n";
 import type { MessageKey } from "../i18n/messages";
 import { selectCurrentProject, useProjectStore } from "../store/project-store";
 import { NumberField } from "./number-field";
 
-const constructionKeys: Record<
-  StructuralSizingStudy["constructionEvidence"][number]["id"],
-  MessageKey
-> = {
+const constructionKeys: Partial<Record<string, MessageKey>> = {
   "flush-inset-panel": "sizing.construction.flushPanel",
   "continuous-main-members": "sizing.construction.continuousMembers",
   "reinforced-load-joints": "sizing.construction.reinforcedJoints",
   "preloaded-connectors-and-side-rails": "sizing.construction.preloadedConnectors",
 };
 
-const compatibilityKeys: Record<ProfileCompatibilityGroup, MessageKey> = {
+const compatibilityKeys: Partial<Record<ProfileCompatibilityGroup, MessageKey>> = {
   "misumi-jp-series-6": "sizing.compatibility.jp6",
   "misumi-jp-series-8": "sizing.compatibility.jp8",
   "misumi-euro-slot-8": "sizing.compatibility.euro8",
 };
 
-function compatibilityLabel(group: ProfileCompatibilityGroup, t: Translator) {
-  return t(compatibilityKeys[group]);
+function compatibilityLabel(group: ProfileCompatibilityGroup | null, t: Translator) {
+  if (group === null) return t("sizing.compatibility.any");
+  const key = compatibilityKeys[group];
+  return key ? t(key) : group;
 }
 
 function calculationSourceLabel(id: string, t: Translator) {
@@ -40,6 +44,7 @@ export function StructuralSizingPanel() {
   const { t, formatNumber } = useI18n();
   const project = useProjectStore(selectCurrentProject);
   const setStructuralLoads = useProjectStore((state) => state.setStructuralLoads);
+  const applyStructuralSelection = useProjectStore((state) => state.applyStructuralSelection);
   const result = evaluateStructuralSizing(project);
 
   if (!result) {
@@ -53,6 +58,16 @@ export function StructuralSizingPanel() {
   }
 
   const { study, selected } = result;
+  const selectionApplied = Boolean(
+    selected &&
+    study.beamEntityIds.every((entityId) => {
+      const profile = project.entities[entityId];
+      if (!profile) return false;
+      const snapshot =
+        project.embeddedParts[`${profile.definitionRef.partId}@${profile.definitionRef.revision}`];
+      return snapshot?.definition.procurement?.sku === selected.candidate.sku;
+    }),
+  );
   return (
     <div className="inspector-scroll" data-testid="structural-sizing-panel">
       <div className="inspector-section-bar">
@@ -80,6 +95,27 @@ export function StructuralSizingPanel() {
               system: compatibilityLabel(study.requiredCompatibilityGroup, t),
             })}
           </p>
+        )}
+        {selected && (
+          <button
+            className={`sizing-apply${selectionApplied ? " is-applied" : ""}`}
+            type="button"
+            data-testid="sizing-apply-selection"
+            disabled={selectionApplied}
+            onClick={applyStructuralSelection}
+          >
+            <PackageCheck size={14} />
+            <span>
+              <strong>
+                {selectionApplied ? t("sizing.selectionApplied") : t("sizing.applySelection")}
+              </strong>
+              <small>
+                {selectionApplied
+                  ? t("sizing.selectionAppliedHelp")
+                  : t("sizing.applySelectionHelp")}
+              </small>
+            </span>
+          </button>
         )}
         <div className="sizing-metrics">
           <div>
@@ -343,15 +379,21 @@ export function StructuralSizingPanel() {
               <small>{source.id}</small>
             </div>
           ))}
-          {study.constructionEvidence.map((evidence) => (
-            <div key={evidence.id}>
-              <span>{t("sizing.evidence.field")}</span>
-              <strong>{t(constructionKeys[evidence.id])}</strong>
-              <small>
-                {t("sizing.evidence.xiaohongshu")} · {evidence.noteId}
-              </small>
-            </div>
-          ))}
+          {study.constructionEvidence.map((evidence) => {
+            const constructionKey = constructionKeys[evidence.id];
+            return (
+              <div key={evidence.id}>
+                <span>{t("sizing.evidence.field")}</span>
+                <strong>
+                  {constructionKey ? t(constructionKey) : (evidence.title ?? evidence.id)}
+                </strong>
+                <small>
+                  {evidence.platform ?? t("sizing.evidence.external")}
+                  {evidence.noteId ? ` · ${evidence.noteId}` : ""}
+                </small>
+              </div>
+            );
+          })}
         </div>
       </section>
 

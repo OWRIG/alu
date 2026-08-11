@@ -100,6 +100,15 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await expect(page.locator(".busy-line")).toHaveCount(0);
     await page.reload();
     await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
+    await page.getByTestId("parameter-add").click();
+    await page.getByTestId("parameter-definition-id").fill("fieldClearance");
+    await page.getByTestId("parameter-definition-value").fill("12");
+    await page.getByTestId("parameter-definition-save").click();
+    await expect(page.getByTestId("param-input-fieldClearance")).toHaveValue("12");
+    const casterHeight = page.getByTestId("param-input-casterInstalledHeight");
+    await casterHeight.fill("100");
+    await casterHeight.press("Enter");
+    await expect(casterHeight).toHaveValue("100");
     await page.getByTestId("tab-sizing").click();
     await expect(page.getByTestId("sizing-selected-sku")).toHaveText("NFSL8-4080");
     await expect(page.getByTestId("sizing-selected-deflection")).toContainText("1.8");
@@ -107,6 +116,9 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await expect(page.getByTestId("sizing-candidate-NEFS8-4040")).toContainText("Fail");
     await expect(page.getByTestId("sizing-candidate-LCF8-3090")).toContainText("Incompatible");
     await expect(page.getByTestId("sizing-candidate-NFSL8-4080")).toContainText("Pass");
+    await page.getByTestId("sizing-apply-selection").click();
+    await expect(page.getByTestId("sizing-apply-selection")).toContainText("Model uses this SKU");
+    await expect(page.getByTestId("sizing-apply-selection")).toBeDisabled();
     await page.getByTestId("sizing-center-payload").fill("25");
     await page.getByTestId("sizing-center-payload").press("Enter");
     await expect(page.getByTestId("sizing-selected-sku")).toHaveText("NEFS8-4080");
@@ -116,6 +128,9 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await page.getByTestId("tab-rules").click();
     await expect(page.getByTestId("rule-list")).toContainText(
       "lowest-mass candidate that meets every sizing constraint",
+    );
+    await expect(page.getByTestId("rule-list")).not.toContainText(
+      "Caster installed height is unknown",
     );
     await page.getByTestId("tab-profiles").click();
 
@@ -160,6 +175,7 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
 
     await page.getByTestId("tab-bom").click();
     await expect(page.getByTestId("bom-table")).toContainText("2,330 mm");
+    await expect(page.getByTestId("bom-table")).toContainText("MISUMI NFSL8-4080");
 
     await page.getByTestId("undo").click();
     await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,230");
@@ -170,8 +186,16 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await expect(page.getByText("Saved roundtrip.alu")).toBeVisible();
     await expect(page.locator(".busy-line")).toHaveCount(0);
     await expect.poll(async () => (await readFile(savePath, "utf8")).length).toBeGreaterThan(100);
-    const saved = JSON.parse(await readFile(savePath, "utf8")) as { bomSnapshot?: unknown };
+    const saved = JSON.parse(await readFile(savePath, "utf8")) as {
+      bomSnapshot?: unknown;
+      embeddedParts: Record<string, { definition: { procurement?: { sku?: string } } }>;
+    };
     expect(saved.bomSnapshot).toBeTruthy();
+    expect(
+      Object.values(saved.embeddedParts).some(
+        (snapshot) => snapshot.definition.procurement?.sku === "NFSL8-4080",
+      ),
+    ).toBe(true);
 
     await running.application.close();
     running = await launchAlu(userDataPath, savePath, savePath);

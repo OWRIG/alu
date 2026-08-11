@@ -34,24 +34,10 @@ const FIELD_GUIDE_EVIDENCE = [
 
 const severityOrder: Record<RuleSeverity, number> = { error: 0, warning: 1, info: 2 };
 
-function isMainSpan(profile: ProfileInstance): boolean {
-  const purpose = profile.purpose.toLowerCase();
-  return (
-    purpose.includes("main-span") ||
-    purpose.includes("long-span") ||
-    purpose.includes("主梁") ||
-    purpose.includes("主跨")
-  );
-}
-
-function isBrace(profile: ProfileInstance): boolean {
-  const purpose = profile.purpose.toLowerCase();
-  return ["brace", "anti-sway", "crossbar", "斜撑", "横撑"].some((token) =>
-    purpose.includes(token),
-  );
-}
-
-function verticalSectionSize(project: ProjectDocumentV1, profile: ProfileInstance): number | null {
+function sectionWorldDimensions(
+  project: ProjectDocumentV1,
+  profile: ProfileInstance,
+): { verticalMm: number; horizontalMm: number } | null {
   if (profile.axis === "z") return null;
   const definition =
     project.embeddedParts[partKey(profile.definitionRef.partId, profile.definitionRef.revision)]
@@ -59,9 +45,25 @@ function verticalSectionSize(project: ProjectDocumentV1, profile: ProfileInstanc
   if (!definition) return null;
   const rotated = profile.rotationAroundAxisDeg === 90 || profile.rotationAroundAxisDeg === 270;
   if (profile.axis === "x") {
-    return rotated ? definition.section.envelopeUMm : definition.section.envelopeVMm;
+    return rotated
+      ? {
+          verticalMm: definition.section.envelopeUMm,
+          horizontalMm: definition.section.envelopeVMm,
+        }
+      : {
+          verticalMm: definition.section.envelopeVMm,
+          horizontalMm: definition.section.envelopeUMm,
+        };
   }
-  return rotated ? definition.section.envelopeVMm : definition.section.envelopeUMm;
+  return rotated
+    ? {
+        verticalMm: definition.section.envelopeVMm,
+        horizontalMm: definition.section.envelopeUMm,
+      }
+    : {
+        verticalMm: definition.section.envelopeUMm,
+        horizontalMm: definition.section.envelopeVMm,
+      };
 }
 
 export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
@@ -107,12 +109,13 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
   }
 
   const mainSpans = Object.values(project.entities).filter(
-    (profile) => isMainSpan(profile) && profile.lengthMm >= 1_500,
+    (profile) => profile.axis !== "z" && profile.lengthMm >= 1_500,
   );
   const structuralSizing = evaluateStructuralSizing(project);
   const sizedEntityIds = new Set(structuralSizing?.study.beamEntityIds ?? []);
   if (structuralSizing) {
     const selected = structuralSizing.selected;
+    const compatibility = structuralSizing.study.requiredCompatibilityGroup;
     const calculationEvidence = structuralSizing.study.calculationSources.map((source) => ({
       kind: "calculation" as const,
       reference: source.url,
@@ -125,8 +128,8 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
             severity: "info",
             blocks: [],
             entityIds: structuralSizing.study.beamEntityIds,
-            message: `${selected.candidate.sku} 是当前候选集中满足挠度、高度和接口体系约束且质量最小的主梁。`,
-            rationale: `理想简支梁计算挠度 ${selected.deflectionMm.toFixed(2)} mm，不大于 ${selected.deflectionLimitMm.toFixed(2)} mm；截面不超过 ${structuralSizing.maximumSectionHeightMm.toFixed(0)} mm，并匹配 ${structuralSizing.study.requiredCompatibilityGroup}。`,
+            message: `${selected.candidate.sku} 是当前候选集中满足挠度与明确空间约束且质量最小的主梁。`,
+            rationale: `理想简支梁计算挠度 ${selected.deflectionMm.toFixed(2)} mm，不大于 ${selected.deflectionLimitMm.toFixed(2)} mm；截面不超过 ${structuralSizing.maximumSectionHeightMm.toFixed(0)} mm${compatibility ? `，并匹配 ${compatibility}` : "，未设置接口体系过滤"}。`,
             evidence: [
               {
                 kind: "vendor",
@@ -144,7 +147,7 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
               beamSetMassKg: selected.beamSetMassKg,
               bendingStressNPerMm2: selected.bendingStressNPerMm2,
               maximumSectionHeightMm: structuralSizing.maximumSectionHeightMm,
-              requiredCompatibilityGroup: structuralSizing.study.requiredCompatibilityGroup,
+              ...(compatibility ? { requiredCompatibilityGroup: compatibility } : {}),
             },
           }
         : {
@@ -152,7 +155,7 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
             severity: "warning",
             blocks: [],
             entityIds: structuralSizing.study.beamEntityIds,
-            message: "当前候选集中没有型材同时满足挠度、高度和接口体系约束。",
+            message: "当前候选集中没有型材同时满足挠度与明确空间约束。",
             rationale:
               "结果只覆盖理想简支梁；调整载荷、截面高度、接口体系、支点或主梁数量后需要重新计算。",
             evidence: calculationEvidence,
@@ -160,10 +163,46 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
             details: {
               spanMm: structuralSizing.effectiveSpanMm,
               maximumSectionHeightMm: structuralSizing.maximumSectionHeightMm,
-              requiredCompatibilityGroup: structuralSizing.study.requiredCompatibilityGroup,
+              ...(compatibility ? { requiredCompatibilityGroup: compatibility } : {}),
             },
           },
     );
+
+    if (parameterValues) {
+      const expectedWidth = structuralSizing.study.appliedSectionWidthParam
+        ? parameterValues[structuralSizing.study.appliedSectionWidthParam]
+        : undefined;
+      const expectedHeight = structuralSizing.study.appliedSectionHeightParam
+        ? parameterValues[structuralSizing.study.appliedSectionHeightParam]
+        : undefined;
+      for (const entityId of structuralSizing.study.beamEntityIds) {
+        const profile = project.entities[entityId];
+        const actual = profile ? sectionWorldDimensions(project, profile) : null;
+        if (!actual) continue;
+        const widthMismatch =
+          expectedWidth !== undefined && Math.abs(actual.horizontalMm - expectedWidth) > 0.005;
+        const heightMismatch =
+          expectedHeight !== undefined && Math.abs(actual.verticalMm - expectedHeight) > 0.005;
+        if (widthMismatch || heightMismatch) {
+          findings.push({
+            ruleId: "structure.section-parameter-mismatch",
+            severity: "error",
+            blocks: ["order-draft", "order-ready"],
+            entityIds: [entityId],
+            message: `${profile.purpose} 的实际截面与尺寸链参数不一致。`,
+            rationale: "几何包络、尺寸链和切料 definition 必须引用同一组截面尺寸。",
+            evidence: [],
+            suggestedActions: ["重新应用当前梁选型", "或把实际截面参数改回 definition 包络尺寸"],
+            details: {
+              actualWidthMm: actual.horizontalMm,
+              actualHeightMm: actual.verticalMm,
+              ...(expectedWidth !== undefined ? { expectedWidthMm: expectedWidth } : {}),
+              ...(expectedHeight !== undefined ? { expectedHeightMm: expectedHeight } : {}),
+            },
+          });
+        }
+      }
+    }
   }
   for (const profile of mainSpans) {
     if (!sizedEntityIds.has(profile.id)) {
@@ -180,48 +219,57 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
       });
     }
 
-    const vertical = verticalSectionSize(project, profile);
-    const definition =
-      project.embeddedParts[partKey(profile.definitionRef.partId, profile.definitionRef.revision)]
-        ?.definition;
-    if (vertical && definition) {
-      const horizontal =
-        vertical === definition.section.envelopeUMm
-          ? definition.section.envelopeVMm
-          : definition.section.envelopeUMm;
-      if (vertical < horizontal) {
+    const section = sectionWorldDimensions(project, profile);
+    if (section) {
+      if (section.verticalMm < section.horizontalMm) {
         findings.push({
           ruleId: "structure.section-orientation",
           severity: "warning",
           blocks: [],
           entityIds: [profile.id],
-          message: `${profile.purpose} 当前竖向截面仅 ${vertical} mm，较大截面没有朝 Z 方向。`,
+          message: `${profile.purpose} 当前竖向截面仅 ${section.verticalMm} mm，较大截面没有朝 Z 方向。`,
           rationale: "长梁通常通过增加竖向截面高度降低弯曲挠度。",
           evidence: FIELD_GUIDE_EVIDENCE,
           suggestedActions: ["将截面绕轴旋转 90° 后重新复核"],
-          details: { verticalMm: vertical },
+          details: { verticalMm: section.verticalMm },
         });
       }
     }
   }
 
-  if (project.context.mobility === "casters" && !Object.values(project.entities).some(isBrace)) {
+  if (project.context.mobility === "casters") {
     findings.push({
       ruleId: "structure.mobile-side-sway",
       severity: "warning",
       blocks: [],
       entityIds: allEntityIds,
-      message: "移动结构尚未建模横撑、斜撑或等效抗侧摆构件。",
-      rationale: "反复移动会放大节点间隙与左右剪切。",
+      message: "当前模型尚未验证移动结构的节点刚度与抗侧摆路径。",
+      rationale: "现有型材实体不包含连接拓扑，构件用途名称不能证明抗侧摆能力。",
       evidence: FIELD_GUIDE_EVIDENCE,
       suggestedActions: ["增加三角撑、大角板或横向中梁", "完成后做锁轮侧推测试"],
+    });
+  }
+
+  if (
+    project.context.mobility === "casters" &&
+    (!parameterValues || !(parameterValues.casterInstalledHeight > 0))
+  ) {
+    findings.push({
+      ruleId: "caster.installed-height-required",
+      severity: "error",
+      blocks: ["order-draft", "order-ready"],
+      entityIds: [],
+      message: "脚轮安装总高尚未确认，立柱订单长度不能定稿。",
+      rationale: "立柱切长必须从完成面高度中扣除脚轮安装后从地面到框架安装面的实际高度。",
+      evidence: FIELD_GUIDE_EVIDENCE,
+      suggestedActions: ["选定脚轮后填写 casterInstalledHeight", "复核立柱起点、切长和完成面高度"],
     });
   }
 
   if (project.context.mobility === "casters" && project.context.floor === "wood") {
     findings.push({
       ruleId: "caster.wood-floor-soft-tread",
-      severity: "warning",
+      severity: "info",
       blocks: [],
       entityIds: [],
       message: "木地板移动结构应优先选择软质聚氨酯或橡胶轮面。",
@@ -237,7 +285,7 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
   ) {
     findings.push({
       ruleId: "motion.cable-routing-safe",
-      severity: "warning",
+      severity: "info",
       blocks: [],
       entityIds: [],
       message: "移动桌上的电器线缆需要避开脚轮行程。",

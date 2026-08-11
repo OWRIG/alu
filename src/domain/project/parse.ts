@@ -70,6 +70,18 @@ export function assertProjectSemantics(project: ProjectDocumentV1): void {
         path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/maximumSectionHeightParam`,
       });
     }
+    for (const [field, param] of [
+      ["appliedSectionWidthParam", study.appliedSectionWidthParam],
+      ["appliedSectionHeightParam", study.appliedSectionHeightParam],
+    ] as const) {
+      if (param && !(param in values)) {
+        throw new DomainError({
+          code: "ref.parameter-missing",
+          message: `梁选型研究引用了不存在的实际截面参数 ${param}`,
+          path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/${field}`,
+        });
+      }
+    }
     const uniqueBeamIds = new Set(study.beamEntityIds);
     if (
       uniqueBeamIds.size !== study.beamEntityIds.length ||

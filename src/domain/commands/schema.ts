@@ -3,8 +3,10 @@ import { z } from "zod";
 import {
   BindingFieldSchema,
   EmbeddedProfileSnapshotSchema,
+  DerivedParameterSchema,
   EntityIdSchema,
   FiniteNumberSchema,
+  ParameterInputSchema,
   PositiveMmSchema,
   ProfileInstanceSchema,
   Vec3MmSchema,
@@ -14,6 +16,23 @@ import { StructuralLoadPatchSchema } from "../structural/schema";
 export const SetParametersCommandSchema = z.strictObject({
   type: z.literal("parameters.set"),
   values: z.record(EntityIdSchema, FiniteNumberSchema),
+});
+
+export const UpsertInputParameterCommandSchema = z.strictObject({
+  type: z.literal("parameter.input.upsert"),
+  id: EntityIdSchema,
+  definition: ParameterInputSchema,
+});
+
+export const UpsertDerivedParameterCommandSchema = z.strictObject({
+  type: z.literal("parameter.derived.upsert"),
+  id: EntityIdSchema,
+  definition: DerivedParameterSchema,
+});
+
+export const RemoveParameterCommandSchema = z.strictObject({
+  type: z.literal("parameter.remove"),
+  id: EntityIdSchema,
 });
 
 export const AddProfileCommandSchema = z.strictObject({
@@ -69,8 +88,15 @@ export const SetStructuralSizingLoadsCommandSchema = z.strictObject({
   patch: StructuralLoadPatchSchema,
 });
 
+export const ApplyStructuralSizingSelectionCommandSchema = z.strictObject({
+  type: z.literal("structural-sizing.selection.apply"),
+});
+
 export const DomainCommandSchema = z.discriminatedUnion("type", [
   SetParametersCommandSchema,
+  UpsertInputParameterCommandSchema,
+  UpsertDerivedParameterCommandSchema,
+  RemoveParameterCommandSchema,
   AddProfileCommandSchema,
   UpdateProfileCommandSchema,
   RemoveEntityCommandSchema,
@@ -78,6 +104,7 @@ export const DomainCommandSchema = z.discriminatedUnion("type", [
   UnbindFieldCommandSchema,
   ResyncBindingCommandSchema,
   SetStructuralSizingLoadsCommandSchema,
+  ApplyStructuralSizingSelectionCommandSchema,
 ]);
 
 export const CommandEnvelopeSchema = z.strictObject({

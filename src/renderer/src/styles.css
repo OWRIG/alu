@@ -431,6 +431,23 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+.module-action {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  color: var(--text-secondary);
+  background: transparent;
+}
+
+.module-action:hover {
+  border-color: var(--accent-line);
+  color: #fff;
+  background: var(--accent-wash);
+}
+
 .section-label {
   display: flex;
   align-items: center;
@@ -536,12 +553,219 @@ button:disabled {
 
 .parameter-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 98px;
+  grid-template-columns: minmax(0, 1fr) 120px;
   align-items: center;
   gap: 12px;
   min-height: 46px;
   padding: 6px 14px;
   border-bottom: 1px solid var(--line);
+}
+
+.parameter-row-actions,
+.derived-row-value {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.parameter-row-actions .number-field {
+  min-width: 0;
+  flex: 1;
+}
+
+.parameter-row-actions > button,
+.derived-row-value > button {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid transparent;
+  color: var(--muted);
+  background: transparent;
+}
+
+.parameter-row-actions > button:hover,
+.derived-row-value > button:hover {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+
+.parameter-editor {
+  border-bottom: 1px solid var(--line-strong);
+  background: #080a0b;
+}
+
+.parameter-editor-head,
+.parameter-term-head,
+.parameter-editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.parameter-editor-head {
+  min-height: 34px;
+  padding: 0 10px 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel-raised);
+}
+
+.parameter-editor-head strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.parameter-editor-head button,
+.parameter-term button {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+.parameter-editor-head button:hover,
+.parameter-term button:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.parameter-kind-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--line);
+}
+
+.parameter-kind-switch button {
+  height: 30px;
+  border: 0;
+  border-right: 1px solid var(--line);
+  color: var(--muted);
+  background: transparent;
+  font-size: 10px;
+}
+
+.parameter-kind-switch button:last-child {
+  border-right: 0;
+}
+
+.parameter-kind-switch button.is-active {
+  color: var(--text);
+  background: var(--accent-wash);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.parameter-editor-field {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.parameter-editor-field > span,
+.parameter-term-head > span {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.parameter-editor-field input,
+.parameter-editor-field select,
+.parameter-term input,
+.parameter-term select {
+  min-width: 0;
+  height: 27px;
+  padding: 0 7px;
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  outline: none;
+  color: var(--text);
+  background: #000;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.parameter-editor-field input:focus,
+.parameter-editor-field select:focus,
+.parameter-term input:focus,
+.parameter-term select:focus {
+  border-color: var(--accent);
+}
+
+.parameter-editor-field input:disabled {
+  color: var(--muted);
+  background: var(--panel-raised);
+}
+
+.parameter-term-list {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.parameter-term-head {
+  min-height: 24px;
+}
+
+.parameter-term-head button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  color: var(--accent);
+  background: transparent;
+  font-size: 9px;
+}
+
+.parameter-term {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 56px 22px;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.parameter-term button:disabled {
+  opacity: 0.25;
+}
+
+.parameter-editor-actions {
+  justify-content: flex-end;
+  padding: 8px 12px;
+}
+
+.parameter-editor-actions button,
+.empty-state--compact > button {
+  display: flex;
+  min-height: 27px;
+  align-items: center;
+  gap: 5px;
+  padding: 0 9px;
+  border: 1px solid var(--line-strong);
+  color: var(--text-secondary);
+  background: transparent;
+  font-size: 9px;
+}
+
+.parameter-editor-actions button:hover:not(:disabled),
+.empty-state--compact > button:hover {
+  border-color: var(--accent-line);
+  color: #fff;
+}
+
+.parameter-editor-actions button.is-primary {
+  border-color: var(--accent-line);
+  color: #fff;
+  background: var(--accent-wash);
+}
+
+.parameter-editor-actions button.is-danger {
+  margin-right: auto;
+  color: var(--danger);
 }
 
 .parameter-group .parameter-row:last-child {
@@ -1486,6 +1710,50 @@ button:disabled {
   color: var(--text-secondary);
   font-size: 10px;
   line-height: 1.55;
+}
+
+.sizing-apply {
+  display: flex;
+  width: 100%;
+  min-height: 42px;
+  align-items: center;
+  gap: 9px;
+  margin-top: 10px;
+  padding: 7px 9px;
+  border: 1px solid var(--accent-line);
+  color: var(--accent);
+  background: var(--accent-wash);
+  text-align: left;
+}
+
+.sizing-apply > span,
+.sizing-apply strong,
+.sizing-apply small {
+  display: block;
+}
+
+.sizing-apply strong {
+  color: var(--text);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.sizing-apply small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 8px;
+}
+
+.sizing-apply:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: rgba(143, 189, 227, 0.14);
+}
+
+.sizing-apply.is-applied {
+  border-color: rgba(99, 177, 132, 0.28);
+  color: var(--success);
+  background: rgba(99, 177, 132, 0.04);
+  opacity: 1;
 }
 
 .sizing-metrics {

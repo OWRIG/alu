@@ -8,24 +8,6 @@ import { _electron as electron } from "@playwright/test";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const output = path.join(root, "docs", "images");
 const temporary = await mkdtemp(path.join(os.tmpdir(), "alu-docs-"));
-const nativeChromeOverlay = `
-  .topbar {
-    position: relative;
-  }
-
-  .topbar::before {
-    position: absolute;
-    top: 19px;
-    left: 16px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #ff5f57;
-    box-shadow: 20px 0 0 #febc2e, 40px 0 0 #28c840;
-    content: "";
-    pointer-events: none;
-  }
-`;
 const application = await electron.launch({
   args: ["."],
   cwd: root,
@@ -44,54 +26,15 @@ try {
   await page.getByTestId("model-viewport").waitFor({ state: "visible" });
   await page.locator("canvas").waitFor({ state: "visible" });
   await page.waitForTimeout(4_200);
-  // Playwright captures only the renderer. Restore the native macOS controls that occupy
-  // the top bar's reserved inset so documentation screenshots match the real window.
-  await page.addStyleTag({ content: nativeChromeOverlay });
-
+  await page.addStyleTag({ content: ".topbar { padding-left: 16px; }" });
   await page.screenshot({ path: path.join(output, "editor-zh.png") });
-  await page.getByTestId("language-menu").click();
-  await page.screenshot({ path: path.join(output, "language-menu-zh.png") });
-  await page.getByTestId("locale-en-US").click();
-  await page.getByText("Set constraints", { exact: true }).waitFor({ state: "visible" });
-  await page.screenshot({ path: path.join(output, "editor-en.png") });
-  await page.getByTestId("language-menu").click();
-  await page.screenshot({ path: path.join(output, "language-menu-en.png") });
-  await page.getByTestId("locale-zh-CN").click();
-  await page.getByText("设定约束", { exact: true }).waitFor({ state: "visible" });
-
-  const widthInput = page.getByTestId("param-input-obstacleOuterWidth");
-  await widthInput.fill("2200");
-  await widthInput.press("Enter");
-  await page.getByTestId("tab-bom").click();
-  await page.screenshot({ path: path.join(output, "example-cut-list.png") });
-
   await page.getByTestId("tab-sizing").click();
+  await page.getByTestId("sizing-apply-selection").click();
+  await page.waitForTimeout(800);
   await page.screenshot({ path: path.join(output, "example-sizing.png") });
-  await page
-    .getByTestId("sizing-candidate-comparison")
-    .evaluate((element) => element.scrollIntoView({ block: "start" }));
-  await page.screenshot({ path: path.join(output, "example-sizing-comparison.png") });
-
-  await page.getByTestId("tab-rules").click();
-  await page.screenshot({ path: path.join(output, "example-checks.png") });
   await page.getByTestId("save-project").click();
   await page.getByText("已保存 example.alu").waitFor({ state: "visible" });
-
-  await page.getByTestId("language-menu").click();
-  await page.getByTestId("locale-en-US").click();
-  await page.getByText("Set constraints", { exact: true }).waitFor({ state: "visible" });
-  await page.getByTestId("tab-bom").click();
-  await page.screenshot({ path: path.join(output, "example-cut-list-en.png") });
-  await page.getByTestId("tab-sizing").click();
-  await page.screenshot({ path: path.join(output, "example-sizing-en.png") });
-  await page
-    .getByTestId("sizing-candidate-comparison")
-    .evaluate((element) => element.scrollIntoView({ block: "start" }));
-  await page.screenshot({ path: path.join(output, "example-sizing-comparison-en.png") });
-  await page.getByTestId("tab-rules").click();
-  await page.screenshot({ path: path.join(output, "example-checks-en.png") });
-
-  console.log(`Wrote documentation screenshots to ${path.relative(root, output)}`);
+  console.log(`Wrote 2 documentation screenshots to ${path.relative(root, output)}`);
 } finally {
   await application.close().catch(() => undefined);
   await rm(temporary, { recursive: true, force: true });

@@ -44,7 +44,7 @@ describe("parametric clearance-frame demo", () => {
     expect(project.extensions?.structuralSizing).toMatchObject({
       version: 1,
       effectiveSpanParam: "topBeamEffectiveSpan",
-      maximumSectionHeightParam: "topFrameHeight",
+      maximumSectionHeightParam: "topBeamMaximumHeight",
       loads: {
         panelMassKg: 12,
         distributedPayloadKg: 30,

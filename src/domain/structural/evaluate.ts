@@ -113,7 +113,9 @@ function evaluateCandidate(
     centerPointForceLimitN / (gravityNPerKg * loads.centerPointLoadSharePerBeam);
   const passesDeflection = deflectionMm <= deflectionLimitMm;
   const fitsSectionHeight = candidate.sectionHeightMm <= maximumSectionHeightMm;
-  const fitsCompatibilityGroup = candidate.compatibilityGroup === study.requiredCompatibilityGroup;
+  const fitsCompatibilityGroup =
+    study.requiredCompatibilityGroup === null ||
+    candidate.compatibilityGroup === study.requiredCompatibilityGroup;
 
   return {
     candidate,
