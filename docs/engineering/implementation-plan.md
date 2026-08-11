@@ -75,6 +75,8 @@
 
 ## P4：Agent 接口层（5–8 人日）
 
+> 进度：Headless CLI 核心、JSON Schema、配套 Skill 冒烟与桌面保存冲突保护已完成；目录搜索、运行中主动重载提示和更多模板仍待后续。
+
 产物：
 
 - 命令协议收尾：dry-run 变更摘要、结构化错误与批量事务全量落地；`commandId` 只做关联，重试通过 expected revision + 重新读取 designHash 收敛。
@@ -87,7 +89,7 @@
 
 验收：同一初始 designHash 和命令批经 UI 与 CLI 执行得到相同最终 designHash；整批失败不留半份修改；外部 agent 借助 skill 用 CLI 完成"改床宽 → 读回 BOM 与警告"闭环。
 
-当前仓库已提前提供一个不依赖 CLI 的 `design-with-alu` 桌面工作流 Skill，便于 agent 正确操作现有 UI 并遵守产品边界；它不表示上述 P4 接口已经实现。
+当前 `design-with-alu` 已改为 CLI 优先：读取工程身份，dry-run 命令批，确认 diff 后 apply，并按目标校验；桌面端继续用于 3D 复核和人工编辑。
 
 ## P5：分发（macOS arm64 prerelease 切片已完成）
 

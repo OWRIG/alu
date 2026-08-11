@@ -135,12 +135,12 @@ The repository bundles four focused Agent Skills that can run independently or a
 | [`integrate-panels-with-extrusions`](skills/integrate-panels-with-extrusions/SKILL.md)           | Design groove infills, flush inset shelves, face-mounted panels, removable panels, and doors  |
 
 ```bash
-mkdir -p ~/.codex/skills
+mkdir -p ~/.agents/skills
 cp -R skills/design-with-alu \
   skills/select-aluminum-extrusion-profiles \
   skills/select-aluminum-extrusion-connections \
   skills/integrate-panels-with-extrusions \
-  ~/.codex/skills/
+  ~/.agents/skills/
 ```
 
 Example invocations:
@@ -156,7 +156,28 @@ Use $integrate-panels-with-extrusions to design a four-sided flush inset panel
 with a measured dimension chain, supports, gaps, and pre-order checks.
 ```
 
-`design-with-alu` currently works through the desktop UI; v0.2.1 has no supported headless mutation API. Do not bypass validation by hand-editing `.alu`. The three knowledge skills can also review concepts and manufacturing handoffs without ALU.
+`design-with-alu` now uses the headless CLI to create, preview, modify, and validate `.alu`; the desktop app remains available for 3D review and manual edits. The three knowledge skills can also review concepts and manufacturing handoffs without ALU.
+
+### Codex setup
+
+```bash
+pnpm install
+pnpm build:cli
+pnpm link --global # optional; exposes the alu command
+```
+
+Without a global link, replace `alu` below with `pnpm cli`:
+
+```bash
+alu create frame.alu --template demo
+alu read frame.alu
+alu schema command
+alu dry-run frame.alu --input command.json
+alu apply frame.alu --input command.json
+alu validate frame.alu --target order-draft
+```
+
+`read` returns the current revision, design hash, project, evaluated dimensions, BOM, and findings. A command envelope must carry the `expectedProjectRevision` and `expectedDesignHash` returned by that read. Run `dry-run` before `apply`. Every invocation emits one JSON line with stable error and exit codes. Do not hand-edit `.alu`.
 
 See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/aluminum-extrusion-field-guide-2026.md) for the current vendor sources, distilled Xiaohongshu cases, and evidence boundaries.
 
@@ -165,12 +186,13 @@ See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/alumin
 - 3D uses simplified rectangular envelopes; verify the latest vendor revision before procurement.
 - The cut list excludes connectors, machining, fasteners, casters, panels, and accessories. It is not order-ready.
 - Beam results cover ideal simply supported deflection only. Joint stiffness, allowable stress, sway, tipping, impact, fatigue, and physical validation remain unresolved.
-- Dragging, snapping, complete procurement BOMs, custom catalogs, and the headless Agent interface remain roadmap work.
+- Dragging, snapping, complete procurement BOMs, custom catalogs, and live attach remain roadmap work.
 
 ## Development and docs
 
 ```bash
 pnpm ready           # types, lint, format, boundaries, tests, build
+pnpm test:cli        # build the headless CLI and run the Skill workflow smoke test
 pnpm test:e2e        # real Electron locale, edit, cut-list, save, reopen flow
 pnpm package:mac     # Apple Silicon DMG, ZIP, and ALU.app
 pnpm package:verify  # ASAR, locale packs, executable, and size limits

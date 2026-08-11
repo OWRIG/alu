@@ -378,8 +378,14 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     set({ busy: true, error: null });
     try {
       const state = get();
+      if (state.fileName && !state.fileHash) {
+        throw new DomainError({
+          code: "file.identity-missing",
+          message: "已打开工程缺少文件哈希，请重新打开后再保存",
+        });
+      }
       const response = state.fileName
-        ? await window.alu.project.save(state.history.present)
+        ? await window.alu.project.save(state.history.present, state.fileHash as string)
         : await window.alu.project.saveAs(state.history.present);
       if (!response.ok) throw new DomainError(response.error);
       if (!response.data) return false;

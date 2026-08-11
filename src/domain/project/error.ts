@@ -3,6 +3,7 @@ export class DomainError extends Error {
   readonly path?: string;
   readonly entityIds?: string[];
   readonly suggestion?: string;
+  readonly commandIndex?: number;
 
   constructor(options: {
     code: string;
@@ -10,6 +11,7 @@ export class DomainError extends Error {
     path?: string;
     entityIds?: string[];
     suggestion?: string;
+    commandIndex?: number;
   }) {
     super(options.message);
     this.name = "DomainError";
@@ -17,6 +19,7 @@ export class DomainError extends Error {
     this.path = options.path;
     this.entityIds = options.entityIds;
     this.suggestion = options.suggestion;
+    this.commandIndex = options.commandIndex;
   }
 }
 

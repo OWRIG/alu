@@ -6,7 +6,9 @@
 
 工程保存 context、输入/派生参数、字段绑定、型材实体、实际引用的 definition snapshot 和可选 BOM snapshot。已知的 `extensions.structuralSizing` 另外保存版本化研究输入、候选 SKU 快照、厂家计算来源和可选现场构造证据；研究 scope、假设 ID 与接口体系是开放稳定 ID，接口过滤和构造证据均可为空。挠度和入选结果不缓存，打开后确定性重算。文件不包含脚本、可执行内容、视角状态或预览图。
 
-Main 进程在目标目录写临时文件、flush、关闭后 rename；校验或写入失败不会用半份 JSON 覆盖最后一次成功内容。打开时重新计算 BOM，并在快照哈希漂移时提示“已重新计算”。
+共享 Node 文件层在目标目录获取 `<project>.alu.lock`，写临时文件、flush、关闭后 rename；Main 与 Headless CLI 使用同一实现。校验或写入失败不会用半份 JSON 覆盖最后一次成功内容。打开时重新计算 BOM，并在快照哈希漂移时提示“已重新计算”。
+
+桌面端保存已有工程时携带打开时的 fileHash。若 CLI 或其他进程已经替换文件，保存以 `file.conflict` 拒绝并要求重新打开，不静默覆盖外部修改。CLI apply 另外在锁内校验命令读取时的 revision 与 designHash。
 
 Renderer 只收到显示文件名、文件哈希和不含路径的最近工程 ID。任意路径、文件系统和 `ipcRenderer` 不暴露到页面。
 
@@ -22,6 +24,8 @@ Renderer 只收到显示文件名、文件哈希和不含路径的最近工程 I
 | `C-bom-snapshot-drift`             | 导入的 BOM 快照与重算不一致时标记漂移，设计实体保持不变                    |
 | `C-structural-study-portable`      | 结构研究、候选快照和证据保存重开后保持一致，已知扩展的引用与梁数被语义校验 |
 | `C-structural-study-open-evidence` | 空构造证据、自定义 scope、假设和接口体系可以保存重开                       |
+| `C-cli-shared-file-lock`           | CLI 与 Main 共用文件锁；活锁拒绝，死进程遗留锁明确报错且不自动删除         |
+| `C-desktop-external-save-conflict` | 外部修改后桌面旧 fileHash 保存被拒绝，不静默覆盖                           |
 
 ## 安全配置
 

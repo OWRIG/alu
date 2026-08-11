@@ -92,4 +92,4 @@ Agent 交接至少应包含：
 6. 全部未决 finding 与缺少的证据；
 7. 保存后的 `.alu` 路径。
 
-`.alu` 是可检查的 JSON，但当前 alpha 尚无受支持的 headless 写入 API。通过 ALU 修改，才能保留 schema 校验、revision 检查、字段绑定与派生结果的一致性。
+`.alu` 是可检查的 JSON，但不要直接编辑。通过桌面端或 Headless CLI 修改，才能保留 schema 校验、revision/designHash 检查、字段绑定与派生结果的一致性。

@@ -17,7 +17,7 @@
 6. **协议形状第一天定型（P1），传输层后置（P4）。** 加字段便宜、改形状贵，因此 MVP 命令信封就包含：
    - `commands: DomainCommand[]` 批量原子——任一失败整批不落地；
    - 新增类命令的实体 ID 由调用方提供，同批后续命令可引用，agent 可离线组合多步计划；
-   - `commandId` 请求关联 + `expectedProjectRevision` 乐观并发；当前不承诺跨进程持久幂等；
+   - `commandId` 请求关联 + `expectedProjectRevision` / `expectedDesignHash` 乐观并发；当前不承诺跨进程持久幂等；
    - 结构化拒绝：稳定错误码 + JSON Pointer + 相关实体 + 修复方向；
    - dry-run 返回结构化变更摘要（实体增删改、受影响参数、规则增减、BOM 差异）。
 7. **读写对称。** 项目快照、参数求值、BOM、规则结论、目录搜索都是纯函数投影，读结果一律携带 `projectRevision + designHash`，agent 检测过期而不是盲写。响应丢失后重试若遇 revision 冲突，先重新读取并比较 designHash，不静默重复应用。

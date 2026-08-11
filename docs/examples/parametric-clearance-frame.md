@@ -94,4 +94,4 @@ An agent handoff should return:
 6. every unresolved finding and the evidence still required;
 7. the saved `.alu` path.
 
-The `.alu` file is inspectable JSON, but the current alpha does not expose a supported headless write API. Apply changes through ALU so schema validation, revision checks, bindings, and derived projections remain intact.
+The `.alu` file is inspectable JSON, but do not edit it directly. Apply changes through the desktop app or headless CLI so schema validation, revision/design-hash checks, bindings, and derived projections remain intact.

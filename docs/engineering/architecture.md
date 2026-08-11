@@ -9,18 +9,20 @@
 ```mermaid
 flowchart LR
   UI["React 编辑器"] --> CMD["版本化领域命令"]
+  CLI["Headless CLI"] --> CMD
   CMD --> DOMAIN["纯 TypeScript 领域模型 + 参数尺寸链"]
   DOMAIN --> VIEW["Three.js 场景投影"]
   DOMAIN --> RULES["规则与校验"]
   DOMAIN --> BOM["P1 型材 BOM 派生"]
   UI --> IPC["Zod IPC 契约"]
   IPC --> MAIN["Electron Main"]
-  MAIN --> FILES[".alu 原子读写 / 最近工程"]
+  MAIN --> FILES["共享 Node 文件锁与原子读写"]
+  CLI --> FILES
 ```
 
 ### Main
 
-P1 负责 Electron 生命周期、安全窗口、文件选择、`.alu` 原子读写和最近工程。任何 Node 文件系统能力都留在这里；CSV/JSON 导出和厂商目录在后续 changeset 中加入。
+Main 负责 Electron 生命周期、安全窗口、文件选择和最近工程。`.alu` 文件锁、校验与原子替换位于 Electron 无关的 `src/node/`，由 Main 与 CLI 共用；CSV/JSON 导出和厂商目录在后续 changeset 中加入。
 
 ### Preload
 
@@ -31,7 +33,7 @@ window.alu.project.getLaunch();
 window.alu.project.open();
 window.alu.project.openRecent(id);
 window.alu.project.recent();
-window.alu.project.save(snapshot);
+window.alu.project.save(snapshot, expectedFileHash);
 window.alu.project.saveAs(snapshot);
 window.alu.settings.setLocale(locale);
 ```
@@ -44,7 +46,7 @@ React 负责 UI，局部普通 CSS 负责界面样式，Three.js/React Three Fib
 
 ### Domain
 
-`src/domain/` 是产品真正的核心：按版本区分的 schema、命令、尺寸链、BOM 和规则。它只能依赖 Zod 和普通 TypeScript，可在 Vitest、Main、Renderer 或未来 CLI 中复用。P1 schema 只包含 P1 已实现语义，目录合并、连接实体与迁移在对应 changeset 获批后再加入。
+`src/domain/` 是产品真正的核心：按版本区分的 schema、命令、尺寸链、BOM 和规则。它只能依赖 Zod 和普通 TypeScript，已由 Vitest、Main、Renderer 与 CLI 共同复用。P1 schema 只包含 P1 已实现语义，目录合并、连接实体与迁移在对应 changeset 获批后再加入。
 
 ## 目录
 
@@ -59,11 +61,13 @@ src/
 ├── shared/
 │   ├── i18n/             # Main/Renderer 共用的 locale 类型
 │   └── ipc/              # Zod IPC 入参与输出契约
+├── node/                  # Main/CLI 共用的 .alu 文件锁、读取与原子替换
+├── cli/                   # JSON-only Headless CLI 传输层
 ├── main/
 │   ├── core/             # 安全 BrowserWindow 与 IPC 来源校验
 │   ├── i18n/             # 原生弹窗文案
 │   └── features/
-│       ├── project/      # .alu 原子读写、IPC 与最近工程
+│       ├── project/      # 工程 IPC 与最近工程
 │       └── settings/     # 受限语言同步 IPC
 ├── preload/
 ├── renderer/
@@ -73,7 +77,7 @@ src/
 └── test-support/         # Node fixture loader，不进入 domain
 ```
 
-单包足够。只有出现真正独立的 CLI、云端目录服务或第二个应用时，才考虑 workspace/monorepo。
+单包足够。CLI 只是同一领域内核的构建入口；只有出现云端目录服务或第二个独立应用时，才考虑 workspace/monorepo。
 
 ## 技术选择
 
@@ -145,9 +149,9 @@ BrowserWindow 默认：
 
 ## Agent Skill
 
-当前仓库版本化 `skills/design-with-alu/`，只编排已实现的桌面交互：先收集现场约束与载荷，创建输入/线性派生参数并绑定构件，显式填写脚轮安装总高，复核具体 SKU 的挠度/高度/可选接口体系筛选，再把确认的 SKU 应用到模型与型材切料。Skill 明确禁止手改 `.alu`，并要求把具体连接、加工、脚轮采购、板材、整机稳定与实物验证作为未决项交接。
+当前仓库版本化 `skills/design-with-alu/`，默认编排 CLI 的 read → dry-run → apply → validate 闭环：先收集现场约束与载荷，建立参数与构件，复核具体 SKU，再把确认结果写回模型与切料。Skill 明确禁止手改 `.alu`，并要求把具体连接、加工、脚轮采购、板材、整机稳定与实物验证作为未决项交接。
 
-当前没有受支持的 headless CLI、MCP server、外部修改检测或 live attach。P4 changeset 仍是草案；只有它单独获批并交付后，才允许文档承诺机器可读命令协议。领域纯函数和命令模型为未来复用保留了边界，但不等于已经存在第二个入口。
+当前已支持 Headless CLI 和桌面保存时的外部修改冲突保护；不提供 MCP server、运行中主动重载提示或 live attach。CLI 与 UI 共享领域内核，不是第二套业务入口。
 
 ## 从 Keel 借与不借
 

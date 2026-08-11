@@ -31,6 +31,8 @@ export const SavedProjectSchema = z.strictObject({
   fileHash: z.string().regex(/^[a-f0-9]{64}$/),
 });
 
+const FileHashSchema = z.string().regex(/^[a-f0-9]{64}$/);
+
 function resultSchema<T extends z.ZodType>(data: T) {
   return z.discriminatedUnion("ok", [
     z.strictObject({ ok: z.literal(true), data }),
@@ -42,7 +44,10 @@ export const OpenProjectResponseSchema = resultSchema(OpenedProjectSchema.nullab
 export const RecentProjectsResponseSchema = resultSchema(z.array(RecentProjectSchema));
 export const SaveProjectResponseSchema = resultSchema(SavedProjectSchema.nullable());
 export const OpenRecentRequestSchema = z.strictObject({ id: z.string().regex(/^[a-f0-9]{64}$/) });
-export const SaveProjectRequestSchema = z.strictObject({ project: ProjectDocumentV1Schema });
+export const SaveProjectRequestSchema = z.strictObject({
+  project: ProjectDocumentV1Schema,
+  expectedFileHash: FileHashSchema.nullable(),
+});
 
 export type IpcError = z.infer<typeof IpcErrorSchema>;
 export type OpenedProject = z.infer<typeof OpenedProjectSchema>;
@@ -58,7 +63,7 @@ export type AluDesktopApi = {
     open(): Promise<OpenProjectResponse>;
     openRecent(id: string): Promise<OpenProjectResponse>;
     recent(): Promise<RecentProjectsResponse>;
-    save(project: ProjectDocumentV1): Promise<SaveProjectResponse>;
+    save(project: ProjectDocumentV1, expectedFileHash: string): Promise<SaveProjectResponse>;
     saveAs(project: ProjectDocumentV1): Promise<SaveProjectResponse>;
   };
   settings: SettingsApi;

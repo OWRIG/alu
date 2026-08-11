@@ -58,6 +58,12 @@ function forbiddenReason(layer, specifier) {
   if (layer === "main" && /\/renderer\//.test(normalized)) {
     return "main 不能导入 renderer";
   }
+  if (
+    layer === "node" &&
+    (isPackage(specifier, "electron") || /\/(?:main|preload|renderer)\//.test(normalized))
+  ) {
+    return "共享 Node 文件层不能依赖 Electron 或应用进程实现";
+  }
   if (layer === "vendor" && /\/domain\//.test(normalized)) {
     return "vendor 适配层不能泄漏进 domain";
   }

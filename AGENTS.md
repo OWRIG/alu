@@ -16,7 +16,7 @@
 - `src/domain/` 必须是框架无关的 TypeScript：不得依赖 Electron、React、Three.js、Zustand 或 Node 文件系统。
 - `src/shared/` 只放跨进程契约与共享 schema；不得依赖 main 或 renderer。
 - `src/main/` 在应用内独占文件系统、系统对话框、工程读写和导出。
-- `.alu` 文件读写当前只由 main 调用；renderer 不得直接触文件。未来若实现 headless CLI，再抽取可复用的纯 Node 文件模块。
+- `.alu` 文件锁、校验与原子读写位于 `src/node/`，只由 main 与 headless CLI 调用；renderer 不得直接触文件。
 - `src/preload/` 只暴露小而明确的桥接 API。
 - `src/renderer/` 不得 import `electron` 或 `node:*`。
 - Three.js 场景只是领域模型的投影；不得把 Mesh、Vector3 或材质对象写入工程文件。
@@ -41,7 +41,7 @@
 - P1 文档 schema 只包含 P1 已实现语义；连接、加工、板材、脚轮和人工 BOM 在对应 changeset 中先定义强类型，再通过迁移增加，不使用泛型占位冻结未来。
 - 所有导入数据与 IPC 入参都经 Zod 在运行时校验。
 - 导入错误必须可见，不静默丢弃坏零件或未知工程内容。
-- 当前 `design-with-alu` Skill 只编排桌面 UI，不得引导 agent 手改 `.alu`；仓库尚无受支持的 headless CLI 或 MCP。
+- 当前 `design-with-alu` Skill 默认编排 headless CLI 的 read → dry-run → apply → validate；不得引导 agent 手改 `.alu`。仓库不提供 MCP。
 - 未来 Agent 写接口只能复用版本化领域命令与规则评估，不得建立绕过 UI 内核的旁路；协议形状以获批的 P4 changeset 为准。
 
 ## 变更纪律

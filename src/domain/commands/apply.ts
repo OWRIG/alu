@@ -1,7 +1,7 @@
 import { evaluateParameters } from "../params/evaluate";
 import { compareCanonicalText, quantizeMm } from "../project/canonical";
-import { DomainError } from "../project/error";
-import { computeDefinitionHash, hashJson } from "../project/hash";
+import { asDomainError, DomainError } from "../project/error";
+import { computeDefinitionHash, computeDesignHash, hashJson } from "../project/hash";
 import { assertProjectSemantics, getBoundField, partKey } from "../project/parse";
 import {
   ProfileInstanceSchema,
@@ -510,9 +510,32 @@ export function applyCommandEnvelope(
       suggestion: "重新读取工程并基于最新 revision 生成命令",
     });
   }
+  const designHash = computeDesignHash(project);
+  if (designHash !== envelope.expectedDesignHash) {
+    throw new DomainError({
+      code: "design.conflict",
+      message: "工程内容已在读取后发生变化",
+      path: "/expectedDesignHash",
+      suggestion: "重新读取工程并基于最新 designHash 生成命令",
+    });
+  }
 
   let next = project;
-  for (const command of envelope.commands) next = applySingle(next, command);
+  for (const [commandIndex, command] of envelope.commands.entries()) {
+    try {
+      next = applySingle(next, command);
+    } catch (error) {
+      const domainError = asDomainError(error);
+      throw new DomainError({
+        code: domainError.code,
+        message: domainError.message,
+        path: domainError.path,
+        entityIds: domainError.entityIds,
+        suggestion: domainError.suggestion,
+        commandIndex,
+      });
+    }
+  }
   next = { ...next, revision: project.revision + 1 };
   const schemaResult = ProjectDocumentV1Schema.safeParse(next);
   if (!schemaResult.success) {
@@ -536,6 +559,7 @@ export function createCommandEnvelope(
     commandVersion: 1,
     commandId,
     expectedProjectRevision: project.revision,
+    expectedDesignHash: computeDesignHash(project),
     commands,
   };
 }

@@ -111,6 +111,7 @@ export const CommandEnvelopeSchema = z.strictObject({
   commandVersion: z.literal(1),
   commandId: EntityIdSchema,
   expectedProjectRevision: z.number().int().nonnegative(),
+  expectedDesignHash: z.string().regex(/^[a-f0-9]{64}$/),
   commands: z.array(DomainCommandSchema).min(1).max(1_000),
 });
 

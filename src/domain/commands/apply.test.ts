@@ -9,6 +9,7 @@ import {
   snapshotDefinition,
 } from "../project/defaults";
 import { DomainError } from "../project/error";
+import { computeDesignHash } from "../project/hash";
 import { evaluateRules } from "../rules/evaluate";
 import { loadOverbedFixture } from "../../test-support/fixture";
 import { applyCommandEnvelope, createCommandEnvelope } from "./apply";
@@ -73,6 +74,7 @@ describe("domain commands", () => {
         commandVersion: 1,
         commandId: "command.invalid-length",
         expectedProjectRevision: project.revision,
+        expectedDesignHash: computeDesignHash(project),
         commands: [
           {
             type: "profile.update",
@@ -196,6 +198,23 @@ describe("domain commands", () => {
     const next = applyCommandEnvelope(project, envelope);
     expect(() => applyCommandEnvelope(next, envelope)).toThrowError(
       expect.objectContaining<Partial<DomainError>>({ code: "revision.conflict" }),
+    );
+  });
+
+  it("rejects same-revision content drift by design hash", () => {
+    const project = loadOverbedFixture();
+    const envelope = createCommandEnvelope(
+      project,
+      [{ type: "parameters.set", values: { bedOuterWidth: 2200 } }],
+      "command.design-conflict",
+    );
+    const drifted = {
+      ...project,
+      context: { ...project.context, notes: "changed without incrementing revision" },
+    };
+
+    expect(() => applyCommandEnvelope(drifted, envelope)).toThrowError(
+      expect.objectContaining<Partial<DomainError>>({ code: "design.conflict" }),
     );
   });
 

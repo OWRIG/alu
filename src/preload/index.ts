@@ -22,11 +22,17 @@ const api: AluDesktopApi = {
     async recent() {
       return ipcRenderer.invoke(PROJECT_IPC.recent) as Promise<RecentProjectsResponse>;
     },
-    async save(project) {
-      return ipcRenderer.invoke(PROJECT_IPC.save, { project }) as Promise<SaveProjectResponse>;
+    async save(project, expectedFileHash) {
+      return ipcRenderer.invoke(PROJECT_IPC.save, {
+        project,
+        expectedFileHash,
+      }) as Promise<SaveProjectResponse>;
     },
     async saveAs(project) {
-      return ipcRenderer.invoke(PROJECT_IPC.saveAs, { project }) as Promise<SaveProjectResponse>;
+      return ipcRenderer.invoke(PROJECT_IPC.saveAs, {
+        project,
+        expectedFileHash: null,
+      }) as Promise<SaveProjectResponse>;
     },
   },
   settings: {

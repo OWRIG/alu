@@ -143,12 +143,12 @@ pnpm dev
 | [`integrate-panels-with-extrusions`](skills/integrate-panels-with-extrusions/SKILL.md)           | 槽内板、四边平嵌层板、面装板、可拆板和门板            |
 
 ```bash
-mkdir -p ~/.codex/skills
+mkdir -p ~/.agents/skills
 cp -R skills/design-with-alu \
   skills/select-aluminum-extrusion-profiles \
   skills/select-aluminum-extrusion-connections \
   skills/integrate-panels-with-extrusions \
-  ~/.codex/skills/
+  ~/.agents/skills/
 ```
 
 安装后可以直接说：
@@ -164,7 +164,28 @@ cp -R skills/design-with-alu \
 留缝和下板前检查。
 ```
 
-`design-with-alu` 当前通过桌面界面工作；v0.2.1 尚无受支持的无界面写入接口。不要绕过校验手改 `.alu`。三项知识 Skill 也可以脱离 ALU，用于方案审查和制造交接。
+`design-with-alu` 默认使用下面的 Headless CLI 创建、预览、修改和校验 `.alu`；桌面端继续负责 3D 查看与人工调整。三项知识 Skill 也可以脱离 ALU，用于方案审查和制造交接。
+
+### Codex 接入
+
+```bash
+pnpm install
+pnpm build:cli
+pnpm link --global # 可选；之后直接使用 alu
+```
+
+不安装到全局时，把下面的 `alu` 换成 `pnpm cli`：
+
+```bash
+alu create frame.alu --template demo
+alu read frame.alu
+alu schema command
+alu dry-run frame.alu --input command.json
+alu apply frame.alu --input command.json
+alu validate frame.alu --target order-draft
+```
+
+`read` 返回当前 `revision`、`designHash`、工程、尺寸链、BOM 和检查结果。命令信封必须带上读取时的 `expectedProjectRevision` 与 `expectedDesignHash`；先 `dry-run`，确认 diff 后再 `apply`。所有输出都是单行 JSON，失败有稳定错误码和退出码。不要手改 `.alu`。
 
 资料来源、2026 小红书案例蒸馏与厂家核对边界见 [2026 铝型材设计知识梳理](docs/research/aluminum-extrusion-field-guide-2026.md)。
 
@@ -173,12 +194,13 @@ cp -R skills/design-with-alu \
 - 3D 使用简化矩形包络；采购前仍须核对厂家最新 revision。
 - 切料清单不含连接件、加工、紧固件、脚轮、板材和附件，不能直接下单。
 - 梁结果只覆盖理想简支挠度。节点刚度、许用应力、侧摆、倾覆、冲击、疲劳和实物验证尚未覆盖。
-- 拖拽吸附、完整采购 BOM、自定义目录与无界面 Agent 接口仍在后续路线图中。
+- 拖拽吸附、完整采购 BOM、自定义目录与 live attach 仍在后续路线图中。
 
 ## 开发与文档
 
 ```bash
 pnpm ready           # 类型、lint、格式、边界、测试与构建
+pnpm test:cli        # 构建 Headless CLI 并跑 Skill 闭环
 pnpm test:e2e        # 真实 Electron：语言、编辑、下料、保存与重开
 pnpm package:mac     # Apple Silicon DMG、ZIP 与 ALU.app
 pnpm package:verify  # ASAR、语言包、可执行文件与体积上限

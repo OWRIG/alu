@@ -9,12 +9,17 @@
     "type": "git",
     "url": "https://github.com/OWRIG/alu.git"
   },
+  "bin": {
+    "alu": "dist/cli/alu.mjs"
+  },
   "type": "module",
   "main": "dist/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
-    "build": "electron-vite build",
+    "build": "electron-vite build && pnpm build:cli",
+    "build:cli": "vite build --config vite.cli.config.ts",
+    "cli": "node dist/cli/alu.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "lint": "oxlint .",
     "format": "oxfmt --write .",
@@ -23,6 +28,7 @@
     "check": "pnpm typecheck && pnpm lint && pnpm format:check && pnpm boundaries",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:cli": "pnpm build:cli && node scripts/cli-smoke.mjs",
     "test:e2e": "pnpm build && playwright test",
     "test:package": "node scripts/package-smoke.mjs",
     "docs:screenshots": "pnpm build && node scripts/capture-doc-screenshots.mjs",
@@ -30,7 +36,7 @@
     "package:dir": "pnpm build && electron-builder --dir --arm64",
     "package:mac": "pnpm icon:build && pnpm build && electron-builder --mac dmg zip --arm64",
     "package:verify": "node scripts/check-package.mjs",
-    "ready": "pnpm check && pnpm test:run && pnpm build"
+    "ready": "pnpm check && pnpm test:run && pnpm build && node scripts/cli-smoke.mjs"
   },
   "dependencies": {
     "@electron-toolkit/utils": "^4.0.0",

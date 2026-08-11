@@ -3,8 +3,9 @@ import { existsSync } from "node:fs";
 
 import { dialog, ipcMain } from "electron";
 
-import { asDomainError } from "../../../domain/project/error";
+import { asDomainError, DomainError } from "../../../domain/project/error";
 import type { ProjectDocumentV1 } from "../../../domain/project/schema";
+import { readProjectFile, replaceProjectFileAtomic } from "../../../node/project-file";
 import type { AppLocale } from "../../../shared/i18n/locale";
 import {
   OpenRecentRequestSchema,
@@ -18,7 +19,6 @@ import {
 } from "../../../shared/ipc/project";
 import { assertTrustedIpcSender } from "../../core/ipc-security";
 import { getNativeCopy } from "../../i18n/native-copy";
-import { readProjectFile, writeProjectFileAtomic } from "./project-file";
 import { RecentProjectsStore } from "./recent-projects";
 
 function errorResponse(error: unknown) {
@@ -71,7 +71,11 @@ export function registerProjectIpc(options: {
     });
   }
 
-  async function saveProject(project: ProjectDocumentV1, forceDialog: boolean) {
+  async function saveProject(
+    project: ProjectDocumentV1,
+    forceDialog: boolean,
+    expectedFileHash?: string,
+  ) {
     let targetPath = forceDialog ? null : currentFilePath;
     if (process.env.ALU_E2E === "1" && process.env.ALU_E2E_SAVE_PATH) {
       targetPath = process.env.ALU_E2E_SAVE_PATH;
@@ -89,7 +93,16 @@ export function registerProjectIpc(options: {
         ? result.filePath
         : `${result.filePath}.alu`;
     }
-    const saved = await writeProjectFileAtomic(targetPath, project);
+    if (!forceDialog && expectedFileHash === undefined) {
+      throw new DomainError({
+        code: "file.identity-missing",
+        message: "保存已有工程时必须提供读取时的文件哈希",
+        suggestion: "重新打开工程后再保存",
+      });
+    }
+    const saved = await replaceProjectFileAtomic(targetPath, project, {
+      expectedFileHash: forceDialog ? undefined : expectedFileHash,
+    });
     currentFilePath = targetPath;
     await recordRecentBestEffort(targetPath);
     return SavedProjectSchema.parse({ ...saved, fileName: path.basename(targetPath) });
@@ -157,7 +170,7 @@ export function registerProjectIpc(options: {
       const request = SaveProjectRequestSchema.parse(input);
       return SaveProjectResponseSchema.parse({
         ok: true,
-        data: await saveProject(request.project, false),
+        data: await saveProject(request.project, false, request.expectedFileHash ?? undefined),
       });
     } catch (error) {
       return SaveProjectResponseSchema.parse(errorResponse(error));

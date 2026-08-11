@@ -11,7 +11,7 @@
 | Members     | Add, remove, select, and edit rectangular profile members.                                                                                                               |
 | Cut list    | Deterministically group profile lines by definition revision, length, orientation, and use.                                                                              |
 | Checks      | Show explainable warnings with rule ID, reason, confidence, and next action.                                                                                             |
-| Files       | Open, validate, atomically save, reopen, and track recent `.alu` v1 files.                                                                                               |
+| Files       | Create, inspect, dry-run, atomically modify, validate, save, reopen, and track `.alu` v1 files through the CLI or desktop editor.                                        |
 | Language    | Start in `zh-CN`; provide a complete `en-US` interface, including native dialogs, with local persistence.                                                                |
 
 ## Not supported now
@@ -19,7 +19,7 @@
 - Order-ready connectors, fasteners, machining, casters, panels, or accessories.
 - Complete structural analysis, joint or frame stiffness, material allowable-stress approval, certified load rating, or compliance approval.
 - Dragging, snapping, joints, or formula strings in the 3D viewport.
-- A supported CLI or headless API for creating or modifying `.alu` files.
+- Live attach to a running desktop editor or automatic proactive reload while an external agent is writing.
 
 ## Dimension semantics
 

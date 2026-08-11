@@ -3,8 +3,11 @@
   "include": [
     "electron.vite.config.ts",
     "playwright.config.ts",
+    "vite.cli.config.ts",
+    "src/cli/**/*",
     "src/domain/**/*",
     "src/main/**/*",
+    "src/node/**/*",
     "src/preload/**/*",
     "src/shared/**/*",
     "src/test-support/**/*",

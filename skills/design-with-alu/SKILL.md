@@ -1,11 +1,11 @@
 ---
 name: design-with-alu
-description: Use ALU to create, adjust, size, inspect, or hand off agent-readable industrial aluminum-extrusion frame concepts and .alu projects. Trigger for aluminum-profile constraints, structured beam load cases, exact-SKU deflection comparison, member geometry, obstacle clearances, flush inset panels, deterministic cut-list review, engineering-rule checks, locale-safe handoff, or requests to work in the ALU desktop editor.
+description: Use ALU's headless CLI or desktop editor to create, dry-run, modify, validate, size, inspect, or hand off agent-readable industrial aluminum-extrusion frame concepts and .alu projects. Trigger for aluminum-profile constraints, structured beam load cases, exact-SKU deflection comparison, member geometry, obstacle clearances, flush inset panels, deterministic cut-list review, engineering-rule checks, or requests to work with ALU.
 ---
 
 # Design with ALU
 
-Use the ALU desktop editor as the source of truth for project state. Keep every conclusion inside the current concept-design boundary.
+Use the `.alu` project as the source of truth. Mutate it only through the ALU CLI or desktop editor, never by editing JSON directly. Keep every conclusion inside the current concept-design boundary.
 
 ## Companion Skills
 
@@ -18,32 +18,37 @@ The companion skills are vendor-neutral decision workflows. ALU remains the sour
 ## Workflow
 
 1. Read [references/current-capabilities.md](references/current-capabilities.md) before changing a project.
-2. If the project contains a beam-sizing study or the request asks which profile to use, read [references/structural-sizing.md](references/structural-sizing.md) and apply the profile-selection companion skill.
-3. Capture the physical constraints before changing members:
+2. Read [references/headless-cli.md](references/headless-cli.md) before using the CLI. If the project contains a beam-sizing study or the request asks which profile to use, also read [references/structural-sizing.md](references/structural-sizing.md) and apply the profile-selection companion skill.
+3. Locate the CLI with `alu help`. From source, run `pnpm build:cli` once and use `pnpm cli` if `alu` is not installed globally.
+4. Capture the physical constraints before changing members:
    - obstacle outside width, height, and depth;
    - required clearance on each side;
    - finished surface height and usable depth;
    - floor, mobility, expected load, cables, and human or child access.
-4. Open ALU. From source, run `pnpm install` once and then `pnpm dev`; for a packaged build, open `ALU.app` or a `.alu` file.
-5. Build the dimension chain before editing repeated member coordinates:
+5. If no project exists, create one with `alu create <file>.alu --template blank`; use `--template demo` only when the bundled clearance-frame starting point matches the task. Otherwise run `alu read <file>.alu` and keep its revision and design hash.
+6. Build the dimension chain before editing repeated member coordinates:
    - create measured values as input parameters;
    - create derived values as explicit linear terms plus a constant;
    - bind member fields to those parameters;
    - edit individual members only when no parameter owns the field.
      For mobile frames, include a measured `casterInstalledHeight`; `0` means unresolved and must not be treated as a finished cut length.
-6. For a long beam, define the loads before selecting a profile:
+7. For a long beam, define the loads before selecting a profile:
    - enter measured panel mass, distributed payload, and the required concentrated payload;
    - verify effective support span rather than reusing cut length;
    - verify per-beam load shares, section-height constraint, required interface family, candidate orientation, and exact vendor source;
    - choose only from candidates that meet deflection, geometry, and interface-family constraints, then minimize mass within that eligible set.
-7. After reviewing the result, explicitly apply the selected SKU to the studied beams. A recommendation that still leaves `Concept 4080 Envelope` in the model or cut list has not completed the design loop. Never auto-apply a new SKU just because loads changed.
-8. Verify all four outputs after every material change:
-   - model: the frame clears the obstacle and any inset panel sits inside the four-sided pocket;
-   - sizing: inputs, formulas, candidate exclusions, selected SKU, and calculation boundary remain consistent;
-   - cut list: lengths and source-member counts match the model;
-   - checks: every warning is either resolved or recorded as an explicit follow-up.
-9. Save through ALU. Do not hand-edit `.alu` JSON: ALU has no supported headless write interface yet, and manual edits bypass command validation.
-10. Report the constraints, load assumptions, effective span, candidate comparison, applied SKU and its scope, derived frame envelope, caster-height status, inset-panel fit, cut-list summary, unresolved checks, and saved file path.
+8. Build one version-1 command envelope using caller-provided stable IDs. Copy `expectedProjectRevision` and `expectedDesignHash` from the latest read. Get command JSON Schema and ready-to-copy generic profile snapshots from `alu schema command`; never calculate or invent a definition hash.
+9. Run `alu dry-run <file>.alu --input <command>.json`. Review every entity, parameter, BOM, and rule delta. If the preview is correct, apply the exact same envelope with `alu apply`; on a conflict, read again instead of forcing the write.
+10. After reviewing the result, explicitly apply the selected SKU to the studied beams. A recommendation that still leaves `Concept 4080 Envelope` in the model or cut list has not completed the design loop. Never auto-apply a new SKU just because loads changed.
+11. Verify all four outputs after every material change:
+
+- model: the frame clears the obstacle and any inset panel sits inside the four-sided pocket;
+- sizing: inputs, formulas, candidate exclusions, selected SKU, and calculation boundary remain consistent;
+- cut list: lengths and source-member counts match the model;
+- checks: every warning is either resolved or recorded as an explicit follow-up.
+
+12. Run `alu validate` for the intended target. Use the desktop editor when a human needs 3D review or manual adjustment; its saves share the same file lock and reject external-change conflicts.
+13. Report the constraints, load assumptions, effective span, candidate comparison, applied SKU and its scope, derived frame envelope, caster-height status, inset-panel fit, cut-list summary, unresolved checks, and saved file path.
 
 ## Decision Rules
 
@@ -55,7 +60,7 @@ The companion skills are vendor-neutral decision workflows. ALU remains the sour
 - Measure an assembled, squared pocket before ordering an error-sensitive panel. The configured gap is nominal.
 - Do not infer connector, machining, caster, fastener, or panel procurement quantities; v0.2 does not model them as orderable BOM lines.
 - Keep stable IDs, units, file names, and user-authored names unchanged when switching UI language.
-- Treat `.alu` as inspectable project data, not as a supported agent mutation API. Human or desktop automation must still perform writes through ALU until the headless command interface ships.
+- Treat the CLI command protocol as the only supported agent mutation API. Never hand-edit `.alu`, bypass dry-run, ignore revision/design conflicts, or reuse a stale envelope after another writer changes the project.
 - If a requested operation exceeds current capabilities, state the gap and propose the smallest manual follow-up instead of inventing data.
 
 ## Example Requests

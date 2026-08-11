@@ -307,13 +307,14 @@ type CommandEnvelope = {
   commandVersion: 1;
   commandId: string; // 请求关联 ID；用于日志和错误回传
   expectedProjectRevision: number; // 乐观并发与防重复写入
+  expectedDesignHash: string; // 捕获同 revision 的内容漂移
   commands: DomainCommand[]; // 1..N，整批原子
 };
 ```
 
 `commandId` 不承诺跨进程持久幂等。当前没有 command receipt ledger，CLI 也是无状态进程，因此把它描述成“幂等去重”是不真实的。安全重试协议是：
 
-1. 调用方携带读取时的 `expectedProjectRevision` 和 `designHash`。
+1. 调用方携带读取时的 `expectedProjectRevision` 和 `expectedDesignHash`。
 2. 成功批次只增加一次 revision。
 3. 响应丢失后原样重试会收到 `revision.conflict`，不会静默再次应用。
 4. 调用方重新读取 revision/designHash；若结果已达到预期则结束，否则基于新 revision 重新 dry-run。
@@ -336,7 +337,7 @@ type DryRunResult = {
 };
 ```
 
-项目快照、参数、BOM、规则和目录读取均返回 `projectRevision + designHash`。UI、模板和未来 CLI 共享同一命令内核；优先修改参数，不逐根型材重复报坐标。
+项目快照、参数、BOM、规则和目录读取均返回 `projectRevision + designHash`。UI、模板和 CLI 共享同一命令内核；优先修改参数，不逐根型材重复报坐标。
 
 ## 供应商适配
 
