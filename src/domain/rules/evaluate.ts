@@ -3,6 +3,7 @@ import { compareCanonicalText } from "../project/canonical";
 import { DomainError } from "../project/error";
 import { getBoundField, partKey } from "../project/parse";
 import type { ProfileInstance, ProjectDocumentV1 } from "../project/schema";
+import { evaluateStructuralSizing } from "../structural/evaluate";
 
 export type ValidationTarget = "edit" | "order-draft" | "order-ready";
 export type RuleSeverity = "error" | "warning" | "info";
@@ -108,18 +109,76 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
   const mainSpans = Object.values(project.entities).filter(
     (profile) => isMainSpan(profile) && profile.lengthMm >= 1_500,
   );
+  const structuralSizing = evaluateStructuralSizing(project);
+  const sizedEntityIds = new Set(structuralSizing?.study.beamEntityIds ?? []);
+  if (structuralSizing) {
+    const selected = structuralSizing.selected;
+    const calculationEvidence = structuralSizing.study.calculationSources.map((source) => ({
+      kind: "calculation" as const,
+      reference: source.url,
+      confidence: "high" as const,
+    }));
+    findings.push(
+      selected
+        ? {
+            ruleId: "structure.beam-sizing-screen",
+            severity: "info",
+            blocks: [],
+            entityIds: structuralSizing.study.beamEntityIds,
+            message: `${selected.candidate.sku} 是当前候选集中满足挠度、高度和接口体系约束且质量最小的主梁。`,
+            rationale: `理想简支梁计算挠度 ${selected.deflectionMm.toFixed(2)} mm，不大于 ${selected.deflectionLimitMm.toFixed(2)} mm；截面不超过 ${structuralSizing.maximumSectionHeightMm.toFixed(0)} mm，并匹配 ${structuralSizing.study.requiredCompatibilityGroup}。`,
+            evidence: [
+              {
+                kind: "vendor",
+                reference: selected.candidate.source.url,
+                confidence: "high",
+              },
+              ...calculationEvidence,
+            ],
+            suggestedActions: ["核对具体 SKU 与强轴朝向", "单独验证连接、侧摆、倾覆和脚轮"],
+            details: {
+              sku: selected.candidate.sku,
+              spanMm: structuralSizing.effectiveSpanMm,
+              deflectionMm: selected.deflectionMm,
+              deflectionLimitMm: selected.deflectionLimitMm,
+              beamSetMassKg: selected.beamSetMassKg,
+              bendingStressNPerMm2: selected.bendingStressNPerMm2,
+              maximumSectionHeightMm: structuralSizing.maximumSectionHeightMm,
+              requiredCompatibilityGroup: structuralSizing.study.requiredCompatibilityGroup,
+            },
+          }
+        : {
+            ruleId: "structure.beam-sizing-no-pass",
+            severity: "warning",
+            blocks: [],
+            entityIds: structuralSizing.study.beamEntityIds,
+            message: "当前候选集中没有型材同时满足挠度、高度和接口体系约束。",
+            rationale:
+              "结果只覆盖理想简支梁；调整载荷、截面高度、接口体系、支点或主梁数量后需要重新计算。",
+            evidence: calculationEvidence,
+            suggestedActions: ["检查各候选的挠度、高度和接口排除原因", "调整明确约束后重新计算"],
+            details: {
+              spanMm: structuralSizing.effectiveSpanMm,
+              maximumSectionHeightMm: structuralSizing.maximumSectionHeightMm,
+              requiredCompatibilityGroup: structuralSizing.study.requiredCompatibilityGroup,
+            },
+          },
+    );
+  }
   for (const profile of mainSpans) {
-    findings.push({
-      ruleId: "structure.long-span-review",
-      severity: "warning",
-      blocks: [],
-      entityIds: [profile.id],
-      message: `${profile.purpose} 跨度 ${profile.lengthMm.toFixed(0)} mm，需要挠度复核。`,
-      rationale: "1500 mm 是低置信度提醒阈值，不代表额定承载或结构不合格。",
-      evidence: FIELD_GUIDE_EVIDENCE,
-      suggestedActions: ["核对厂家截面惯性矩", "考虑增加截面高度、双梁或中间支撑"],
-      details: { lengthMm: profile.lengthMm },
-    });
+    if (!sizedEntityIds.has(profile.id)) {
+      findings.push({
+        ruleId: "structure.long-span-review",
+        severity: "warning",
+        blocks: [],
+        entityIds: [profile.id],
+        message: `${profile.purpose} 跨度 ${profile.lengthMm.toFixed(0)} mm，需要挠度复核。`,
+        rationale: "1500 mm 是低置信度提醒阈值，不代表额定承载或结构不合格。",
+        evidence: FIELD_GUIDE_EVIDENCE,
+        suggestedActions: ["核对厂家截面惯性矩", "考虑增加截面高度、双梁或中间支撑"],
+        details: { lengthMm: profile.lengthMm },
+      });
+    }
 
     const vertical = verticalSectionSize(project, profile);
     const definition =

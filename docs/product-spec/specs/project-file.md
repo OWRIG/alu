@@ -4,7 +4,7 @@
 
 `.alu` 是 UTF-8、规范化排序的单一 JSON 文档。当前只接受 `ProjectDocumentV1`：`formatVersion` 必须为 1，顶层和嵌套对象使用严格 schema，数字必须有限，文件上限为 8 MiB。
 
-工程保存 context、输入/派生参数、字段绑定、型材实体、实际引用的 definition snapshot 和可选 BOM snapshot。文件不包含脚本、可执行内容、视角状态或预览图。
+工程保存 context、输入/派生参数、字段绑定、型材实体、实际引用的 definition snapshot 和可选 BOM snapshot。已知的 `extensions.structuralSizing` 另外保存版本化研究输入、候选 SKU 快照、厂家计算来源与现场构造证据；挠度和入选结果不缓存，打开后确定性重算。文件不包含脚本、可执行内容、视角状态或预览图。
 
 Main 进程在目标目录写临时文件、flush、关闭后 rename；校验或写入失败不会用半份 JSON 覆盖最后一次成功内容。打开时重新计算 BOM，并在快照哈希漂移时提示“已重新计算”。
 
@@ -12,14 +12,15 @@ Renderer 只收到显示文件名、文件哈希和不含路径的最近工程 I
 
 ## Cases
 
-| Case                             | 已验证结果                                                         |
-| -------------------------------- | ------------------------------------------------------------------ |
-| `C-save-reopen-roundtrip`        | 保存后重开保留稳定 ID、尺寸、参数、绑定和 definition snapshot      |
-| `C-embedded-catalog-portability` | 只依赖文件内嵌的精确 definition revision 即可解析与生成 BOM        |
-| `C-import-schema-validation`     | 损坏 JSON、未知字段、超限内容或语义引用错误被拒绝并返回定位信息    |
-| `C-import-unknown-version`       | `formatVersion` 高于 1 被拒绝，不做静默降级                        |
-| `C-atomic-save`                  | 保存前校验失败时原文件字节保持不变；成功路径使用同目录临时文件替换 |
-| `C-bom-snapshot-drift`           | 导入的 BOM 快照与重算不一致时标记漂移，设计实体保持不变            |
+| Case                             | 已验证结果                                                                 |
+| -------------------------------- | -------------------------------------------------------------------------- |
+| `C-save-reopen-roundtrip`        | 保存后重开保留稳定 ID、尺寸、参数、绑定和 definition snapshot              |
+| `C-embedded-catalog-portability` | 只依赖文件内嵌的精确 definition revision 即可解析与生成 BOM                |
+| `C-import-schema-validation`     | 损坏 JSON、未知字段、超限内容或语义引用错误被拒绝并返回定位信息            |
+| `C-import-unknown-version`       | `formatVersion` 高于 1 被拒绝，不做静默降级                                |
+| `C-atomic-save`                  | 保存前校验失败时原文件字节保持不变；成功路径使用同目录临时文件替换         |
+| `C-bom-snapshot-drift`           | 导入的 BOM 快照与重算不一致时标记漂移，设计实体保持不变                    |
+| `C-structural-study-portable`    | 结构研究、候选快照和证据保存重开后保持一致，已知扩展的引用与梁数被语义校验 |
 
 ## 安全配置
 

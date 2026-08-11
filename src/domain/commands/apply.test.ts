@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { deriveProfileBom } from "../bom/derive";
 import {
   createBlankProject,
+  createParametricClearanceFrameDemo,
   GENERIC_PROFILE_DEFINITIONS,
   snapshotDefinition,
 } from "../project/defaults";
@@ -195,5 +196,27 @@ describe("domain commands", () => {
     expect(() => applyCommandEnvelope(next, envelope)).toThrowError(
       expect.objectContaining<Partial<DomainError>>({ code: "revision.conflict" }),
     );
+  });
+
+  it("C-sizing-load-edit updates a structured load input atomically", () => {
+    const project = createParametricClearanceFrameDemo();
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(
+        project,
+        [
+          {
+            type: "structural-sizing.loads.set",
+            patch: { centerPointPayloadKg: 20 },
+          },
+        ],
+        "command.structural-load",
+      ),
+    );
+
+    expect(next.revision).toBe(project.revision + 1);
+    expect(next.extensions?.structuralSizing).toMatchObject({
+      loads: { centerPointPayloadKg: 20, distributedPayloadKg: 30 },
+    });
   });
 });

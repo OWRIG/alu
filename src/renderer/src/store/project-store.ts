@@ -22,6 +22,7 @@ import type {
   ProfileInstance,
   ProjectDocumentV1,
 } from "../../../domain/project/schema";
+import type { StructuralLoadPatch } from "../../../domain/structural/schema";
 import type { OpenedProject, RecentProject, SavedProject } from "../../../shared/ipc/project";
 import type { MessageKey, MessageValues } from "../i18n/messages";
 
@@ -50,6 +51,7 @@ type ProjectStore = {
   recentProjects: RecentProject[];
   dispatch: (commands: DomainCommand[], selectedEntityId?: string | null) => boolean;
   setParameter: (id: string, valueMm: number) => boolean;
+  setStructuralLoads: (patch: StructuralLoadPatch) => boolean;
   addProfile: () => boolean;
   updateProfile: (entityId: string, patch: UpdateProfilePatch) => boolean;
   removeEntity: (entityId: string) => boolean;
@@ -194,6 +196,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   setParameter(id, valueMm) {
     return get().dispatch([{ type: "parameters.set", values: { [id]: valueMm } }]);
+  },
+
+  setStructuralLoads(patch) {
+    return get().dispatch([{ type: "structural-sizing.loads.set", patch }]);
   },
 
   addProfile() {

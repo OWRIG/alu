@@ -57,11 +57,11 @@ describe("renderer i18n", () => {
     expect(localizeParameterLabel("finishedHeight", "用户自定义高度", t)).toBe("用户自定义高度");
 
     const finding = evaluateRules(project).find(
-      (item) => item.ruleId === "structure.long-span-review",
+      (item) => item.ruleId === "structure.beam-sizing-screen",
     );
     expect(finding).toBeDefined();
     expect(localizeFinding(finding!, project, t).message).toBe(
-      "Long-span top beam spans 2230 mm and needs a deflection review.",
+      "At a 2190 mm effective span, NFSL8-4080 is the lowest-mass candidate that meets every sizing constraint.",
     );
   });
 

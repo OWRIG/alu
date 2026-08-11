@@ -1,22 +1,23 @@
-# ALU v0.1 capability boundary
+# ALU v0.2 capability boundary
 
 ## Supported now
 
-| Area        | Supported behavior                                                                                      |
-| ----------- | ------------------------------------------------------------------------------------------------------- |
-| Constraints | Edit the bundled clearance frame's obstacle, clearance, frame, height, panel, and nominal-gap inputs.   |
-| Geometry    | Recompute bound profile members and show a read-only 3D projection in millimetres.                      |
-| Panel fit   | Show a panel inset inside a four-sided top-frame pocket with configurable per-side gap.                 |
-| Members     | Add, remove, select, and edit rectangular profile members.                                              |
-| Cut list    | Deterministically group profile lines by definition revision, length, orientation, and use.             |
-| Checks      | Show explainable warnings with rule ID, reason, confidence, and next action.                            |
-| Files       | Open, validate, atomically save, reopen, and track recent `.alu` v1 files.                              |
-| Language    | Start in `en-US`; allow a complete `zh-CN` interface, including native dialogs, with local persistence. |
+| Area        | Supported behavior                                                                                                                                                                  |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Constraints | Edit the bundled clearance frame's obstacle, clearance, frame, height, panel, and nominal-gap inputs.                                                                               |
+| Geometry    | Recompute bound profile members and show a read-only 3D projection in millimetres.                                                                                                  |
+| Panel fit   | Show a panel inset inside a four-sided top-frame pocket with configurable per-side gap.                                                                                             |
+| Beam sizing | Edit kg load inputs; recompute ideal-beam deflection for embedded exact-SKU candidates; filter section height and interface family, then select the lowest-mass eligible candidate. |
+| Members     | Add, remove, select, and edit rectangular profile members.                                                                                                                          |
+| Cut list    | Deterministically group profile lines by definition revision, length, orientation, and use.                                                                                         |
+| Checks      | Show explainable warnings with rule ID, reason, confidence, and next action.                                                                                                        |
+| Files       | Open, validate, atomically save, reopen, and track recent `.alu` v1 files.                                                                                                          |
+| Language    | Start in `en-US`; allow a complete `zh-CN` interface, including native dialogs, with local persistence.                                                                             |
 
 ## Not supported now
 
 - Order-ready connectors, fasteners, machining, casters, panels, or accessories.
-- Structural analysis, deflection calculation, certified load rating, or compliance approval.
+- Complete structural analysis, joint or frame stiffness, material allowable-stress approval, certified load rating, or compliance approval.
 - Dragging, snapping, joints, or parametric-template authoring in the 3D viewport.
 - A supported CLI or headless API for creating or modifying `.alu` files.
 
@@ -30,6 +31,14 @@
   - the panel is supported conceptually inside the top-frame pocket, not placed on top of it.
 - Values persisted by commands are quantized to 0.01 mm.
 
+## Beam-sizing semantics
+
+- The effective span is a derived support-center distance, not the profile cut length.
+- Uniform panel and payload masses use the stored per-beam share; the concentrated payload uses its own worst-beam share; each candidate adds its self-weight.
+- The current study superposes simply supported uniform-load and midspan-point-load deflection using the embedded modulus and inertia.
+- Eligibility requires the deflection criterion, the stored section-height constraint, and the required interface family. Selection then minimizes mass per meter inside that eligible set.
+- Candidate catalog values and calculation sources travel inside `.alu`; construction videos remain a separate evidence layer.
+
 ## Required handoff
 
 Always include:
@@ -38,5 +47,6 @@ Always include:
 2. derived outer frame and tabletop dimensions;
 3. inset-panel size and nominal gap per side, when present;
 4. profile-only cut-list summary;
-5. unresolved checks and real-world measurements still required;
-6. saved `.alu` path, if one was produced.
+5. structured loads, effective span, load shares, required interface family, candidate comparison, selected SKU, and the limited meaning of “pass”;
+6. unresolved checks and real-world measurements still required;
+7. saved `.alu` path, if one was produced.

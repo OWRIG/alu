@@ -8,7 +8,9 @@
 
 P1 界面只编辑工程内已有输入参数，不提供新增参数或编辑派生公式的 UI。领域文档可以表达任意有限的输入参数和线性组合派生参数。
 
-默认跨障碍框架采用四边围框平嵌板：顶框外轮廓 `2230 × 500 mm`，40 mm 围框形成 `2150 × 420 mm` 槽内净空，18 mm 板按单边 2 mm 安装缝取 `2146 × 416 mm`，板面与顶框上沿齐平。左右顶框侧梁属于工程型材实体；内侧托条目前只是 3D 概念参照，不进入 P1 型材 BOM。新工程使用通用 obstacle 参数 ID；0.1.0 的 bed/mattress 旧 ID 仍兼容读取与显示。
+默认跨障碍框架采用四边围框平嵌板：顶框外轮廓 `2230 × 500 mm`，40 mm 围框形成 `2150 × 420 mm` 槽内净空，18 mm 板按单边 2 mm 安装缝取 `2146 × 416 mm`，板面与顶框上沿齐平。两根纵向长梁使用 4080 概念包络；顶框侧梁、立柱和底梁收窄为 4040 概念包络。内侧托条目前只是 3D 概念参照，不进入 P1 型材 BOM。新工程使用通用 obstacle 参数 ID；0.1.0 的 bed/mattress 旧 ID 仍兼容读取与显示。
+
+右侧“选型”页读取工程内的结构化梁研究。用户可编辑台面质量、均布使用载荷和跨中集中载荷；每次提交只产生一步历史，并立即重算有效跨度、分项挠度、候选自重、弹性应力、截面高度与接口体系约束、候选状态和最小质量结果。具体 SKU 与厂家来源不从概念几何名称推断。
 
 右侧构件页支持新增、选择和删除矩形型材，并通过属性编辑起点、X/Y/Z 主轴、切长、用途与 0°/90°/180°/270° 截面朝向。3D 画布是工程实体的只读投影；相机操作不会改变工程。
 
@@ -18,31 +20,34 @@ P1 界面只编辑工程内已有输入参数，不提供新增参数或编辑�
 
 ## Cases
 
-| Case                            | 已验证结果                                                                   |
-| ------------------------------- | ---------------------------------------------------------------------------- |
-| `C-param-input-edit`            | 输入框按 Enter 或失焦提交，工程 revision 增加一次                            |
-| `C-param-derived-chain`         | 黄金样例得到内净宽 2150、骨架外宽 2230、桌板宽 2146、桌板下表面离床垫 232 mm |
-| `C-param-cycle-error`           | 环依赖返回 `dimension.parameter-cycle`，不产生部分结果                       |
-| `C-param-binding-sync`          | 修改床宽后两根主梁及相关定位同步，整批只产生一步历史                         |
-| `C-param-manual-override-stale` | 手工覆盖保持原值并产生可见失同步 finding，可重同步或解除                     |
-| `C-add-profile`                 | 新增构件同时出现在列表、属性面板、3D 与 BOM 派生输入中                       |
-| `C-edit-profile-length`         | 合法切长修改同步改变几何和 BOM                                               |
-| `C-invalid-profile-length`      | 零值、负值和非有限值被 schema 拒绝，原工程不变                               |
-| `C-profile-axis-orientation`    | X/Y/Z 主轴及截面朝向存入工程，不随相机变化                                   |
-| `C-undo-redo-model-command`     | 参数与构件命令可撤销、重做，BOM 从当前 snapshot 重算                         |
-| `C-history-clears-redo-branch`  | 撤销后新提交会清空 future                                                    |
-| `C-inset-tabletop-fit`          | 默认样例显式派生槽内净空、单边安装缝和 2146 × 416 × 18 mm 平嵌板尺寸         |
-| `C-inset-top-frame-topology`    | 两根长梁与两根 420 mm 侧梁闭合顶框，板面、四边型材上沿同为 750 mm            |
-| `C-i18n-default-en`             | 首次启动为英文，不出现随机中文系统文案                                       |
-| `C-simplified-chinese-entry`    | 简体中文入口完整切换并持久化，切回英文同样保持                               |
-| `C-i18n-switch-persist`         | 中英文完整切换，重载后保持语言选择                                           |
-| `C-i18n-domain-copy`            | 内置数据、通知、错误和规则解释随语言变化，技术标识与用户内容不改写           |
-| `C-task-oriented-parameters`    | 输入按三个任务组展示，关键结果常驻，完整计算结果默认折叠且可展开             |
-| `C-native-dialog-locale`        | 打开、保存、未保存提醒与最近文件错误跟随当前界面语言                         |
-| `C-demo-positioning-generic`    | 新示例使用通用项目名与 obstacle 参数 ID，旧 bed/mattress ID 仍兼容           |
+| Case                             | 已验证结果                                                                   |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| `C-param-input-edit`             | 输入框按 Enter 或失焦提交，工程 revision 增加一次                            |
+| `C-param-derived-chain`          | 黄金样例得到内净宽 2150、骨架外宽 2230、桌板宽 2146、桌板下表面离床垫 232 mm |
+| `C-param-cycle-error`            | 环依赖返回 `dimension.parameter-cycle`，不产生部分结果                       |
+| `C-param-binding-sync`           | 修改床宽后两根主梁及相关定位同步，整批只产生一步历史                         |
+| `C-param-manual-override-stale`  | 手工覆盖保持原值并产生可见失同步 finding，可重同步或解除                     |
+| `C-add-profile`                  | 新增构件同时出现在列表、属性面板、3D 与 BOM 派生输入中                       |
+| `C-edit-profile-length`          | 合法切长修改同步改变几何和 BOM                                               |
+| `C-invalid-profile-length`       | 零值、负值和非有限值被 schema 拒绝，原工程不变                               |
+| `C-profile-axis-orientation`     | X/Y/Z 主轴及截面朝向存入工程，不随相机变化                                   |
+| `C-undo-redo-model-command`      | 参数与构件命令可撤销、重做，BOM 从当前 snapshot 重算                         |
+| `C-history-clears-redo-branch`   | 撤销后新提交会清空 future                                                    |
+| `C-inset-tabletop-fit`           | 默认样例显式派生槽内净空、单边安装缝和 2146 × 416 × 18 mm 平嵌板尺寸         |
+| `C-inset-top-frame-topology`     | 两根长梁与两根 420 mm 侧梁闭合顶框，板面、四边型材上沿同为 750 mm            |
+| `C-i18n-default-en`              | 首次启动为英文，不出现随机中文系统文案                                       |
+| `C-simplified-chinese-entry`     | 简体中文入口完整切换并持久化，切回英文同样保持                               |
+| `C-i18n-switch-persist`          | 中英文完整切换，重载后保持语言选择                                           |
+| `C-i18n-domain-copy`             | 内置数据、通知、错误和规则解释随语言变化，技术标识与用户内容不改写           |
+| `C-task-oriented-parameters`     | 输入按三个任务组展示，关键结果常驻，完整计算结果默认折叠且可展开             |
+| `C-native-dialog-locale`         | 打开、保存、未保存提醒与最近文件错误跟随当前界面语言                         |
+| `C-demo-positioning-generic`     | 新示例使用通用项目名与 obstacle 参数 ID，旧 bed/mattress ID 仍兼容           |
+| `C-sizing-load-edit`             | 修改任一 kg 载荷只增加一次 revision，候选、检查结果与保存内容同步更新        |
+| `C-minimum-mass-passing-profile` | 默认研究比较 7 个具体 SKU，只在挠度、高度和接口体系均满足后按质量选择        |
 
 ## 限制
 
 - 没有拖拽、吸附或 transform gizmo；P1 通过数值属性移动构件。
 - 只有矩形截面包络，没有真实 T 槽网格。
 - 空白工程没有参数定义编辑器。
+- 选型页不验证具体连接件 SKU、材料许用应力、侧摆、倾覆或脚轮。

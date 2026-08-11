@@ -94,6 +94,7 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("zh-CN");
     await page.getByTestId("save-project").click();
     await expect(page.getByText("已保存 roundtrip.alu")).toBeVisible();
+    await expect(page.locator(".busy-line")).toHaveCount(0);
     await page.reload();
     await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
     await page.getByTestId("language-menu").click();
@@ -102,10 +103,26 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("en-US");
     await page.getByTestId("save-project").click();
     await expect(page.getByText("Saved roundtrip.alu")).toBeVisible();
+    await expect(page.locator(".busy-line")).toHaveCount(0);
     await page.reload();
     await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
+    await page.getByTestId("tab-sizing").click();
+    await expect(page.getByTestId("sizing-selected-sku")).toHaveText("NFSL8-4080");
+    await expect(page.getByTestId("sizing-selected-deflection")).toContainText("1.8");
+    await expect(page.getByTestId("sizing-candidate-NEFS6-3030")).toContainText("Fail");
+    await expect(page.getByTestId("sizing-candidate-NEFS8-4040")).toContainText("Fail");
+    await expect(page.getByTestId("sizing-candidate-LCF8-3090")).toContainText("Incompatible");
+    await expect(page.getByTestId("sizing-candidate-NFSL8-4080")).toContainText("Pass");
+    await page.getByTestId("sizing-center-payload").fill("25");
+    await page.getByTestId("sizing-center-payload").press("Enter");
+    await expect(page.getByTestId("sizing-selected-sku")).toHaveText("NEFS8-4080");
+    await page.getByTestId("sizing-center-payload").fill("15");
+    await page.getByTestId("sizing-center-payload").press("Enter");
+    await expect(page.getByTestId("sizing-selected-sku")).toHaveText("NFSL8-4080");
     await page.getByTestId("tab-rules").click();
-    await expect(page.getByTestId("rule-list")).toContainText("needs a deflection review");
+    await expect(page.getByTestId("rule-list")).toContainText(
+      "lowest-mass candidate that meets every sizing constraint",
+    );
     await page.getByTestId("tab-profiles").click();
 
     await page.getByTestId("profile-length").fill("0");
@@ -157,6 +174,7 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
 
     await page.getByTestId("save-project").click();
     await expect(page.getByText("Saved roundtrip.alu")).toBeVisible();
+    await expect(page.locator(".busy-line")).toHaveCount(0);
     await expect.poll(async () => (await readFile(savePath, "utf8")).length).toBeGreaterThan(100);
     const saved = JSON.parse(await readFile(savePath, "utf8")) as { bomSnapshot?: unknown };
     expect(saved.bomSnapshot).toBeTruthy();

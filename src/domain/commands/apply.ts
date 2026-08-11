@@ -7,9 +7,15 @@ import {
   ProfileInstanceSchema,
   ProjectDocumentV1Schema,
   type BindingField,
+  type JsonValue,
   type ProfileInstance,
   type ProjectDocumentV1,
 } from "../project/schema";
+import {
+  getStructuralSizingStudy,
+  STRUCTURAL_SIZING_EXTENSION_KEY,
+  StructuralSizingStudySchema,
+} from "../structural/schema";
 import { CommandEnvelopeSchema, type CommandEnvelope, type DomainCommand } from "./schema";
 
 const BINDING_TOLERANCE_MM = 0.005;
@@ -226,6 +232,27 @@ function applySingle(project: ProjectDocumentV1, command: DomainCommand): Projec
         entities: {
           ...project.entities,
           [command.entityId]: setBoundField(profile, command.field, values[binding.param]),
+        },
+      };
+    }
+    case "structural-sizing.loads.set": {
+      const study = getStructuralSizingStudy(project);
+      if (!study) {
+        throw new DomainError({
+          code: "structure.sizing-study-missing",
+          message: "当前工程没有可编辑的梁选型研究",
+          path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}`,
+        });
+      }
+      const nextStudy = StructuralSizingStudySchema.parse({
+        ...study,
+        loads: { ...study.loads, ...command.patch },
+      });
+      return {
+        ...project,
+        extensions: {
+          ...project.extensions,
+          [STRUCTURAL_SIZING_EXTENSION_KEY]: nextStudy as unknown as JsonValue,
         },
       };
     }

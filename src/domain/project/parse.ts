@@ -1,6 +1,7 @@
 import { ZodError } from "zod";
 
 import { evaluateParameters } from "../params/evaluate";
+import { STRUCTURAL_SIZING_EXTENSION_KEY, StructuralSizingStudySchema } from "../structural/schema";
 import { prettyCanonicalStringify } from "./canonical";
 import { DomainError } from "./error";
 import { computeDefinitionHash } from "./hash";
@@ -41,6 +42,65 @@ export function getBoundField(profile: ProfileInstance, field: BindingField): nu
 
 export function assertProjectSemantics(project: ProjectDocumentV1): void {
   const values = evaluateParameters(project.parameters);
+  const structuralSizingInput = project.extensions?.[STRUCTURAL_SIZING_EXTENSION_KEY];
+  if (structuralSizingInput !== undefined) {
+    const parsed = StructuralSizingStudySchema.safeParse(structuralSizingInput);
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      throw new DomainError({
+        code: "structure.sizing-study-invalid",
+        message: issue?.message ?? "梁选型研究格式无效",
+        path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}${
+          issue?.path.length ? `/${issue.path.join("/")}` : ""
+        }`,
+      });
+    }
+    const study = parsed.data;
+    if (!(study.effectiveSpanParam in values)) {
+      throw new DomainError({
+        code: "ref.parameter-missing",
+        message: `梁选型研究引用了不存在的跨度参数 ${study.effectiveSpanParam}`,
+        path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/effectiveSpanParam`,
+      });
+    }
+    if (!(study.maximumSectionHeightParam in values)) {
+      throw new DomainError({
+        code: "ref.parameter-missing",
+        message: `梁选型研究引用了不存在的截面高度参数 ${study.maximumSectionHeightParam}`,
+        path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/maximumSectionHeightParam`,
+      });
+    }
+    const uniqueBeamIds = new Set(study.beamEntityIds);
+    if (
+      uniqueBeamIds.size !== study.beamEntityIds.length ||
+      study.beamCount !== uniqueBeamIds.size
+    ) {
+      throw new DomainError({
+        code: "structure.sizing-beam-count-mismatch",
+        message: "梁选型研究的 beamCount 必须等于唯一主梁实体数量",
+        path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/beamCount`,
+      });
+    }
+    for (const entityId of study.beamEntityIds) {
+      if (!project.entities[entityId]) {
+        throw new DomainError({
+          code: "ref.entity-missing",
+          message: `梁选型研究引用了不存在的型材 ${entityId}`,
+          path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/beamEntityIds`,
+          entityIds: [entityId],
+        });
+      }
+    }
+    if (
+      new Set(study.candidates.map((candidate) => candidate.id)).size !== study.candidates.length
+    ) {
+      throw new DomainError({
+        code: "structure.sizing-candidate-id-conflict",
+        message: "梁选型候选 ID 必须唯一",
+        path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}/candidates`,
+      });
+    }
+  }
   for (const binding of project.bindings) {
     if (!project.entities[binding.entityId]) {
       throw new DomainError({

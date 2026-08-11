@@ -8,6 +8,7 @@ import {
   Plus,
   RefreshCw,
   ShieldAlert,
+  Calculator,
   Trash2,
   Unlink2,
 } from "lucide-react";
@@ -29,8 +30,9 @@ import { useI18n } from "../i18n/i18n";
 import type { Translator } from "../i18n/i18n";
 import { selectCurrentProject, useProjectStore } from "../store/project-store";
 import { NumberField } from "./number-field";
+import { StructuralSizingPanel } from "./structural-sizing-panel";
 
-type InspectorTab = "profiles" | "bom" | "rules";
+type InspectorTab = "profiles" | "bom" | "sizing" | "rules";
 
 function ProfileList() {
   const { t, formatNumber } = useI18n();
@@ -439,6 +441,16 @@ export function InspectorPanel() {
           <ClipboardList size={13} /> {t("inspector.cutList")}
         </button>
         <button
+          className={tab === "sizing" ? "is-active" : ""}
+          data-testid="tab-sizing"
+          type="button"
+          role="tab"
+          aria-selected={tab === "sizing"}
+          onClick={() => setTab("sizing")}
+        >
+          <Calculator size={13} /> {t("inspector.sizing")}
+        </button>
+        <button
           className={tab === "rules" ? "is-active" : ""}
           data-testid="tab-rules"
           type="button"
@@ -453,6 +465,7 @@ export function InspectorPanel() {
       <div className="inspector-content">
         {tab === "profiles" && <ProfileList />}
         {tab === "bom" && <BomPanel />}
+        {tab === "sizing" && <StructuralSizingPanel />}
         {tab === "rules" && <RulesPanel />}
       </div>
     </aside>

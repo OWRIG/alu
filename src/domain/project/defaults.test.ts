@@ -28,6 +28,11 @@ describe("parametric clearance-frame demo", () => {
       beamUndersideClearance: 170,
       uprightLength: 670,
       topBeamCenterZ: 710,
+      topBeamEffectiveSpan: 2190,
+      topSideRailCenterZ: 730,
+      frontUprightCenterY: 20,
+      rearUprightCenterY: 480,
+      baseRailCenterZ: 20,
     });
     expect(project.extensions?.panelMount).toEqual({
       method: "shelf-support-flush-inset",
@@ -35,6 +40,16 @@ describe("parametric clearance-frame demo", () => {
       fitClearancePerSideMm: 2,
       supportConcept: "continuous-inner-ledges-or-shelf-supports",
       measurePanelAfterFrameAssembly: true,
+    });
+    expect(project.extensions?.structuralSizing).toMatchObject({
+      version: 1,
+      effectiveSpanParam: "topBeamEffectiveSpan",
+      maximumSectionHeightParam: "topFrameHeight",
+      loads: {
+        panelMassKg: 12,
+        distributedPayloadKg: 30,
+        centerPointPayloadKg: 15,
+      },
     });
   });
 
@@ -56,14 +71,20 @@ describe("parametric clearance-frame demo", () => {
       lengthMm: 2230,
     });
     expect(project.entities["profile.top-side-left"]).toMatchObject({
-      origin: { x: 20, y: 40, z: 710 },
+      origin: { x: 20, y: 40, z: 730 },
       axis: "y",
       lengthMm: 420,
     });
     expect(project.entities["profile.top-side-right"]).toMatchObject({
-      origin: { x: 2210, y: 40, z: 710 },
+      origin: { x: 2210, y: 40, z: 730 },
       axis: "y",
       lengthMm: 420,
     });
+    expect(project.entities["profile.top-front"].definitionRef.partId).toBe(
+      "generic.profile.4080-envelope",
+    );
+    expect(project.entities["profile.top-side-left"].definitionRef.partId).toBe(
+      "generic.profile.4040-envelope",
+    );
   });
 });

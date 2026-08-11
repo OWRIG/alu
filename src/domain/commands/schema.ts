@@ -9,6 +9,7 @@ import {
   ProfileInstanceSchema,
   Vec3MmSchema,
 } from "../project/schema";
+import { StructuralLoadPatchSchema } from "../structural/schema";
 
 export const SetParametersCommandSchema = z.strictObject({
   type: z.literal("parameters.set"),
@@ -63,6 +64,11 @@ export const ResyncBindingCommandSchema = z.strictObject({
   field: BindingFieldSchema,
 });
 
+export const SetStructuralSizingLoadsCommandSchema = z.strictObject({
+  type: z.literal("structural-sizing.loads.set"),
+  patch: StructuralLoadPatchSchema,
+});
+
 export const DomainCommandSchema = z.discriminatedUnion("type", [
   SetParametersCommandSchema,
   AddProfileCommandSchema,
@@ -71,6 +77,7 @@ export const DomainCommandSchema = z.discriminatedUnion("type", [
   BindFieldCommandSchema,
   UnbindFieldCommandSchema,
   ResyncBindingCommandSchema,
+  SetStructuralSizingLoadsCommandSchema,
 ]);
 
 export const CommandEnvelopeSchema = z.strictObject({

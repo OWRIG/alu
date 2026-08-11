@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { loadOverbedFixture } from "../../test-support/fixture";
+import { createParametricClearanceFrameDemo } from "../project/defaults";
 import { evaluateRules } from "./evaluate";
 
 describe("P1 engineering rules", () => {
@@ -23,5 +24,13 @@ describe("P1 engineering rules", () => {
       .map((finding) => `${finding.message} ${finding.rationale}`)
       .join(" ");
     expect(messages).not.toMatch(/额定承载\s*[:：]?\s*\d|结构安全|结构合格/);
+  });
+
+  it("replaces the generic long-span prompt with a calculated sizing screen", () => {
+    const findings = evaluateRules(createParametricClearanceFrameDemo());
+    expect(findings.some((finding) => finding.ruleId === "structure.beam-sizing-screen")).toBe(
+      true,
+    );
+    expect(findings.some((finding) => finding.ruleId === "structure.long-span-review")).toBe(false);
   });
 });

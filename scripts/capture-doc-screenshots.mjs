@@ -35,6 +35,13 @@ try {
   await page.getByTestId("tab-bom").click();
   await page.screenshot({ path: path.join(output, "example-cut-list-en.png") });
 
+  await page.getByTestId("tab-sizing").click();
+  await page.screenshot({ path: path.join(output, "example-sizing-en.png") });
+  await page
+    .getByTestId("sizing-candidate-comparison")
+    .evaluate((element) => element.scrollIntoView({ block: "start" }));
+  await page.screenshot({ path: path.join(output, "example-sizing-comparison-en.png") });
+
   await page.getByTestId("tab-rules").click();
   await page.screenshot({ path: path.join(output, "example-checks-en.png") });
 
@@ -44,6 +51,12 @@ try {
   await page.screenshot({ path: path.join(output, "editor-zh.png") });
   await page.getByTestId("tab-bom").click();
   await page.screenshot({ path: path.join(output, "example-cut-list.png") });
+  await page.getByTestId("tab-sizing").click();
+  await page.screenshot({ path: path.join(output, "example-sizing.png") });
+  await page
+    .getByTestId("sizing-candidate-comparison")
+    .evaluate((element) => element.scrollIntoView({ block: "start" }));
+  await page.screenshot({ path: path.join(output, "example-sizing-comparison.png") });
   await page.getByTestId("tab-rules").click();
   await page.screenshot({ path: path.join(output, "example-checks.png") });
   await page.getByTestId("save-project").click();

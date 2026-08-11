@@ -11,7 +11,7 @@
 
 `formatVersion` 只表示 `ProjectDocument` 的 JSON schema 版本。物理容器与文档版本独立：当前 `.alu` 直接保存 JSON；未来需要二进制附件时可用 ZIP 包裹任意受支持的文档版本，ZIP manifest 使用独立的 `containerVersion`。
 
-P1 的 `ProjectDocumentV1` 只固化 P1 已实现语义：工程上下文、参数、绑定、型材实体、已引用型材 definition 和型材 BOM snapshot。连接、加工、板材、脚轮、人工 BOM 与调整不得用 `Record<string, JsonValue>` 占位进入 v1；对应 changeset 实现时先定义精确类型，再增加文档版本和纯函数迁移。
+P1 的 `ProjectDocumentV1` 只固化核心 P1 语义：工程上下文、参数、绑定、型材实体、已引用型材 definition 和型材 BOM snapshot。向后兼容、可忽略的附加研究可进入有名字且内部版本化的 `extensions`；当前唯一被应用识别的是 `structuralSizing`。连接、加工、板材、脚轮、人工 BOM 与调整会改变核心设计与订单语义，不得用 `Record<string, JsonValue>` 占位进入 v1；对应 changeset 实现时先定义精确类型，再增加文档版本和纯函数迁移。
 
 ## 坐标、局部截面与数值
 
@@ -84,6 +84,12 @@ type ProjectDocumentV1 = {
 ```
 
 实体不按画面层级嵌套，统一使用稳定 ID 和引用。v1 不保存撤销历史、规则结果、Three.js 对象或未来阶段的空占位字段。
+
+### 已知扩展：`structuralSizing` v1
+
+`extensions.structuralSizing` 是可忽略但受当前 reader 严格校验的研究数据，不是开放字典。它保存：被研究梁 ID、有效跨度参数、截面高度上限参数、所需接口体系、梁数与载荷分配、弹性模量、挠度准则、具体候选 SKU 的质量/惯性矩/方向/接口体系/厂家来源，以及计算和构造证据。
+
+解析时必须确认梁 ID 和参数存在、梁数与 ID 数量一致、候选 ID 唯一。挠度、应力、利用率和入选项都是当前 snapshot 的纯函数投影，不写入文件，避免参数变化后出现陈旧结论。未知扩展仍原样保留；已知扩展形状错误必须拒绝，而不是降级为“没有研究”。
 
 ## 工程上下文
 
@@ -287,6 +293,7 @@ final = applyAdjustments(derive(project, catalogs), adjustments) + manualLines
 ## 导入、迁移与扩展
 
 - 每个 `formatVersion` 使用独立严格 Zod schema；未知顶层字段是错误，扩展只能进入 `extensions`。
+- 应用识别的扩展必须有内部 `version`、精确 schema 与语义引用校验；未知扩展可以保留但不参与规则或派生产物。
 - 后续行为需要新字段时升级文档版本，不在 v1 静默增加旧 reader 会拒绝的字段。
 - 迁移函数逐版本纯函数，例如 `migrateV1ToV2`；每步有固定 fixture、幂等包装和 designHash 语义说明。
 - 高于当前支持版本：只读最小文件头/元数据并提示升级，不猜测降级。

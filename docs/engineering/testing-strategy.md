@@ -18,6 +18,7 @@
 - format migration fixture 可重复、幂等且不丢扩展字段。
 - 命令 schema 拒绝旧 revision、非法 ID 和越界数量。
 - 命令拒绝返回稳定错误码与 JSON Pointer；批量任一条失败，整批不落地。
+- 已知 `structuralSizing` 扩展校验版本、梁/参数引用、梁数、候选唯一性和接口体系；保存重开后研究输入完全一致。
 - P4 若实现 CLI，必须增加同一初始 designHash/命令批与 UI 内核结果一致的契约测试；当前不把草案当作现有入口。
 
 ### L1 领域规则
@@ -31,6 +32,7 @@
 - P1 只启用 `edit`；P2 启用 `order-draft` 与 `order-ready` 后仍使用同一组 finding，只按 finding 的 `blocks` 判断操作是否允许。
 - P2 的 `order-draft` 成功时始终带 `notForOrdering` 与未决项；`order-ready` 被订单完整性 error 阻止。
 - 没有证据时不生成确定承载值。
+- 梁筛选对均布、集中和自重分项使用黄金数值；只在挠度、截面高度与接口体系均通过后按单位质量选择。
 
 ### L2 文件与 IPC
 
@@ -48,6 +50,7 @@
 - Zustand command 提交、撤销、重做和 redo 分支清理。
 - 属性面板修改后，工程 snapshot、画布投影和 BOM 面板一致。
 - 规则错误定位到对应实体。
+- 结构载荷提交只产生一步历史；选型页、检查页和保存 snapshot 同步更新。
 - 中英文语言包键与插值变量严格对齐；内置项目内容、规则和领域错误不向另一种界面语言泄漏。
 - 大模型场景只测试 selector 与渲染数量，不做脆弱的像素级快照。
 
@@ -59,11 +62,12 @@ P1 保留一条覆盖关键闭环的 workflow：
 2. 首次启动默认英文，切换简中后界面和内置领域文案同步变化，重载后保持选择，再切回英文。
 3. 新建型材并绑定参数，修改输入参数，几何与 BOM 同步。
 4. 保存 `.alu`，关闭并重新打开，内容一致。
+5. 打开选型页核对默认 7 个 SKU；增大集中载荷后入选项确定性切换，恢复输入后结果恢复。
 
 P3 再增加：
 
-5. 导入自定义 definition，工程可引用且导出文件内包含 snapshot。
-6. 导出 CSV，内容与界面最终 BOM 一致。
+6. 导入自定义 definition，工程可引用且导出文件内包含 snapshot。
+7. 导出 CSV，内容与界面最终 BOM 一致。
 
 E2E 每次使用独立临时 `userData`，不得污染真实零件库和最近工程。
 
@@ -75,7 +79,8 @@ E2E 每次使用独立临时 `userData`，不得污染真实零件库和最近�
 - 尺寸公式直接落成派生参数定义，P1 参数求值纯函数直接消费，不依赖 UI。
 - 断言内净宽、骨架外宽、桌面宽、桌板下表面离床垫距离。
 - 断言两根同聚合键的主梁生成一行 profile BOM、数量 2、来源实体完整，并在重复重算时保持 bomHash。
-- 断言大跨度、移动侧摆、木地板脚轮选择和线缆路径提示存在。
+- 断言结构化研究取代通用长跨警告，并稳定得到计算型 finding；侧摆、木地板脚轮选择和线缆路径提示仍存在。
+- 断言 7 个具体厂家候选的挠度、高度、接口体系、质量排序与默认 `NFSL8-4080` 结果。
 - P1 断言 `order-draft` / `order-ready` 尚不支持；`dimension.connection-topology-explicit` 与 `caster.mount-interface-known` 的阻断断言延后到 P2 节点 fixture。
 - 断言未选连接不会误触发 `connection.main-node-strength`，未选脚轮不会误触发 `caster.brake-accessibility`。
 - 不断言未确认脚轮或节点加工的真实下单值。
@@ -92,6 +97,7 @@ E2E 每次使用独立临时 `userData`，不得污染真实零件库和最近�
 | `project.portable-package`                                                         | `src/main/features/project/project-file.test.ts` + Electron E2E                           |
 | `bom.deterministic-generation`                                                     | `src/domain/bom/derive.test.ts` + golden fixture + Electron E2E                           |
 | `rules.explainable-validation`                                                     | `src/domain/rules/evaluate.test.ts` + schema/command error tests                          |
+| `structure.beam-sizing-study`                                                      | `src/domain/structural/evaluate.test.ts` + parse/command tests + Electron E2E             |
 | `editor.locale-system`、`editor.task-oriented-layout`                              | `src/renderer/src/i18n/i18n.test.ts` + Electron E2E                                       |
 | `desktop.native-locale`、`desktop.ipc-origin`                                      | Electron E2E + `src/main/core/ipc-security.test.ts`                                       |
 | `distribution.macos-arm64`                                                         | `package:verify` + 打包应用 Playwright workflow                                           |

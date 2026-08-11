@@ -12,6 +12,7 @@ const parameterKeys: Record<string, MessageKey> = {
   clearanceRight: "parameter.clearanceRight",
   uprightWidthX: "parameter.uprightWidthX",
   topFrameHeight: "parameter.topFrameHeight",
+  topBeamEffectiveSpan: "parameter.topBeamEffectiveSpan",
   topFrameOuterDepth: "parameter.topFrameOuterDepth",
   panelFitClearance: "parameter.panelFitClearance",
   tabletopThickness: "parameter.tabletopThickness",
@@ -27,12 +28,15 @@ const parameterKeys: Record<string, MessageKey> = {
   beamUndersideClearance: "parameter.beamUndersideClearance",
   uprightLength: "parameter.uprightLength",
   topBeamCenterZ: "parameter.topBeamCenterZ",
+  topSideRailCenterZ: "parameter.topSideRailCenterZ",
   leftUprightCenterX: "parameter.leftUprightCenterX",
   rightUprightCenterX: "parameter.rightUprightCenterX",
   frontTopBeamCenterY: "parameter.frontTopBeamCenterY",
   rearTopBeamCenterY: "parameter.rearTopBeamCenterY",
+  frontUprightCenterY: "parameter.frontUprightCenterY",
   rearUprightCenterY: "parameter.rearUprightCenterY",
   topSideRailStartY: "parameter.topSideRailStartY",
+  baseRailCenterZ: "parameter.baseRailCenterZ",
 };
 
 const boundaryKeys: Record<string, MessageKey> = {
@@ -220,6 +224,26 @@ export function localizeFinding(
         }),
         rationale: t("rule.longSpan.rationale"),
         suggestedActions: [t("rule.longSpan.action1"), t("rule.longSpan.action2")],
+      };
+    case "structure.beam-sizing-screen":
+      return {
+        message: t("rule.sizingPass.message", {
+          span: Number(finding.details?.spanMm ?? 0).toFixed(0),
+          sku: finding.details?.sku ?? "—",
+        }),
+        rationale: t("rule.sizingPass.rationale", {
+          deflection: Number(finding.details?.deflectionMm ?? 0).toFixed(2),
+          limit: Number(finding.details?.deflectionLimitMm ?? 0).toFixed(2),
+        }),
+        suggestedActions: [t("rule.sizingPass.action1"), t("rule.sizingPass.action2")],
+      };
+    case "structure.beam-sizing-no-pass":
+      return {
+        message: t("rule.sizingNoPass.message", {
+          span: Number(finding.details?.spanMm ?? 0).toFixed(0),
+        }),
+        rationale: t("rule.sizingNoPass.rationale"),
+        suggestedActions: [t("rule.sizingNoPass.action1"), t("rule.sizingNoPass.action2")],
       };
     case "structure.section-orientation":
       return {

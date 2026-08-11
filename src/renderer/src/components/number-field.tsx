@@ -47,6 +47,7 @@ export function NumberField({
   return (
     <label className={`number-field${compact ? " number-field--compact" : ""}`}>
       <input
+        id={testId}
         data-testid={testId}
         aria-label={ariaLabel}
         type="number"
