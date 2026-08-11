@@ -92,8 +92,8 @@ function ProfileMesh({
 
 function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
   const values = evaluateParameters(project.parameters);
-  const bedWidth = values.bedOuterWidth;
-  const mattressHeight = values.mattressTopHeight;
+  const obstacleWidth = values.obstacleOuterWidth ?? values.bedOuterWidth;
+  const obstacleHeight = values.obstacleTopHeight ?? values.mattressTopHeight;
   const frameOuterWidth = values.frameOuterWidth;
   const insetPanel =
     values.topFrameOuterDepth !== undefined && values.panelFitClearance !== undefined;
@@ -106,8 +106,8 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
   const finishedHeight = values.finishedHeight;
   if (
     [
-      bedWidth,
-      mattressHeight,
+      obstacleWidth,
+      obstacleHeight,
       frameOuterWidth,
       frameRailWidth,
       tabletopWidth,
@@ -119,8 +119,8 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
     return null;
   }
 
-  const bedStartX = (values.uprightWidthX + values.clearanceLeft) * MM_TO_M;
-  const mattressDepth = 1.9;
+  const obstacleStartX = (values.uprightWidthX + values.clearanceLeft) * MM_TO_M;
+  const obstacleDepth = 1.9;
   const panelCenterX = insetPanel
     ? (frameRailWidth + panelFitClearance + tabletopWidth * 0.5) * MM_TO_M
     : (frameOuterWidth + (values.tabletopRightOverhang ?? 0) - (values.tabletopLeftOverhang ?? 0)) *
@@ -141,10 +141,14 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
   return (
     <group>
       <mesh
-        position={[bedStartX + bedWidth * MM_TO_M * 0.5, mattressHeight * MM_TO_M - 0.09, 0.25]}
+        position={[
+          obstacleStartX + obstacleWidth * MM_TO_M * 0.5,
+          obstacleHeight * MM_TO_M - 0.09,
+          0.25,
+        ]}
         receiveShadow
       >
-        <boxGeometry args={[bedWidth * MM_TO_M, 0.18, mattressDepth]} />
+        <boxGeometry args={[obstacleWidth * MM_TO_M, 0.18, obstacleDepth]} />
         <meshStandardMaterial
           color="#6d8794"
           transparent

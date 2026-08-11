@@ -2,16 +2,16 @@
 
 ## Supported now
 
-| Area        | Supported behavior                                                                                       |
-| ----------- | -------------------------------------------------------------------------------------------------------- |
-| Constraints | Edit the mobile overbed-table template's space, clearance, frame, height, panel, and nominal-gap inputs. |
-| Geometry    | Recompute bound profile members and show a read-only 3D projection in millimetres.                       |
-| Panel fit   | Show a wood panel inset inside a four-sided top-frame pocket with configurable per-side gap.             |
-| Members     | Add, remove, select, and edit rectangular profile members.                                               |
-| Cut list    | Deterministically group profile lines by definition revision, length, orientation, and use.              |
-| Checks      | Show explainable warnings with rule ID, reason, confidence, and next action.                             |
-| Files       | Open, validate, atomically save, reopen, and track recent `.alu` v1 files.                               |
-| Language    | Use one complete `zh-CN` or `en-US` interface at a time, including native dialogs.                       |
+| Area        | Supported behavior                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| Constraints | Edit the bundled clearance frame's obstacle, clearance, frame, height, panel, and nominal-gap inputs.   |
+| Geometry    | Recompute bound profile members and show a read-only 3D projection in millimetres.                      |
+| Panel fit   | Show a panel inset inside a four-sided top-frame pocket with configurable per-side gap.                 |
+| Members     | Add, remove, select, and edit rectangular profile members.                                              |
+| Cut list    | Deterministically group profile lines by definition revision, length, orientation, and use.             |
+| Checks      | Show explainable warnings with rule ID, reason, confidence, and next action.                            |
+| Files       | Open, validate, atomically save, reopen, and track recent `.alu` v1 files.                              |
+| Language    | Start in `en-US`; allow a complete `zh-CN` interface, including native dialogs, with local persistence. |
 
 ## Not supported now
 
@@ -23,10 +23,10 @@
 ## Dimension semantics
 
 - Domain coordinates are millimetres with Z up. The viewport adapts them to Three.js; viewport coordinates never write back to the project.
-- For the bundled table template:
+- For the bundled clearance-frame example:
   - inner frame width = obstacle width + left clearance + right clearance;
   - outer frame width = inner frame width + two profile widths;
-  - tabletop width = inner frame width − two nominal panel gaps;
+  - inset-panel width = inner frame width − two nominal panel gaps;
   - the panel is supported conceptually inside the top-frame pocket, not placed on top of it.
 - Values persisted by commands are quantized to 0.01 mm.
 
@@ -36,7 +36,7 @@ Always include:
 
 1. measured obstacle envelope and selected clearances;
 2. derived outer frame and tabletop dimensions;
-3. nominal panel gap per side;
+3. inset-panel size and nominal gap per side, when present;
 4. profile-only cut-list summary;
 5. unresolved checks and real-world measurements still required;
 6. saved `.alu` path, if one was produced.

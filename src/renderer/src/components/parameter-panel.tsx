@@ -23,7 +23,9 @@ const inputGroupDefinitions: Array<{
     title: "parameters.group.space",
     help: "parameters.group.spaceHelp",
     ids: [
+      "obstacleOuterWidth",
       "bedOuterWidth",
+      "obstacleTopHeight",
       "mattressTopHeight",
       "clearanceLeft",
       "clearanceRight",

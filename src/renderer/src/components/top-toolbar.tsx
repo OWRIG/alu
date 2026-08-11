@@ -204,7 +204,7 @@ export function TopToolbar() {
           </summary>
           <div className="popover-panel popover-panel--language">
             <div className="popover-title">{t("toolbar.language")}</div>
-            {(["zh-CN", "en-US"] as const).map((item) => (
+            {(["en-US", "zh-CN"] as const).map((item) => (
               <button
                 className="locale-option"
                 data-testid={`locale-${item}`}

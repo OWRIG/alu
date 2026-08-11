@@ -77,16 +77,16 @@ src/
 
 ## 技术选择
 
-| 能力       | 选择                         | 约束                                              |
-| ---------- | ---------------------------- | ------------------------------------------------- |
-| 桌面运行时 | Electron                     | macOS/Windows 使用统一 Chromium                   |
-| 构建       | electron-vite                | main/preload/renderer 一份配置                    |
-| UI         | React + 普通 CSS             | 中文优先；P1 不为样式引入额外构建插件             |
-| 3D         | Three.js + React Three Fiber | 只消费领域投影；不持久化 Three 对象               |
-| 状态       | Zustand                      | 工程、编辑器 UI、目录分 store；不建全局万能 store |
-| 校验       | Zod                          | 工程、命令与 Main IPC 入参/输出均校验             |
-| 测试       | Vitest + Playwright Electron | 纯领域测试优先，E2E 只覆盖关键闭环                |
-| 打包       | electron-builder             | macOS arm64 产物、ASAR、fuses 与内容回归          |
+| 能力       | 选择                         | 约束                                                |
+| ---------- | ---------------------------- | --------------------------------------------------- |
+| 桌面运行时 | Electron                     | macOS/Windows 使用统一 Chromium                     |
+| 构建       | electron-vite                | main/preload/renderer 一份配置                      |
+| UI         | React + 普通 CSS             | 英文优先、完整简中入口；P1 不为样式引入额外构建插件 |
+| 3D         | Three.js + React Three Fiber | 只消费领域投影；不持久化 Three 对象                 |
+| 状态       | Zustand                      | 工程、编辑器 UI、目录分 store；不建全局万能 store   |
+| 校验       | Zod                          | 工程、命令与 Main IPC 入参/输出均校验               |
+| 测试       | Vitest + Playwright Electron | 纯领域测试优先，E2E 只覆盖关键闭环                  |
+| 打包       | electron-builder             | macOS arm64 产物、ASAR、fuses 与内容回归            |
 
 暂不引入 oRPC、数据库、后端、插件框架、规则 DSL。初期 IPC 少且稳定，显式 channel + Zod 更容易调试；出现重复样板的真实痛点后再评估 RPC 层。
 

@@ -35,7 +35,12 @@ const severityOrder: Record<RuleSeverity, number> = { error: 0, warning: 1, info
 
 function isMainSpan(profile: ProfileInstance): boolean {
   const purpose = profile.purpose.toLowerCase();
-  return purpose.includes("main-span") || purpose.includes("主梁") || purpose.includes("主跨");
+  return (
+    purpose.includes("main-span") ||
+    purpose.includes("long-span") ||
+    purpose.includes("主梁") ||
+    purpose.includes("主跨")
+  );
 }
 
 function isBrace(profile: ProfileInstance): boolean {

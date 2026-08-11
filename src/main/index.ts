@@ -104,7 +104,7 @@ app.whenReady().then(() => {
   if (trustedRendererUrl === PACKAGED_RENDERER_URL) {
     handleRendererScheme(path.join(currentDirectory, "../renderer"));
   }
-  let interfaceLocale: AppLocale = "zh-CN";
+  let interfaceLocale: AppLocale = "en-US";
   const getLocale = () => interfaceLocale;
   registerSettingsIpc({
     trustedRendererUrl,

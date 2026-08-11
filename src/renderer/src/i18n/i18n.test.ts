@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createMobileOverbedDemo } from "../../../domain/project/defaults";
+import { createParametricClearanceFrameDemo } from "../../../domain/project/defaults";
 import { evaluateRules } from "../../../domain/rules/evaluate";
 import {
   localizeError,
@@ -33,14 +33,18 @@ describe("renderer i18n", () => {
   });
 
   it("localizes built-in content by stable identity", () => {
-    const project = createMobileOverbedDemo({
+    const project = createParametricClearanceFrameDemo({
       projectId: "project.i18n",
       now: "2026-08-09T00:00:00.000Z",
     });
     const t = (key: MessageKey, values?: Record<string, string | number>) =>
       translate("en-US", key, values);
 
-    expect(localizeProjectName(project, t)).toBe("Mobile Overbed Table Concept");
+    expect(localizeProjectName(project, t)).toBe("Parametric Clearance Frame");
+    expect(localizeParameterLabel("obstacleOuterWidth", "Obstacle outer width", t)).toBe(
+      "Obstacle outer width",
+    );
+    expect(localizeParameterLabel("bedOuterWidth", "床架最外沿宽", t)).toBe("Obstacle outer width");
     expect(localizeParameterLabel("panelFitClearance", "嵌板单边安装缝", t)).toBe(
       "Panel gap per side",
     );

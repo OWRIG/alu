@@ -1,8 +1,8 @@
 {
   "name": "alu",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
-  "description": "ALU — 铝型材设计与复核工作台",
+  "description": "ALU — agent-friendly industrial aluminum-extrusion design workspace",
   "homepage": "https://github.com/OWRIG/alu",
   "author": "OWRIG",
   "repository": {

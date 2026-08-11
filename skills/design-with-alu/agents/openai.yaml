@@ -1,4 +1,4 @@
 interface:
   display_name: "Design with ALU"
-  short_description: "Guide ALU aluminum-frame concept design and review"
-  default_prompt: "Use $design-with-alu to adjust and review an aluminum-profile design in ALU."
+  short_description: "Create and review agent-readable aluminum frames"
+  default_prompt: "Use $design-with-alu to inspect this aluminum-extrusion project and return a structured handoff."

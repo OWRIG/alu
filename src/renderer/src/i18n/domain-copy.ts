@@ -4,8 +4,10 @@ import { enUS, zhCN, type MessageKey } from "./messages";
 import type { Locale, Translator } from "./i18n";
 
 const parameterKeys: Record<string, MessageKey> = {
-  bedOuterWidth: "parameter.bedOuterWidth",
-  mattressTopHeight: "parameter.mattressTopHeight",
+  obstacleOuterWidth: "parameter.obstacleOuterWidth",
+  bedOuterWidth: "parameter.obstacleOuterWidth",
+  obstacleTopHeight: "parameter.obstacleTopHeight",
+  mattressTopHeight: "parameter.obstacleTopHeight",
   clearanceLeft: "parameter.clearanceLeft",
   clearanceRight: "parameter.clearanceRight",
   uprightWidthX: "parameter.uprightWidthX",
@@ -20,7 +22,8 @@ const parameterKeys: Record<string, MessageKey> = {
   topFrameInnerDepth: "parameter.topFrameInnerDepth",
   tabletopWidth: "parameter.tabletopWidth",
   tabletopDepth: "parameter.tabletopDepth",
-  clearanceAboveMattress: "parameter.clearanceAboveMattress",
+  clearanceAboveObstacle: "parameter.clearanceAboveObstacle",
+  clearanceAboveMattress: "parameter.clearanceAboveObstacle",
   beamUndersideClearance: "parameter.beamUndersideClearance",
   uprightLength: "parameter.uprightLength",
   topBeamCenterZ: "parameter.topBeamCenterZ",
@@ -43,11 +46,37 @@ const boundaryKeys: Record<string, MessageKey> = {
 };
 
 const legacyParameterLabels: Record<string, string[]> = {
+  obstacleOuterWidth: ["床架最外沿宽", "Bed outer width"],
+  bedOuterWidth: ["床架最外沿宽", "Bed outer width", "障碍物最外沿宽", "Obstacle outer width"],
+  obstacleTopHeight: ["床垫上表面离地", "Mattress top height"],
+  mattressTopHeight: [
+    "床垫上表面离地",
+    "Mattress top height",
+    "障碍物上表面离地",
+    "Obstacle top height",
+  ],
   clearanceLeft: ["左动态余量"],
   clearanceRight: ["右动态余量"],
   uprightWidthX: ["围框/立柱横向宽"],
-  finishedHeight: ["桌面成品高"],
+  tabletopThickness: ["桌板厚度"],
+  finishedHeight: ["桌面成品高", "桌面完成高度", "Finished tabletop height"],
+  tabletopWidth: ["平嵌桌板宽"],
+  tabletopDepth: ["平嵌桌板深"],
+  clearanceAboveObstacle: ["桌板下表面离床垫", "Panel underside above mattress"],
+  clearanceAboveMattress: [
+    "桌板下表面离床垫",
+    "Panel underside above mattress",
+    "嵌板下表面离障碍物",
+    "Panel underside above obstacle",
+  ],
 };
+
+const demoProjectNames = [
+  "移动跨床桌概念方案",
+  "Mobile Overbed Table Concept",
+  "参数化跨障碍框架",
+  "Parametric Clearance Frame",
+];
 
 const defaultPurposeKeys: Record<string, { key: MessageKey; values: string[] }> = {
   "profile.top-front": {
@@ -90,17 +119,11 @@ export function localizeBoundary(kind: string | undefined, t: Translator) {
 }
 
 export function localizeProjectName(project: ProjectDocumentV1, t: Translator) {
-  if (
-    project.context.usage.includes("overbed-table") &&
-    ["移动跨床桌概念方案", "Mobile Overbed Table Concept"].includes(project.meta.name)
-  ) {
-    return localizeKnownProjectName(project.meta.name, t);
-  }
   return localizeKnownProjectName(project.meta.name, t);
 }
 
 export function localizeKnownProjectName(name: string, t: Translator) {
-  if (["移动跨床桌概念方案", "Mobile Overbed Table Concept"].includes(name)) {
+  if (demoProjectNames.includes(name)) {
     return t("project.demoName");
   }
   return ["未命名工程", "Untitled Project"].includes(name) ? t("project.untitled") : name;

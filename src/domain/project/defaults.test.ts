@@ -1,16 +1,22 @@
 import { describe, expect, it } from "vitest";
 
 import { evaluateParameters } from "../params/evaluate";
-import { createMobileOverbedDemo } from "./defaults";
+import { createParametricClearanceFrameDemo } from "./defaults";
 
-describe("mobile overbed demo", () => {
+describe("parametric clearance-frame demo", () => {
   it("C-inset-tabletop-fit derives a flush panel inside the top frame", () => {
-    const project = createMobileOverbedDemo({
+    const project = createParametricClearanceFrameDemo({
       projectId: "project.inset-panel",
       now: "2026-08-09T00:00:00.000Z",
     });
     const values = evaluateParameters(project.parameters);
 
+    expect(project.meta.name).toBe("Parametric Clearance Frame");
+    expect(project.context.usage).toEqual(["clearance-frame"]);
+    expect(project.parameters.inputs).toHaveProperty("obstacleOuterWidth");
+    expect(project.parameters.inputs).toHaveProperty("obstacleTopHeight");
+    expect(project.parameters.inputs).not.toHaveProperty("bedOuterWidth");
+    expect(project.parameters.derived).toHaveProperty("clearanceAboveObstacle");
     expect(values).toMatchObject({
       innerClearWidth: 2150,
       frameOuterWidth: 2230,
@@ -18,7 +24,7 @@ describe("mobile overbed demo", () => {
       topFrameInnerDepth: 420,
       tabletopWidth: 2146,
       tabletopDepth: 416,
-      clearanceAboveMattress: 232,
+      clearanceAboveObstacle: 232,
       beamUndersideClearance: 170,
       uprightLength: 670,
       topBeamCenterZ: 710,
@@ -33,7 +39,7 @@ describe("mobile overbed demo", () => {
   });
 
   it("C-inset-top-frame-topology closes the panel with four top rails", () => {
-    const project = createMobileOverbedDemo({
+    const project = createParametricClearanceFrameDemo({
       projectId: "project.inset-frame",
       now: "2026-08-09T00:00:00.000Z",
     });

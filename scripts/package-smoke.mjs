@@ -106,14 +106,14 @@ try {
   running = await launch();
   const { page } = running;
 
-  await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
-  await page.getByTestId("language-menu").click();
-  await page.getByTestId("locale-en-US").click();
   await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
   await page.getByTestId("language-menu").click();
   await page.getByTestId("locale-zh-CN").click();
+  await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
+  await page.getByTestId("language-menu").click();
+  await page.getByTestId("locale-en-US").click();
 
-  const widthInput = page.getByTestId("param-input-bedOuterWidth");
+  const widthInput = page.getByTestId("param-input-obstacleOuterWidth");
   await widthInput.fill("2200");
   await widthInput.press("Enter");
   await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,330");
@@ -122,7 +122,7 @@ try {
   await expect(page.getByTestId("bom-table")).toContainText("2,330 mm");
 
   await page.getByTestId("save-project").click();
-  await expect(page.getByText("已保存 package-smoke.alu")).toBeVisible();
+  await expect(page.getByText("Saved package-smoke.alu")).toBeVisible();
   const saved = JSON.parse(await readFile(savePath, "utf8"));
   if (!saved.bomSnapshot) throw new Error("Packaged ALU saved without a BOM snapshot");
   if (running.rendererErrors.length > 0) {

@@ -22,7 +22,8 @@ function makeGenericDefinition(
     evidence: [
       {
         kind: "field-guide",
-        reference: "通用截面包络，仅用于概念建模；采购前核对实际目录",
+        reference:
+          "Generic section envelope for concept modeling only; verify the vendor catalog before procurement.",
         confidence: "low",
       },
     ],
@@ -30,10 +31,10 @@ function makeGenericDefinition(
 }
 
 export const GENERIC_PROFILE_DEFINITIONS = [
-  makeGenericDefinition("generic.profile.2020-envelope", "概念 2020 包络", 20, 20),
-  makeGenericDefinition("generic.profile.3030-envelope", "概念 3030 包络", 30, 30),
-  makeGenericDefinition("generic.profile.4040-envelope", "概念 4040 包络", 40, 40),
-  makeGenericDefinition("generic.profile.4080-envelope", "概念 4080 包络", 40, 80),
+  makeGenericDefinition("generic.profile.2020-envelope", "Concept 2020 Envelope", 20, 20),
+  makeGenericDefinition("generic.profile.3030-envelope", "Concept 3030 Envelope", 30, 30),
+  makeGenericDefinition("generic.profile.4040-envelope", "Concept 4040 Envelope", 40, 40),
+  makeGenericDefinition("generic.profile.4080-envelope", "Concept 4080 Envelope", 40, 80),
 ] as const;
 
 export function snapshotDefinition(definition: ProfileDefinition): EmbeddedProfileSnapshot {
@@ -41,7 +42,7 @@ export function snapshotDefinition(definition: ProfileDefinition): EmbeddedProfi
 }
 
 function newProjectMeta(name: string, now: string) {
-  return { name, createdAt: now, updatedAt: now, appVersion: "0.1.0", units: "mm" as const };
+  return { name, createdAt: now, updatedAt: now, appVersion: "0.1.1", units: "mm" as const };
 }
 
 export function createBlankProject(options?: {
@@ -54,7 +55,7 @@ export function createBlankProject(options?: {
     formatVersion: 1,
     projectId: options?.projectId ?? `project.${globalThis.crypto.randomUUID()}`,
     revision: 0,
-    meta: newProjectMeta(options?.name ?? "未命名工程", now),
+    meta: newProjectMeta(options?.name ?? "Untitled Project", now),
     context: {
       usage: [],
       humanLoad: "unknown",
@@ -70,7 +71,7 @@ export function createBlankProject(options?: {
   };
 }
 
-export function createMobileOverbedDemo(options?: {
+export function createParametricClearanceFrameDemo(options?: {
   projectId?: string;
   now?: string;
 }): ProjectDocumentV1 {
@@ -81,50 +82,82 @@ export function createMobileOverbedDemo(options?: {
     formatVersion: 1,
     projectId: options?.projectId ?? `project.${globalThis.crypto.randomUUID()}`,
     revision: 0,
-    meta: newProjectMeta("移动跨床桌概念方案", now),
+    meta: newProjectMeta("Parametric Clearance Frame", now),
     context: {
-      usage: ["overbed-table"],
+      usage: ["clearance-frame"],
       humanLoad: false,
       childAccess: "unknown",
       mobility: "casters",
       floor: "wood",
       loads: ["laptop", "meal", "small-projector"],
       notes:
-        "桌板采用四边围框内托平嵌：18 mm 板落在内侧连续托条或层板托上，顶面与型材上沿齐平，四周单边预留 2 mm 安装缝。先装框并校正对角线，实测后再下板。概念阶段仍未确认脚轮、主节点、托件接口、厂家截面数据与试载。",
+        "The 18 mm panel sits inside a four-sided top-frame pocket on continuous inner ledges or shelf supports. Its top face is flush with the profile and keeps a nominal 2 mm gap per side. Assemble and square the frame before measuring the final panel. Casters, primary joints, support interfaces, vendor section data, and proof loading remain unresolved.",
     },
     parameters: {
       inputs: {
-        bedOuterWidth: {
+        obstacleOuterWidth: {
           valueMm: 2100,
-          label: "床架最外沿宽",
+          label: "Obstacle outer width",
           boundaryKind: "obstacle-outer",
         },
-        mattressTopHeight: {
+        obstacleTopHeight: {
           valueMm: 500,
-          label: "床垫上表面离地",
+          label: "Obstacle top height",
           boundaryKind: "height",
         },
-        clearanceLeft: { valueMm: 25, label: "左动态余量", boundaryKind: "clearance" },
-        clearanceRight: { valueMm: 25, label: "右动态余量", boundaryKind: "clearance" },
-        uprightWidthX: { valueMm: 40, label: "围框/立柱横向宽", boundaryKind: "generic" },
-        topFrameHeight: { valueMm: 80, label: "顶框型材占高", boundaryKind: "generic" },
-        topFrameOuterDepth: { valueMm: 500, label: "顶框外深", boundaryKind: "frame-outer" },
-        panelFitClearance: { valueMm: 2, label: "嵌板单边安装缝", boundaryKind: "panel" },
-        tabletopThickness: { valueMm: 18, label: "桌板厚度", boundaryKind: "panel" },
-        finishedHeight: { valueMm: 750, label: "桌面成品高", boundaryKind: "height" },
+        clearanceLeft: {
+          valueMm: 25,
+          label: "Left working clearance",
+          boundaryKind: "clearance",
+        },
+        clearanceRight: {
+          valueMm: 25,
+          label: "Right working clearance",
+          boundaryKind: "clearance",
+        },
+        uprightWidthX: {
+          valueMm: 40,
+          label: "Frame and upright width",
+          boundaryKind: "generic",
+        },
+        topFrameHeight: {
+          valueMm: 80,
+          label: "Top-frame profile height",
+          boundaryKind: "generic",
+        },
+        topFrameOuterDepth: {
+          valueMm: 500,
+          label: "Top-frame outer depth",
+          boundaryKind: "frame-outer",
+        },
+        panelFitClearance: {
+          valueMm: 2,
+          label: "Panel gap per side",
+          boundaryKind: "panel",
+        },
+        tabletopThickness: {
+          valueMm: 18,
+          label: "Panel thickness",
+          boundaryKind: "panel",
+        },
+        finishedHeight: {
+          valueMm: 750,
+          label: "Finished surface height",
+          boundaryKind: "height",
+        },
       },
       derived: {
         innerClearWidth: {
-          label: "结构内净宽",
+          label: "Clear structural width",
           terms: [
-            { param: "bedOuterWidth", coef: 1 },
+            { param: "obstacleOuterWidth", coef: 1 },
             { param: "clearanceLeft", coef: 1 },
             { param: "clearanceRight", coef: 1 },
           ],
           constantMm: 0,
         },
         frameOuterWidth: {
-          label: "骨架外宽",
+          label: "Frame outer width",
           terms: [
             { param: "innerClearWidth", coef: 1 },
             { param: "uprightWidthX", coef: 2 },
@@ -132,7 +165,7 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         topFrameInnerWidth: {
-          label: "顶框槽内净宽",
+          label: "Top-frame inner width",
           terms: [
             { param: "frameOuterWidth", coef: 1 },
             { param: "uprightWidthX", coef: -2 },
@@ -140,7 +173,7 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         topFrameInnerDepth: {
-          label: "顶框槽内净深",
+          label: "Top-frame inner depth",
           terms: [
             { param: "topFrameOuterDepth", coef: 1 },
             { param: "uprightWidthX", coef: -2 },
@@ -148,7 +181,7 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         tabletopWidth: {
-          label: "平嵌桌板宽",
+          label: "Inset panel width",
           terms: [
             { param: "topFrameInnerWidth", coef: 1 },
             { param: "panelFitClearance", coef: -2 },
@@ -156,33 +189,33 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         tabletopDepth: {
-          label: "平嵌桌板深",
+          label: "Inset panel depth",
           terms: [
             { param: "topFrameInnerDepth", coef: 1 },
             { param: "panelFitClearance", coef: -2 },
           ],
           constantMm: 0,
         },
-        clearanceAboveMattress: {
-          label: "桌板下表面离床垫",
+        clearanceAboveObstacle: {
+          label: "Panel underside above obstacle",
           terms: [
             { param: "finishedHeight", coef: 1 },
             { param: "tabletopThickness", coef: -1 },
-            { param: "mattressTopHeight", coef: -1 },
+            { param: "obstacleTopHeight", coef: -1 },
           ],
           constantMm: 0,
         },
         beamUndersideClearance: {
-          label: "主梁下方实际净空",
+          label: "Clearance below main beam",
           terms: [
             { param: "finishedHeight", coef: 1 },
             { param: "topFrameHeight", coef: -1 },
-            { param: "mattressTopHeight", coef: -1 },
+            { param: "obstacleTopHeight", coef: -1 },
           ],
           constantMm: 0,
         },
         uprightLength: {
-          label: "立柱净长",
+          label: "Upright cut length",
           terms: [
             { param: "finishedHeight", coef: 1 },
             { param: "topFrameHeight", coef: -1 },
@@ -190,7 +223,7 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         topBeamCenterZ: {
-          label: "顶梁中心高",
+          label: "Top-beam center height",
           terms: [
             { param: "uprightLength", coef: 1 },
             { param: "topFrameHeight", coef: 0.5 },
@@ -198,12 +231,12 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         leftUprightCenterX: {
-          label: "左立柱中心 X",
+          label: "Left upright center X",
           terms: [{ param: "uprightWidthX", coef: 0.5 }],
           constantMm: 0,
         },
         rightUprightCenterX: {
-          label: "右立柱中心 X",
+          label: "Right upright center X",
           terms: [
             { param: "frameOuterWidth", coef: 1 },
             { param: "uprightWidthX", coef: -0.5 },
@@ -211,12 +244,12 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         frontTopBeamCenterY: {
-          label: "前顶梁中心 Y",
+          label: "Front top-beam center Y",
           terms: [{ param: "uprightWidthX", coef: 0.5 }],
           constantMm: 0,
         },
         rearTopBeamCenterY: {
-          label: "后顶梁中心 Y",
+          label: "Rear top-beam center Y",
           terms: [
             { param: "topFrameOuterDepth", coef: 1 },
             { param: "uprightWidthX", coef: -0.5 },
@@ -224,7 +257,7 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         rearUprightCenterY: {
-          label: "后立柱中心 Y",
+          label: "Rear upright center Y",
           terms: [
             { param: "topFrameOuterDepth", coef: 1 },
             { param: "uprightWidthX", coef: -1 },
@@ -232,7 +265,7 @@ export function createMobileOverbedDemo(options?: {
           constantMm: 0,
         },
         topSideRailStartY: {
-          label: "顶框侧梁起点 Y",
+          label: "Top side-rail start Y",
           terms: [{ param: "uprightWidthX", coef: 1 }],
           constantMm: 0,
         },
@@ -277,7 +310,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "x",
         lengthMm: 2230,
         rotationAroundAxisDeg: 0,
-        purpose: "顶部长跨主梁",
+        purpose: "Long-span top beam",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -289,7 +322,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "x",
         lengthMm: 2230,
         rotationAroundAxisDeg: 0,
-        purpose: "顶部长跨主梁",
+        purpose: "Long-span top beam",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -301,7 +334,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "y",
         lengthMm: 420,
         rotationAroundAxisDeg: 0,
-        purpose: "顶部围框侧梁",
+        purpose: "Top-frame side rail",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -313,7 +346,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "y",
         lengthMm: 420,
         rotationAroundAxisDeg: 0,
-        purpose: "顶部围框侧梁",
+        purpose: "Top-frame side rail",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -325,7 +358,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "z",
         lengthMm: 670,
         rotationAroundAxisDeg: 0,
-        purpose: "立柱",
+        purpose: "Upright",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -337,7 +370,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "z",
         lengthMm: 670,
         rotationAroundAxisDeg: 0,
-        purpose: "立柱",
+        purpose: "Upright",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -349,7 +382,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "z",
         lengthMm: 670,
         rotationAroundAxisDeg: 0,
-        purpose: "立柱",
+        purpose: "Upright",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -361,7 +394,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "z",
         lengthMm: 670,
         rotationAroundAxisDeg: 0,
-        purpose: "立柱",
+        purpose: "Upright",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -373,7 +406,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "y",
         lengthMm: 500,
         rotationAroundAxisDeg: 0,
-        purpose: "底部侧梁",
+        purpose: "Base side rail",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },
@@ -385,7 +418,7 @@ export function createMobileOverbedDemo(options?: {
         axis: "y",
         lengthMm: 500,
         rotationAroundAxisDeg: 0,
-        purpose: "底部侧梁",
+        purpose: "Base side rail",
         endCutA: { kind: "square" },
         endCutB: { kind: "square" },
       },

@@ -11,7 +11,7 @@ import {
 import type { DomainCommand, UpdateProfilePatch } from "../../../domain/commands/schema";
 import {
   createBlankProject,
-  createMobileOverbedDemo,
+  createParametricClearanceFrameDemo,
   GENERIC_PROFILE_DEFINITIONS,
   snapshotDefinition,
 } from "../../../domain/project/defaults";
@@ -71,7 +71,7 @@ type ProjectStore = {
   clearNotice: () => void;
 };
 
-const initialProject = createMobileOverbedDemo();
+const initialProject = createParametricClearanceFrameDemo();
 
 function presentError(error: unknown): UiError {
   const domainError = asDomainError(error);
@@ -263,7 +263,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   newDemo() {
     if (get().busy) return;
-    const project = createMobileOverbedDemo();
+    const project = createParametricClearanceFrameDemo();
     set({
       history: createHistory(project),
       selectedEntityId: firstEntityId(project),

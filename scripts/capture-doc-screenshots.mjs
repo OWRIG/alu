@@ -27,23 +27,27 @@ try {
   await page.locator("canvas").waitFor({ state: "visible" });
   await page.waitForTimeout(4_200);
 
-  await page.screenshot({ path: path.join(output, "editor-zh.png") });
+  await page.screenshot({ path: path.join(output, "editor-en.png") });
 
-  const widthInput = page.getByTestId("param-input-bedOuterWidth");
+  const widthInput = page.getByTestId("param-input-obstacleOuterWidth");
   await widthInput.fill("2200");
   await widthInput.press("Enter");
   await page.getByTestId("tab-bom").click();
-  await page.screenshot({ path: path.join(output, "example-cut-list.png") });
+  await page.screenshot({ path: path.join(output, "example-cut-list-en.png") });
 
   await page.getByTestId("tab-rules").click();
-  await page.screenshot({ path: path.join(output, "example-checks.png") });
+  await page.screenshot({ path: path.join(output, "example-checks-en.png") });
 
   await page.getByTestId("language-menu").click();
-  await page.getByTestId("locale-en-US").click();
-  await page.getByText("Set constraints", { exact: true }).waitFor({ state: "visible" });
-  await page.screenshot({ path: path.join(output, "editor-en.png") });
+  await page.getByTestId("locale-zh-CN").click();
+  await page.getByText("设定约束", { exact: true }).waitFor({ state: "visible" });
+  await page.screenshot({ path: path.join(output, "editor-zh.png") });
+  await page.getByTestId("tab-bom").click();
+  await page.screenshot({ path: path.join(output, "example-cut-list.png") });
+  await page.getByTestId("tab-rules").click();
+  await page.screenshot({ path: path.join(output, "example-checks.png") });
   await page.getByTestId("save-project").click();
-  await page.getByText("Saved example.alu").waitFor({ state: "visible" });
+  await page.getByText("已保存 example.alu").waitFor({ state: "visible" });
 
   console.log(`Wrote documentation screenshots to ${path.relative(root, output)}`);
 } finally {

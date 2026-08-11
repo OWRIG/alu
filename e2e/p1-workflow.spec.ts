@@ -71,46 +71,48 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     running = await launchAlu(userDataPath, savePath);
     const { page } = running;
 
-    await expect(page.getByText("概念模型 · 不可下单")).toBeVisible();
-    await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
-    await expect(page.getByText("空间边界", { exact: true })).toBeVisible();
-    await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,230");
-    await expect(page.getByTestId("derived-tabletopWidth")).toContainText("2,146");
-    await expect(page.getByText("平嵌桌板 · 单边缝 2 mm")).toBeVisible();
-    await expect(page.getByTestId("derived-disclosure")).not.toHaveAttribute("open", "");
-    await page.getByTestId("derived-disclosure").locator("summary").click();
-    await expect(page.getByText("顶框槽内净宽", { exact: true })).toBeVisible();
-    await page.getByTestId("derived-disclosure").locator("summary").click();
-    await expect(page.getByText("Dimension System", { exact: true })).toHaveCount(0);
-
-    await page.getByTestId("language-menu").click();
-    await page.getByTestId("locale-en-US").click();
+    await expect(page.getByText("Concept model · Not order-ready")).toBeVisible();
     await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
     await expect(page.getByText("Space envelope", { exact: true })).toBeVisible();
-    await expect(page.getByText("Mobile Overbed Table Concept", { exact: true })).toBeVisible();
-    await expect(page.getByText("Long-span top beam", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText("Parametric Clearance Frame", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,230");
+    await expect(page.getByTestId("derived-tabletopWidth")).toContainText("2,146");
     await expect(page.getByText("FLUSH PANEL · 2 MM GAP PER SIDE")).toBeVisible();
+    await expect(page.getByTestId("derived-disclosure")).not.toHaveAttribute("open", "");
+    await page.getByTestId("derived-disclosure").locator("summary").click();
+    await expect(page.getByText("Top-frame inner width", { exact: true })).toBeVisible();
+    await page.getByTestId("derived-disclosure").locator("summary").click();
+    await expect(page.getByText("Dimension System", { exact: true })).toHaveCount(0);
     await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("en-US");
     const englishInterface = (await page.locator(".app-shell").innerText()).replaceAll("铝", "");
     expect(englishInterface).not.toMatch(/[\u3400-\u9fff]/u);
-    await page.screenshot({ path: "/tmp/alu-en.png", fullPage: true });
+
+    await page.getByTestId("language-menu").click();
+    await page.getByTestId("locale-zh-CN").click();
+    await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
+    await expect(page.locator(".project-heading strong")).toHaveText("参数化跨障碍框架");
+    await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("zh-CN");
+    await page.getByTestId("save-project").click();
+    await expect(page.getByText("已保存 roundtrip.alu")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
+    await page.getByTestId("language-menu").click();
+    await page.getByTestId("locale-en-US").click();
+    await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
+    await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("en-US");
     await page.getByTestId("save-project").click();
     await expect(page.getByText("Saved roundtrip.alu")).toBeVisible();
     await page.reload();
     await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
     await page.getByTestId("tab-rules").click();
     await expect(page.getByTestId("rule-list")).toContainText("needs a deflection review");
-    await page.getByTestId("language-menu").click();
-    await page.getByTestId("locale-zh-CN").click();
-    await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
-    await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("zh-CN");
     await page.getByTestId("tab-profiles").click();
 
     await page.getByTestId("profile-length").fill("0");
     await page.getByTestId("profile-length").press("Enter");
-    await expect(page.getByTestId("error-toast")).toContainText("长度必须大于 0 mm");
+    await expect(page.getByTestId("error-toast")).toContainText("Length must be greater than 0 mm");
     await expect(page.getByTestId("profile-length")).toHaveValue("2230");
-    await page.getByLabel("关闭错误").click();
+    await page.getByLabel("Dismiss error").click();
     await expect(page.locator('[data-testid^="profile-card-"]')).toHaveCount(10);
     await page.getByTestId("add-profile").click();
     await expect(page.locator('[data-testid^="profile-card-"]')).toHaveCount(11);
@@ -138,7 +140,7 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     ]);
     expect(isolation.settingsApiKeys).toEqual(["setLocale"]);
 
-    const widthInput = page.getByTestId("param-input-bedOuterWidth");
+    const widthInput = page.getByTestId("param-input-obstacleOuterWidth");
     await widthInput.fill("2200");
     await widthInput.press("Enter");
     await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,330");
@@ -153,10 +155,8 @@ test("P1 edits a parameter, updates model/BOM, saves, and reopens", async () => 
     await page.getByTestId("redo").click();
     await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,330");
 
-    await page.screenshot({ path: "/tmp/alu-initial.png", fullPage: true });
-
     await page.getByTestId("save-project").click();
-    await expect(page.getByText("已保存 roundtrip.alu")).toBeVisible();
+    await expect(page.getByText("Saved roundtrip.alu")).toBeVisible();
     await expect.poll(async () => (await readFile(savePath, "utf8")).length).toBeGreaterThan(100);
     const saved = JSON.parse(await readFile(savePath, "utf8")) as { bomSnapshot?: unknown };
     expect(saved.bomSnapshot).toBeTruthy();

@@ -5,7 +5,7 @@ import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { deriveProfileBom } from "../../../domain/bom/derive";
-import { createMobileOverbedDemo } from "../../../domain/project/defaults";
+import { createParametricClearanceFrameDemo } from "../../../domain/project/defaults";
 import { readProjectFile, writeProjectFileAtomic } from "./project-file";
 
 const temporaryDirectories: string[] = [];
@@ -28,7 +28,7 @@ describe("project file", () => {
   it("writes an atomic portable package and reopens it without design loss", async () => {
     const directory = await makeTemporaryDirectory();
     const filePath = path.join(directory, "table.alu");
-    const project = createMobileOverbedDemo({
+    const project = createParametricClearanceFrameDemo({
       projectId: "project.file-roundtrip",
       now: "2026-08-09T00:00:00.000Z",
     });
@@ -50,7 +50,7 @@ describe("project file", () => {
     const filePath = path.join(directory, "protected.alu");
     const original = "last successful content";
     await writeFile(filePath, original, "utf8");
-    const invalid = { ...createMobileOverbedDemo(), formatVersion: 2 };
+    const invalid = { ...createParametricClearanceFrameDemo(), formatVersion: 2 };
 
     await expect(writeProjectFileAtomic(filePath, invalid as never)).rejects.toThrow();
     await expect(readFile(filePath, "utf8")).resolves.toBe(original);
@@ -59,7 +59,7 @@ describe("project file", () => {
   it("reports BOM drift while preserving the imported design", async () => {
     const directory = await makeTemporaryDirectory();
     const filePath = path.join(directory, "drift.alu");
-    const project = createMobileOverbedDemo();
+    const project = createParametricClearanceFrameDemo();
     const saved = await writeProjectFileAtomic(filePath, project);
     const source = JSON.parse(await readFile(filePath, "utf8")) as typeof saved.project;
     if (!source.bomSnapshot) throw new Error("test setup failed");

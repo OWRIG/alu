@@ -7,16 +7,16 @@ export const supportedLocales = APP_LOCALES;
 export type Locale = AppLocale;
 export type Translator = (key: MessageKey, values?: MessageValues) => string;
 
-const DEFAULT_LOCALE: Locale = "zh-CN";
+const DEFAULT_LOCALE: Locale = "en-US";
 const STORAGE_KEY = "alu.locale";
-const dictionaries = { "zh-CN": zhCN, "en-US": enUS } as const;
+const dictionaries = { "en-US": enUS, "zh-CN": zhCN } as const;
 
 export function isLocale(value: unknown): value is Locale {
   return typeof value === "string" && supportedLocales.includes(value as Locale);
 }
 
 export function translate(locale: Locale, key: MessageKey, values: MessageValues = {}): string {
-  const template = dictionaries[locale][key] ?? zhCN[key];
+  const template = dictionaries[locale][key] ?? enUS[key];
   return template.replace(/\{([a-zA-Z0-9]+)\}/g, (token, name: string) => {
     const value = values[name];
     return value === undefined ? token : String(value);
@@ -54,7 +54,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
       // A disabled localStorage should not prevent the editor from running.
     }
     void window.alu.settings.setLocale(locale).catch(() => {
-      // Native dialogs default to Chinese if the main process cannot receive the preference.
+      // Native dialogs keep the main process default if the preference cannot be delivered.
     });
   }, [locale]);
 

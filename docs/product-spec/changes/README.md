@@ -6,6 +6,7 @@
 - `flush-inset-tabletop`：已交付的四边围框平嵌桌板调整。
 - `i18n-and-task-flow`：已交付的完整中英文与任务化输入区。
 - `release-readiness`：当前发布前安全、安装包、文档与 Skill 收口。
+- `agent-first-positioning`：英文优先、简中入口、通用示例与 Agent-first 对外定位。
 - `nodes-and-complete-bom`：P2 后续草案。
 - `catalog-and-portability`：P3 后续草案。
 - `headless-agent-interface`：P4 后续草案。
