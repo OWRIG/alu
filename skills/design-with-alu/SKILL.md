@@ -7,10 +7,18 @@ description: Use ALU to create, adjust, size, inspect, or hand off agent-readabl
 
 Use the ALU desktop editor as the source of truth for project state. Keep every conclusion inside the current concept-design boundary.
 
+## Companion Skills
+
+- Apply `$select-aluminum-extrusion-profiles` before choosing a family, orientation, or exact profile SKU from loads and geometry.
+- Apply `$select-aluminum-extrusion-connections` before naming connector SKUs, machining, fasteners, occupied slots, or assembly order.
+- Apply `$integrate-panels-with-extrusions` before fixing panel thickness, support method, pocket gaps, retention, or door motion.
+
+The companion skills are vendor-neutral decision workflows. ALU remains the source of truth for the project model and its current supported fields.
+
 ## Workflow
 
 1. Read [references/current-capabilities.md](references/current-capabilities.md) before changing a project.
-2. If the project contains a beam-sizing study or the request asks which profile to use, read [references/structural-sizing.md](references/structural-sizing.md).
+2. If the project contains a beam-sizing study or the request asks which profile to use, read [references/structural-sizing.md](references/structural-sizing.md) and apply the profile-selection companion skill.
 3. Capture the physical constraints before changing members:
    - obstacle outside width, height, and depth;
    - required clearance on each side;

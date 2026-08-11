@@ -125,22 +125,40 @@ pnpm dev
 
 ## Agent Skill
 
-仓库内置 [`design-with-alu`](skills/design-with-alu/SKILL.md)，用于约束 Agent 的读取、复核和交接流程。
+仓库内置一套可独立使用、也可串联的 Agent Skill：
+
+| Skill                                                                                            | 负责                                                  |
+| ------------------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| [`design-with-alu`](skills/design-with-alu/SKILL.md)                                             | `.alu` 工程的尺寸链、选型、模型、下料、检查和交接闭环 |
+| [`select-aluminum-extrusion-profiles`](skills/select-aluminum-extrusion-profiles/SKILL.md)       | 从接口族、有效跨度、载荷与截面数据选择精确型材 SKU    |
+| [`select-aluminum-extrusion-connections`](skills/select-aluminum-extrusion-connections/SKILL.md) | 连接件、紧固件、加工、槽位占用和装配顺序              |
+| [`integrate-panels-with-extrusions`](skills/integrate-panels-with-extrusions/SKILL.md)           | 槽内板、四边平嵌层板、面装板、可拆板和门板            |
 
 ```bash
 mkdir -p ~/.codex/skills
-cp -R skills/design-with-alu ~/.codex/skills/
+cp -R skills/design-with-alu \
+  skills/select-aluminum-extrusion-profiles \
+  skills/select-aluminum-extrusion-connections \
+  skills/integrate-panels-with-extrusions \
+  ~/.codex/skills/
 ```
 
 安装后可以直接说：
 
 ```text
-Use $design-with-alu to inspect this .alu project and return its constraints,
-derived dimensions, structural load assumptions, beam candidates, cut groups,
-unresolved checks, and required field measurements.
+用 $select-aluminum-extrusion-profiles 根据 1,600 mm 有效跨度、载荷和高度约束，
+比较精确 SKU；不要按 3030/4040 经验选型。
+
+用 $select-aluminum-extrusion-connections 为每个节点列出连接件、加工、螺钉、
+槽位占用和装配顺序。
+
+用 $integrate-panels-with-extrusions 设计四边平嵌木板，给出实测尺寸链、支承、
+留缝和下板前检查。
 ```
 
-当前 Skill 通过桌面界面工作；v0.2.1 尚无受支持的无界面写入接口。不要绕过校验手改 `.alu`。发布页同时提供 `design-with-alu-0.2.1.zip`。
+`design-with-alu` 当前通过桌面界面工作；v0.2.1 尚无受支持的无界面写入接口。不要绕过校验手改 `.alu`。三项知识 Skill 也可以脱离 ALU，用于方案审查和制造交接。
+
+资料来源、2026 小红书案例蒸馏与厂家核对边界见 [2026 铝型材设计知识梳理](docs/research/aluminum-extrusion-field-guide-2026.md)。
 
 ## 当前边界
 
@@ -163,6 +181,7 @@ pnpm test:package    # 对真实安装包复跑关键闭环
 - [当前产品行为](docs/product-spec/specs/README.md)
 - [架构与领域模型](docs/engineering/architecture.md)
 - [梁选型公式、候选与证据](docs/engineering/structural-sizing.md)
+- [2026 铝型材设计知识梳理](docs/research/aluminum-extrusion-field-guide-2026.md)
 - [工程规则目录](docs/domain/engineering-rule-catalog.md)
 - [路线图](docs/product-spec/roadmap.md)
 

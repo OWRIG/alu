@@ -1,0 +1,4 @@
+interface:
+  display_name: "Integrate Panels with Extrusions"
+  short_description: "Fit panels, shelves, and infills into frames"
+  default_prompt: "Use $integrate-panels-with-extrusions to choose a panel mounting method, derive its fit, and verify support and assembly constraints."

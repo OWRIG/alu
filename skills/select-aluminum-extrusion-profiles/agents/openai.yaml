@@ -1,0 +1,4 @@
+interface:
+  display_name: "Select Aluminum Profiles"
+  short_description: "Choose exact extrusion families and SKUs"
+  default_prompt: "Use $select-aluminum-extrusion-profiles to compare compatible extrusion families and exact SKUs for this frame."

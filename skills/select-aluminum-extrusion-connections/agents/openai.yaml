@@ -1,0 +1,4 @@
+interface:
+  display_name: "Select Extrusion Connections"
+  short_description: "Choose joints, machining, and matching fasteners"
+  default_prompt: "Use $select-aluminum-extrusion-connections to define compatible joints, machining, fasteners, slot usage, and assembly order."

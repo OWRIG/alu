@@ -125,22 +125,40 @@ See the [illustrated parametric clearance-frame example](docs/examples/parametri
 
 ## Agent Skill
 
-The bundled [`design-with-alu`](skills/design-with-alu/SKILL.md) constrains how an agent reads, reviews, and hands off an ALU project.
+The repository bundles four focused Agent Skills that can run independently or as a suite:
+
+| Skill                                                                                            | Responsibility                                                                                |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| [`design-with-alu`](skills/design-with-alu/SKILL.md)                                             | Close the loop across `.alu` dimensions, sizing, model state, cut groups, checks, and handoff |
+| [`select-aluminum-extrusion-profiles`](skills/select-aluminum-extrusion-profiles/SKILL.md)       | Select exact profile SKUs from interface families, effective span, loads, and section data    |
+| [`select-aluminum-extrusion-connections`](skills/select-aluminum-extrusion-connections/SKILL.md) | Define connectors, fasteners, machining, slot occupancy, and assembly order                   |
+| [`integrate-panels-with-extrusions`](skills/integrate-panels-with-extrusions/SKILL.md)           | Design groove infills, flush inset shelves, face-mounted panels, removable panels, and doors  |
 
 ```bash
 mkdir -p ~/.codex/skills
-cp -R skills/design-with-alu ~/.codex/skills/
+cp -R skills/design-with-alu \
+  skills/select-aluminum-extrusion-profiles \
+  skills/select-aluminum-extrusion-connections \
+  skills/integrate-panels-with-extrusions \
+  ~/.codex/skills/
 ```
 
-Then invoke it explicitly:
+Example invocations:
 
 ```text
-Use $design-with-alu to inspect this .alu project and return its constraints,
-derived dimensions, structural load assumptions, beam candidates, cut groups,
-unresolved checks, and required field measurements.
+Use $select-aluminum-extrusion-profiles to compare exact SKUs for a 1,600 mm
+effective span; do not select from 3030/4040 rules of thumb.
+
+Use $select-aluminum-extrusion-connections to produce a node schedule with
+connectors, machining, screws, slot occupancy, and assembly order.
+
+Use $integrate-panels-with-extrusions to design a four-sided flush inset panel
+with a measured dimension chain, supports, gaps, and pre-order checks.
 ```
 
-The current Skill works through the desktop UI; v0.2.1 has no supported headless mutation API. Do not bypass validation by hand-editing `.alu`. The release also includes `design-with-alu-0.2.1.zip`.
+`design-with-alu` currently works through the desktop UI; v0.2.1 has no supported headless mutation API. Do not bypass validation by hand-editing `.alu`. The three knowledge skills can also review concepts and manufacturing handoffs without ALU.
+
+See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/aluminum-extrusion-field-guide-2026.md) for the current vendor sources, distilled Xiaohongshu cases, and evidence boundaries.
 
 ## Current boundaries
 
@@ -163,6 +181,7 @@ pnpm test:package    # repeat the critical flow against the packaged app
 - [Current product behavior](docs/product-spec/specs/README.md)
 - [Architecture and domain model](docs/engineering/architecture.md)
 - [Beam-sizing formulas, candidates, and evidence](docs/engineering/structural-sizing.md)
+- [2026 aluminum-extrusion field guide](docs/research/aluminum-extrusion-field-guide-2026.md)
 - [Engineering-rule catalog](docs/domain/engineering-rule-catalog.md)
 - [Roadmap](docs/product-spec/roadmap.md)
 
