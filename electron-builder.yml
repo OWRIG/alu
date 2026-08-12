@@ -3,9 +3,16 @@ productName: ALU
 directories:
   output: release
   buildResources: build
+electronDist: node_modules/electron/dist
+afterPack: scripts/after-pack.mjs
 files:
   - dist/**/*
   - package.json
+extraResources:
+  - from: skills
+    to: skills
+    filter:
+      - "**/*"
 asar: true
 compression: normal
 electronLanguages:

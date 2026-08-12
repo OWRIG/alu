@@ -1,4 +1,7 @@
 interface:
   display_name: "Design with ALU"
-  short_description: "Design and size agent-readable aluminum frames"
-  default_prompt: "Use $design-with-alu to inspect this aluminum-extrusion project, verify its load, deflection, height, and interface-family assumptions, compare exact-SKU candidates, and return a structured handoff with unresolved checks."
+  short_description: "Design, validate, and export aluminum frames"
+  icon_small: "./assets/alu-mark.svg"
+  icon_large: "./assets/alu-mark.svg"
+  brand_color: "#1688E8"
+  default_prompt: "Use $design-with-alu to design or inspect this aluminum-extrusion project, validate it, and export the final handoff as Markdown by default."

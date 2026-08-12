@@ -108,6 +108,8 @@ ALU 先给出当前候选集里的最小质量合格项，再由用户决定是�
 
 当前构建已做 Developer ID 签名，但尚未 Apple 公证。Gatekeeper 可能阻止首次打开；操作前请核对发布页中的 SHA-256 与源码。
 
+第一次打开 ALU 时，选择“安装 Codex 接入”。ALU 会一次装好四项 Skill 和指向当前应用的启动器，不需要另外安装 Node.js、pnpm 或源码。之后也可以从 `ALU → 安装 Codex 接入…` 重新安装。
+
 ### 从源码运行
 
 需要 Node.js 22+ 与 pnpm 10。
@@ -142,14 +144,7 @@ pnpm dev
 | [`select-aluminum-extrusion-connections`](skills/select-aluminum-extrusion-connections/SKILL.md) | 连接件、紧固件、加工、槽位占用和装配顺序              |
 | [`integrate-panels-with-extrusions`](skills/integrate-panels-with-extrusions/SKILL.md)           | 槽内板、四边平嵌层板、面装板、可拆板和门板            |
 
-```bash
-mkdir -p ~/.agents/skills
-cp -R skills/design-with-alu \
-  skills/select-aluminum-extrusion-profiles \
-  skills/select-aluminum-extrusion-connections \
-  skills/integrate-panels-with-extrusions \
-  ~/.agents/skills/
-```
+macOS 安装包会在用户确认后把四项 Skill 放进 `~/.agents/skills`。Codex 通常会自动发现；当前任务里没有出现时，重启 Codex 即可。从源码开发时仍可手动复制 `skills/` 下的对应目录。
 
 安装后可以直接说：
 
@@ -168,13 +163,7 @@ cp -R skills/design-with-alu \
 
 ### Codex 接入
 
-```bash
-pnpm install
-pnpm build:cli
-pnpm link --global # 可选；之后直接使用 alu
-```
-
-不安装到全局时，把下面的 `alu` 换成 `pnpm cli`：
+安装 ALU 并完成首次接入后，在 Codex 里直接调用 `$design-with-alu`。Skill 自带的 `scripts/alu` 会调用当前 `ALU.app`，无界面地创建、修改、校验和导出 `.alu`。下面用 `alu` 简写这个启动器：
 
 ```bash
 alu create frame.alu --template demo
@@ -183,9 +172,21 @@ alu schema command
 alu dry-run frame.alu --input command.json
 alu apply frame.alu --input command.json
 alu validate frame.alu --target order-draft
+alu export frame.alu --output frame-handoff.md --format md --target order-draft
+alu export frame.alu --output frame-handoff.pdf --format pdf --target order-draft
 ```
 
-`read` 返回当前 `revision`、`designHash`、工程、尺寸链、BOM 和检查结果。命令信封必须带上读取时的 `expectedProjectRevision` 与 `expectedDesignHash`；先 `dry-run`，确认 diff 后再 `apply`。所有输出都是单行 JSON，失败有稳定错误码和退出码。不要手改 `.alu`。
+`read` 返回当前 `revision`、`designHash`、工程、尺寸链、BOM 和检查结果。命令信封必须带上读取时的 `expectedProjectRevision` 与 `expectedDesignHash`；先 `dry-run`，确认 diff 后再 `apply`。所有命令状态都是单行 JSON，失败有稳定错误码和退出码。不要手改 `.alu`。
+
+设计完成后，ALU 先生成 `reportVersion: 1` 的标准交付 JSON，再从同一份数据输出 Markdown 或带 ALU 标识的 A4 PDF。默认使用 Markdown；PDF 按需生成。当前材料清单只包含型材切料，不会猜测连接件、加工、紧固件、脚轮、板材或附件。
+
+从源码使用 CLI 需要 Node.js 22+：
+
+```bash
+pnpm install
+pnpm build:cli
+pnpm cli -- help
+```
 
 资料来源、2026 小红书案例蒸馏与厂家核对边界见 [2026 铝型材设计知识梳理](docs/research/aluminum-extrusion-field-guide-2026.md)。
 

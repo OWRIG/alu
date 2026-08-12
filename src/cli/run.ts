@@ -14,12 +14,18 @@ import {
 import { asDomainError, DomainError } from "../domain/project/error";
 import { inspectProject, validateProject } from "../domain/project/inspect";
 import { ProjectDocumentV1Schema, type ProjectDocumentV1 } from "../domain/project/schema";
+import {
+  buildProjectHandoff,
+  renderProjectHandoffHtml,
+  renderProjectHandoffMarkdown,
+} from "../domain/report/handoff";
 import type { ValidationTarget } from "../domain/rules/evaluate";
 import {
   createProjectFileAtomic,
   mutateProjectFileAtomic,
   readProjectFile,
 } from "../node/project-file";
+import { writeOutputFileAtomic } from "../node/output-file";
 
 const MAX_COMMAND_BYTES = 8 * 1024 * 1024;
 const VALIDATION_TARGETS = new Set<ValidationTarget>(["edit", "order-draft", "order-ready"]);
@@ -53,6 +59,8 @@ export type CliRunResult = { exitCode: number; response: CliResponse };
 export type CliDependencies = {
   readStdin: () => Promise<string>;
   now?: () => Date;
+  reportLogoDataUrl?: string;
+  renderPdf?: (input: { html: string; title: string; footerText: string }) => Promise<Uint8Array>;
 };
 
 type ParsedArguments = { positionals: string[]; options: Map<string, string> };
@@ -64,12 +72,14 @@ const HELP = {
     "alu validate FILE [--target edit|order-draft|order-ready]",
     "alu dry-run FILE --input FILE|- [--target edit|order-draft|order-ready]",
     "alu apply FILE --input FILE|- [--target edit|order-draft|order-ready]",
+    "alu export FILE --output FILE [--format json|md|pdf] [--target edit|order-draft|order-ready]",
     "alu schema [project|command|all]",
   ],
   notes: [
     "Every invocation writes exactly one JSON response to stdout.",
     "Use schema command to obtain JSON Schema and built-in profile snapshots.",
     "Use read -> dry-run -> apply; never edit .alu JSON directly.",
+    "Use export for the versioned JSON model, Markdown handoff, or packaged-app PDF.",
   ],
   exitCodes: CLI_EXIT_CODES,
 };
@@ -139,6 +149,21 @@ function validationTarget(value: string | undefined): ValidationTarget {
     });
   }
   return target as ValidationTarget;
+}
+
+type ExportFormat = "json" | "md" | "pdf";
+
+function exportFormat(value: string | undefined, outputPath: string): ExportFormat {
+  const extension = path.extname(outputPath).toLowerCase();
+  const format = value ?? (extension === ".pdf" ? "pdf" : extension === ".json" ? "json" : "md");
+  if (!new Set<ExportFormat>(["json", "md", "pdf"]).has(format as ExportFormat)) {
+    throw new DomainError({
+      code: "report.format-invalid",
+      message: `不支持的交付格式 ${format}`,
+      suggestion: "使用 json、md 或 pdf",
+    });
+  }
+  return format as ExportFormat;
 }
 
 function jsonPointer(pathItems: PropertyKey[]): string | undefined {
@@ -265,6 +290,7 @@ function exitCodeFor(error: DomainError): number {
     error.code === "command.input-not-file" ||
     error.code === "command.schema-invalid" ||
     error.code === "command.version-unsupported" ||
+    error.code.startsWith("report.") ||
     error.code === "file.not-found" ||
     error.code === "file.not-file" ||
     error.code === "file.directory-missing"
@@ -397,6 +423,61 @@ async function execute(
       return success(command, {
         ...saved.result,
         after: fileIdentity(saved.project, saved.fileHash),
+      });
+    }
+    case "export": {
+      const args = parseArguments(tokens, ["output", "format", "target"]);
+      requirePositionals(command, args.positionals, 1);
+      const projectPath = path.resolve(args.positionals[0]);
+      const output = args.options.get("output");
+      if (!output) {
+        throw new DomainError({
+          code: "cli.invalid-arguments",
+          message: "export 需要 --output FILE",
+        });
+      }
+      const outputPath = path.resolve(output);
+      if (outputPath === projectPath) {
+        throw new DomainError({
+          code: "report.output-conflicts-project",
+          message: "交付文件不能覆盖源 .alu 工程",
+          suggestion: "为 --output 使用不同的文件名",
+        });
+      }
+      const format = exportFormat(args.options.get("format"), outputPath);
+      const target = validationTarget(args.options.get("target"));
+      const opened = await readProjectFile(projectPath);
+      const report = buildProjectHandoff(opened.project, target);
+      let contents: string | Uint8Array;
+      if (format === "json") {
+        contents = `${JSON.stringify(report, null, 2)}\n`;
+      } else if (format === "md") {
+        contents = renderProjectHandoffMarkdown(report);
+      } else {
+        if (!dependencies.renderPdf || !dependencies.reportLogoDataUrl) {
+          throw new DomainError({
+            code: "report.pdf-unavailable",
+            message: "当前 CLI 运行时不支持 PDF 渲染",
+            suggestion: "使用已安装 ALU.app 的 Skill 启动器，或改为 --format md",
+          });
+        }
+        contents = await dependencies.renderPdf({
+          html: renderProjectHandoffHtml(report, {
+            logoDataUrl: dependencies.reportLogoDataUrl,
+          }),
+          title: `${report.project.name} · ALU 工程交付单`,
+          footerText: `ALU · ${report.project.name}`,
+        });
+      }
+      await writeOutputFileAtomic(outputPath, contents);
+      return success(command, {
+        format,
+        outputPath,
+        identity: fileIdentity(opened.project, opened.fileHash),
+        reportVersion: report.reportVersion,
+        bomHash: report.bomHash,
+        materialLineCount: report.materials.length,
+        validation: report.validation,
       });
     }
     case "schema": {

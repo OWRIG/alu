@@ -2,7 +2,7 @@
 
 ## Locate the CLI
 
-Prefer an installed `alu` command. From a source checkout, build once with `pnpm build:cli` and use `pnpm cli` in place of `alu`.
+Prefer the `scripts/alu` launcher beside the installed Skill. It points to the exact `ALU.app` that installed the Skill and does not require Node.js or pnpm. From a source checkout, build once with `pnpm build:cli` and use `pnpm cli` in place of `alu`.
 
 ```bash
 alu help
@@ -73,3 +73,15 @@ For `validate`, exit code `5` means validation completed but findings block the 
 On exit code `4`, read the project again. If the new design already contains the intended result, stop; otherwise generate a new envelope from the new identity. `commandId` is a correlation ID, not a persistent idempotency receipt.
 
 `project.stale-lock` means the previous writer exited without releasing `<project>.alu.lock`. Confirm the PID named in that lock is no longer running before deleting that exact lock file. The CLI deliberately does not auto-delete stale locks because check-then-delete can admit two concurrent writers.
+
+## Standard handoff
+
+ALU first builds one `reportVersion: 1` JSON model, then renders JSON, Markdown, or PDF from it. Default to Markdown. Do not recreate the material table or findings in free-form prose.
+
+```bash
+alu export frame.alu --output frame-handoff.md --format md --target order-draft
+alu export frame.alu --output frame-handoff.json --format json --target order-draft
+alu export frame.alu --output frame-handoff.pdf --format pdf --target order-draft
+```
+
+PDF rendering is provided by the installed `ALU.app` launcher. The standalone Node CLI supports JSON and Markdown but returns `report.pdf-unavailable` for PDF. Every handoff states that the current material list contains profile cuts only; never infer missing connectors, machining, fasteners, casters, panels, or accessories.

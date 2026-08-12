@@ -22,7 +22,7 @@ flowchart LR
 
 ### Main
 
-Main 负责 Electron 生命周期、安全窗口、文件选择和最近工程。`.alu` 文件锁、校验与原子替换位于 Electron 无关的 `src/node/`，由 Main 与 CLI 共用；CSV/JSON 导出和厂商目录在后续 changeset 中加入。
+Main 负责 Electron 生命周期、安全窗口、文件选择、最近工程、安装包 Headless 入口和 PDF 打印。`.alu` 文件锁、校验、报告输出与原子替换位于 Electron 无关的 `src/node/`，由 Main 与 CLI 共用；versioned report JSON 与 Markdown 位于领域层，PDF 只是一层 Electron 渲染适配。
 
 ### Preload
 
@@ -61,7 +61,7 @@ src/
 ├── shared/
 │   ├── i18n/             # Main/Renderer 共用的 locale 类型
 │   └── ipc/              # Zod IPC 入参与输出契约
-├── node/                  # Main/CLI 共用的 .alu 文件锁、读取与原子替换
+├── node/                  # Main/CLI 共用的文件锁、报告写入、Skill 安装与原子替换
 ├── cli/                   # JSON-only Headless CLI 传输层
 ├── main/
 │   ├── core/             # 安全 BrowserWindow 与 IPC 来源校验
@@ -149,7 +149,7 @@ BrowserWindow 默认：
 
 ## Agent Skill
 
-当前仓库版本化 `skills/design-with-alu/`，默认编排 CLI 的 read → dry-run → apply → validate 闭环：先收集现场约束与载荷，建立参数与构件，复核具体 SKU，再把确认结果写回模型与切料。Skill 明确禁止手改 `.alu`，并要求把具体连接、加工、脚轮采购、板材、整机稳定与实物验证作为未决项交接。
+当前仓库版本化 `skills/design-with-alu/`，默认编排 CLI 的 read → dry-run → apply → validate → export 闭环：先收集现场约束与载荷，建立参数与构件，复核具体 SKU，再把确认结果写回模型与切料，最后从同一份 report JSON 输出 Markdown 或品牌 PDF。Skill 明确禁止手改 `.alu`，并要求把具体连接、加工、脚轮采购、板材、整机稳定与实物验证作为未决项交接。
 
 当前已支持 Headless CLI 和桌面保存时的外部修改冲突保护；不提供 MCP server、运行中主动重载提示或 live attach。CLI 与 UI 共享领域内核，不是第二套业务入口。
 

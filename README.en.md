@@ -100,6 +100,8 @@ Download `ALU-0.2.1-arm64.dmg` from the [v0.2.1 prerelease](https://github.com/O
 
 The build is Developer ID signed but not Apple-notarized. Gatekeeper may block the first launch; verify the release SHA-256 and source before following the documented open procedure.
 
+On first launch, choose **Install Codex Integration**. ALU installs all four skills plus a launcher bound to the current application. Node.js, pnpm, and a source checkout are not required. You can reinstall later from **ALU → Install Codex Integration…**.
+
 ### Run from source
 
 Requires Node.js 22+ and pnpm 10.
@@ -134,14 +136,7 @@ The repository bundles four focused Agent Skills that can run independently or a
 | [`select-aluminum-extrusion-connections`](skills/select-aluminum-extrusion-connections/SKILL.md) | Define connectors, fasteners, machining, slot occupancy, and assembly order                   |
 | [`integrate-panels-with-extrusions`](skills/integrate-panels-with-extrusions/SKILL.md)           | Design groove infills, flush inset shelves, face-mounted panels, removable panels, and doors  |
 
-```bash
-mkdir -p ~/.agents/skills
-cp -R skills/design-with-alu \
-  skills/select-aluminum-extrusion-profiles \
-  skills/select-aluminum-extrusion-connections \
-  skills/integrate-panels-with-extrusions \
-  ~/.agents/skills/
-```
+After confirmation, the macOS application installs all four skills under `~/.agents/skills`. Codex normally detects them automatically; restart Codex if they do not appear in the current task. Source contributors can still copy the corresponding directories from `skills/` manually.
 
 Example invocations:
 
@@ -160,13 +155,7 @@ with a measured dimension chain, supports, gaps, and pre-order checks.
 
 ### Codex setup
 
-```bash
-pnpm install
-pnpm build:cli
-pnpm link --global # optional; exposes the alu command
-```
-
-Without a global link, replace `alu` below with `pnpm cli`:
+Install ALU, complete the first-launch integration, then invoke `$design-with-alu` in Codex. The Skill's `scripts/alu` launcher calls the current `ALU.app` without opening a window. The examples below abbreviate that launcher as `alu`:
 
 ```bash
 alu create frame.alu --template demo
@@ -175,9 +164,21 @@ alu schema command
 alu dry-run frame.alu --input command.json
 alu apply frame.alu --input command.json
 alu validate frame.alu --target order-draft
+alu export frame.alu --output frame-handoff.md --format md --target order-draft
+alu export frame.alu --output frame-handoff.pdf --format pdf --target order-draft
 ```
 
 `read` returns the current revision, design hash, project, evaluated dimensions, BOM, and findings. A command envelope must carry the `expectedProjectRevision` and `expectedDesignHash` returned by that read. Run `dry-run` before `apply`. Every invocation emits one JSON line with stable error and exit codes. Do not hand-edit `.alu`.
+
+For the final handoff, ALU builds one `reportVersion: 1` JSON model and renders Markdown or a branded A4 PDF from the same data. Markdown is the default; PDF is optional. The current material list contains profile cuts only and never invents connectors, machining, fasteners, casters, panels, or accessories.
+
+The source CLI still requires Node.js 22+:
+
+```bash
+pnpm install
+pnpm build:cli
+pnpm cli -- help
+```
 
 See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/aluminum-extrusion-field-guide-2026.md) for the current vendor sources, distilled Xiaohongshu cases, and evidence boundaries.
 

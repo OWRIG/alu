@@ -12,6 +12,26 @@ const asar = path.join(resources, "app.asar");
 const executable = path.join(app, "Contents", "MacOS", "ALU");
 
 await Promise.all([access(asar), access(executable)]);
+try {
+  await access(path.join(resources, "default_app.asar"));
+  throw new Error("Unexpected Electron default_app.asar");
+} catch (error) {
+  if (error instanceof Error && !error.message.includes("ENOENT")) throw error;
+}
+
+const packagedSkills = [
+  "design-with-alu",
+  "select-aluminum-extrusion-profiles",
+  "select-aluminum-extrusion-connections",
+  "integrate-panels-with-extrusions",
+];
+for (const skillName of packagedSkills) {
+  await access(path.join(resources, "skills", skillName, "SKILL.md"));
+}
+await Promise.all([
+  access(path.join(resources, "skills", "design-with-alu", "assets", "alu-mark.svg")),
+  access(path.join(resources, "skills", "design-with-alu", "scripts", "alu")),
+]);
 
 const unpacked = path.join(resources, "app.asar.unpacked");
 try {

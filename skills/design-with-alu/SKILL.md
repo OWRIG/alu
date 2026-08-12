@@ -1,6 +1,6 @@
 ---
 name: design-with-alu
-description: Use ALU's headless CLI or desktop editor to create, dry-run, modify, validate, size, inspect, or hand off agent-readable industrial aluminum-extrusion frame concepts and .alu projects. Trigger for aluminum-profile constraints, structured beam load cases, exact-SKU deflection comparison, member geometry, obstacle clearances, flush inset panels, deterministic cut-list review, engineering-rule checks, or requests to work with ALU.
+description: Use ALU's headless CLI or desktop editor to create, dry-run, modify, validate, size, inspect, or export agent-readable industrial aluminum-extrusion frame concepts and .alu projects. Trigger for aluminum-profile constraints, structured beam load cases, exact-SKU deflection comparison, member geometry, obstacle clearances, flush inset panels, deterministic cut-list review, engineering-rule checks, branded JSON/Markdown/PDF handoffs, or requests to work with ALU.
 ---
 
 # Design with ALU
@@ -19,7 +19,7 @@ The companion skills are vendor-neutral decision workflows. ALU remains the sour
 
 1. Read [references/current-capabilities.md](references/current-capabilities.md) before changing a project.
 2. Read [references/headless-cli.md](references/headless-cli.md) before using the CLI. If the project contains a beam-sizing study or the request asks which profile to use, also read [references/structural-sizing.md](references/structural-sizing.md) and apply the profile-selection companion skill.
-3. Locate the CLI with `alu help`. From source, run `pnpm build:cli` once and use `pnpm cli` if `alu` is not installed globally.
+3. Resolve `scripts/alu` relative to this `SKILL.md` and use it as `ALU_CLI`. Run `"$ALU_CLI" help`. The ALU installer writes the exact application path into this launcher; do not require Node.js or pnpm. From a source checkout only, fall back to `pnpm build:cli` once and then `pnpm cli`.
 4. Capture the physical constraints before changing members:
    - obstacle outside width, height, and depth;
    - required clearance on each side;
@@ -47,8 +47,9 @@ The companion skills are vendor-neutral decision workflows. ALU remains the sour
 - cut list: lengths and source-member counts match the model;
 - checks: every warning is either resolved or recorded as an explicit follow-up.
 
-12. Run `alu validate` for the intended target. Use the desktop editor when a human needs 3D review or manual adjustment; its saves share the same file lock and reject external-change conflicts.
-13. Report the constraints, load assumptions, effective span, candidate comparison, applied SKU and its scope, derived frame envelope, caster-height status, inset-panel fit, cut-list summary, unresolved checks, and saved file path.
+12. Run `"$ALU_CLI" validate` for the intended target. Use the desktop editor when a human needs 3D review or manual adjustment; its saves share the same file lock and reject external-change conflicts.
+13. Export the final handoff through ALU instead of drafting it manually. Default to `"$ALU_CLI" export <project>.alu --output <project>-handoff.md --format md --target <target>`. Use `--format pdf` only when requested, and `--format json` when another system needs the versioned report model. Markdown and branded PDF must come from the same `reportVersion` JSON.
+14. Return the saved `.alu` path and handoff path. Summarize the constraints, load assumptions, effective span, applied SKU, unresolved blockers, and report format without duplicating the full handoff in chat.
 
 ## Decision Rules
 

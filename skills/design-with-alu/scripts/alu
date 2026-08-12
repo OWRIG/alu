@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+
+if [ -n "${ALU_APP_PATH:-}" ] && [ -x "${ALU_APP_PATH}/Contents/MacOS/ALU" ]; then
+  exec "${ALU_APP_PATH}/Contents/MacOS/ALU" --cli "$@"
+fi
+
+for alu_executable in \
+  "/Applications/ALU.app/Contents/MacOS/ALU" \
+  "${HOME}/Applications/ALU.app/Contents/MacOS/ALU"
+do
+  if [ -x "${alu_executable}" ]; then
+    exec "${alu_executable}" --cli "$@"
+  fi
+done
+
+if command -v alu >/dev/null 2>&1; then
+  exec alu "$@"
+fi
+
+printf '%s\n' '{"ok":false,"command":"launch","error":{"code":"alu.not-installed","message":"找不到 ALU.app 或 alu CLI","suggestion":"安装 ALU.app，或设置 ALU_APP_PATH"}}'
+exit 127

@@ -144,6 +144,50 @@ describe("headless CLI", () => {
     );
   });
 
+  it("exports one versioned report model to JSON and Markdown", async () => {
+    const directory = await makeTemporaryDirectory();
+    const projectPath = path.join(directory, "report.alu");
+    const jsonPath = path.join(directory, "report.json");
+    const markdownPath = path.join(directory, "report.md");
+    await runCli(["create", projectPath, "--template", "demo"], dependencies);
+
+    const jsonResult = await runCli(
+      ["export", projectPath, "--output", jsonPath, "--format", "json"],
+      dependencies,
+    );
+    const markdownResult = await runCli(
+      ["export", projectPath, "--output", markdownPath],
+      dependencies,
+    );
+    const report = JSON.parse(await readFile(jsonPath, "utf8")) as Record<string, unknown>;
+    const markdown = await readFile(markdownPath, "utf8");
+
+    expect(jsonResult).toMatchObject({
+      exitCode: 0,
+      response: { ok: true, data: { format: "json", reportVersion: 1 } },
+    });
+    expect(markdownResult).toMatchObject({
+      exitCode: 0,
+      response: { ok: true, data: { format: "md", reportVersion: 1 } },
+    });
+    expect(report).toMatchObject({ reportVersion: 1, brand: "ALU" });
+    expect(markdown).toContain(String(report.bomHash));
+    expect(markdown).toContain("当前材料清单只包含型材切料");
+  });
+
+  it("requires the packaged application renderer for PDF export", async () => {
+    const directory = await makeTemporaryDirectory();
+    const projectPath = path.join(directory, "report.alu");
+    await runCli(["create", projectPath, "--template", "demo"], dependencies);
+
+    await expect(
+      runCli(["export", projectPath, "--output", path.join(directory, "report.pdf")], dependencies),
+    ).resolves.toMatchObject({
+      exitCode: 2,
+      response: { ok: false, error: { code: "report.pdf-unavailable" } },
+    });
+  });
+
   it("publishes both generated schemas by default", async () => {
     const result = await runCli(["schema"], dependencies);
     expect(successData(result.response)).toMatchObject({

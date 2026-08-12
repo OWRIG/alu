@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { spawn } from "node:child_process";
@@ -52,6 +52,7 @@ function assertSuccess(result, command) {
 
 const directory = await mkdtemp(path.join(os.tmpdir(), "alu-cli-smoke-"));
 const projectPath = path.join(directory, "skill-smoke.alu");
+const handoffPath = path.join(directory, "skill-smoke.md");
 try {
   assertSuccess(await run(["create", projectPath, "--template", "demo"]), "create");
   const read = assertSuccess(await run(["read", projectPath]), "read");
@@ -77,6 +78,14 @@ try {
   const reopened = assertSuccess(await run(["read", projectPath]), "read");
   if (reopened.evaluatedParameters.frameOuterWidth !== 2330) {
     throw new Error("readback did not observe the expected derived width");
+  }
+  const exported = assertSuccess(
+    await run(["export", projectPath, "--output", handoffPath, "--target", "order-draft"]),
+    "export",
+  );
+  const handoff = await readFile(handoffPath, "utf8");
+  if (exported.reportVersion !== 1 || !handoff.includes(exported.bomHash)) {
+    throw new Error("export did not produce the versioned Markdown handoff");
   }
   process.stdout.write("CLI skill smoke: OK\n");
 } finally {

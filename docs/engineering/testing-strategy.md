@@ -19,7 +19,7 @@
 - 命令 schema 拒绝旧 revision、非法 ID 和越界数量。
 - 命令拒绝返回稳定错误码与 JSON Pointer；批量任一条失败，整批不落地。
 - 已知 `structuralSizing` 扩展校验版本、梁/参数引用、梁数、候选唯一性和接口体系；保存重开后研究输入完全一致。
-- P4 若实现 CLI，必须增加同一初始 designHash/命令批与 UI 内核结果一致的契约测试；当前不把草案当作现有入口。
+- CLI 对同一初始 designHash 与命令批保持 UI 内核结果一致；交付 JSON、Markdown 与 PDF 必须共享 reportVersion、BOM hash、finding 和边界。
 
 ### L1 领域规则
 
@@ -106,6 +106,8 @@ E2E 每次使用独立临时 `userData`，不得污染真实零件库和最近�
 | `bom.manual-and-adjustments`                                                       | `src/domain/bom/__tests__/adjustments.test.ts`                                            |
 | `catalog.custom-parts`                                                             | catalog parser/service integration test                                                   |
 | `agent.versioned-commands`、`agent.headless-cli-and-skill`                         | P4 command/CLI contract + Skill smoke                                                     |
+| `distribution.packaged-headless-cli`、`distribution.codex-integration-installer`   | installer unit tests + package content check + packaged launcher smoke                    |
+| `agent.project-handoff`                                                            | report model tests + CLI export contract + packaged PDF render smoke                      |
 
 ## 自动化门禁
 

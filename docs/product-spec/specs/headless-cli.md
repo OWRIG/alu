@@ -2,7 +2,7 @@
 
 ## 当前行为
 
-`alu` 是 Electron 无关的单文件 Node.js CLI。它与桌面编辑器复用同一份工程 schema、领域命令、参数求值、BOM、规则和原子文件模块，不建立第二套业务 API。
+`alu` 核心是 Electron 无关的单文件 Node.js CLI。已安装的 `ALU.app` 通过 `--cli` 暴露同一入口，并只为 PDF 增加 Electron 打印适配；领域协议、报告模型和 Markdown 渲染仍共用，不建立第二套业务 API。
 
 | 命令            | 行为                                                         |
 | --------------- | ------------------------------------------------------------ |
@@ -11,6 +11,7 @@
 | `validate FILE` | 按 `edit`、`order-draft` 或 `order-ready` 判断是否可继续     |
 | `dry-run FILE`  | 校验命令批并返回实体、参数、BOM、规则差异，不写文件          |
 | `apply FILE`    | 在文件锁内重读、校验 revision/designHash、整批执行并原子替换 |
+| `export FILE`   | 生成 versioned report JSON，并输出 JSON、Markdown 或品牌 PDF |
 | `schema`        | 从 Zod 生成工程/命令 JSON Schema，并返回内置型材 snapshot    |
 
 所有调用只向 stdout 写一个 JSON 对象。成功形状为 `{ ok: true, command, data }`；失败形状为 `{ ok: false, command, error }`。`error` 至少包含稳定 `code` 与 `message`，可附带 JSON Pointer、失败的 `commandIndex`、实体 ID 和修复建议。
@@ -27,6 +28,12 @@
 `dry-run` 与 `apply` 调用同一个 `applyCommandEnvelope`。任一命令失败时整批不写入；同 revision 但设计内容漂移也以 `design.conflict` 拒绝。`commandId` 只做请求关联，不持久化去重。响应丢失后应重新读取并比较结果，不能盲目重复或强制覆盖。
 
 CLI 与桌面端共用 `<project>.alu.lock`。锁记录 PID、时间和随机 token。活锁拒绝并发写；死进程遗留锁返回 `project.stale-lock`，不会用有竞态的自动删除冒险放进第二个写入者。调用方确认 PID 已退出后才能删除该明确锁文件。桌面端保存已有工程还会校验打开时的 fileHash，外部写入后拒绝静默覆盖并要求重新打开。
+
+## 工程交付
+
+`alu export` 先生成 `reportVersion: 1` 的标准 JSON，包含工程身份、目标校验状态、参数尺寸链、型材材料与切料、梁选型摘要、finding 和能力边界。JSON、Markdown 与 PDF 都消费这份模型；PDF 使用随 Skill 分发的 ALU 标识和应用内打印适配。
+
+默认格式按输出扩展名推断：`.json`、`.pdf`，其他扩展名默认 Markdown。调用方必须提供 `--output`，且输出路径不能与源 `.alu` 相同。独立 Node CLI 支持 JSON/Markdown；PDF 必须通过已安装应用的 Skill 启动器执行。
 
 ## 退出码
 
@@ -53,3 +60,5 @@ CLI 与桌面端共用 `<project>.alu.lock`。锁记录 PID、时间和随机 to
 | `C-cli-shared-file-lock`           | 活锁拒绝并发写；死进程遗留锁明确报错且不自动删除                |
 | `C-agent-skill-smoke`              | create → read → dry-run → apply → readback 在构建产物上执行通过 |
 | `C-desktop-external-save-conflict` | CLI 修改后，桌面端旧 fileHash 保存被拒绝                        |
+| `C-handoff-versioned-json`         | JSON、Markdown 与 PDF 共用 reportVersion 1 和相同 BOM/finding   |
+| `C-handoff-branded-pdf`            | 真实 ALU.app 输出带标识、中文表格、边界和页码的 A4 PDF          |
