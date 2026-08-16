@@ -42,8 +42,8 @@ ALU 当前能修改内置样例，却不能创建输入参数或派生尺寸；�
 ### CHANGED `structure.open-study-schema`
 
 - `scope`、接口体系和假设 ID 改为开放稳定 ID；所需接口体系允许为空。
-- 构造证据允许为空，证据 ID、平台与 note ID 不再绑定小红书或四条内置记录。
-- 默认样例仍可保留已有现场资料，但它们不再是新研究的 schema 门槛。
+- 构造证据允许为空，来源字段不再绑定任何内置记录。
+- 默认样例可以保留项目内的构造资料，但它们不再是新研究的 schema 门槛。
 
 ### CHANGED `rules.no-purpose-heuristics`
 

@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/OWRIG/alu"><img src="https://img.shields.io/github/stars/OWRIG/alu?style=flat&amp;label=%E2%98%85&amp;color=4EA7FF" alt="GitHub stars" /></a>
   <a href="https://github.com/OWRIG/alu/releases"><img src="https://img.shields.io/github/v/release/OWRIG/alu?include_prereleases&amp;sort=semver&amp;label=release&amp;color=4EA7FF" alt="Latest release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-4EA7FF?style=flat" alt="License: PolyForm Noncommercial 1.0.0" /></a>
   <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-15191E?style=flat" alt="Platform: macOS Apple Silicon" />
   <img src="https://img.shields.io/badge/status-alpha-F2A65A?style=flat" alt="Status: alpha" />
 </p>
@@ -188,7 +189,7 @@ pnpm build:cli
 pnpm cli -- help
 ```
 
-资料来源、2026 小红书案例蒸馏与厂家核对边界见 [2026 铝型材设计知识梳理](docs/research/aluminum-extrusion-field-guide-2026.md)。
+厂家资料、计算依据与使用边界见 [2026 铝型材设计知识梳理](docs/research/aluminum-extrusion-field-guide-2026.md)。
 
 ## 当前边界
 
@@ -196,6 +197,16 @@ pnpm cli -- help
 - 切料清单不含连接件、加工、紧固件、脚轮、板材和附件，不能直接下单。
 - 梁结果只覆盖理想简支挠度。节点刚度、许用应力、侧摆、倾覆、冲击、疲劳和实物验证尚未覆盖。
 - 拖拽吸附、完整采购 BOM、自定义目录与 live attach 仍在后续路线图中。
+
+## 许可与内测状态
+
+ALU 仍处于 alpha 内测和持续打磨阶段，源码按 [PolyForm Noncommercial License 1.0.0](LICENSE) 提供：
+
+- 可以为个人学习、研究、实验、兴趣项目等非商业目的使用、修改和分发，包括二次开发。
+- 分发原版或衍生版本时，必须保留许可证及其中的 `Required Notice`，明确注明 ALU 并附上项目地址。
+- 商业使用必须事先获得版权所有者的另行书面授权。
+
+由于限制商业使用，ALU 属于 source-available 项目，不是 OSI 定义的开源软件。商业授权请通过 GitHub 联系 OWRIG。
 
 ## 开发与文档
 

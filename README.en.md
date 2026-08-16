@@ -5,6 +5,7 @@
 <p align="center">
   <a href="https://github.com/OWRIG/alu"><img src="https://img.shields.io/github/stars/OWRIG/alu?style=flat&amp;label=%E2%98%85&amp;color=4EA7FF" alt="GitHub stars" /></a>
   <a href="https://github.com/OWRIG/alu/releases"><img src="https://img.shields.io/github/v/release/OWRIG/alu?include_prereleases&amp;sort=semver&amp;label=release&amp;color=4EA7FF" alt="Latest release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-4EA7FF?style=flat" alt="License: PolyForm Noncommercial 1.0.0" /></a>
   <img src="https://img.shields.io/badge/macOS-Apple%20Silicon-15191E?style=flat" alt="Platform: macOS Apple Silicon" />
   <img src="https://img.shields.io/badge/status-alpha-F2A65A?style=flat" alt="Status: alpha" />
 </p>
@@ -180,7 +181,7 @@ pnpm build:cli
 pnpm cli -- help
 ```
 
-See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/aluminum-extrusion-field-guide-2026.md) for the current vendor sources, distilled Xiaohongshu cases, and evidence boundaries.
+See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/aluminum-extrusion-field-guide-2026.md) for current vendor sources, calculation references, and evidence boundaries.
 
 ## Current boundaries
 
@@ -188,6 +189,16 @@ See the Chinese-first [2026 aluminum-extrusion field guide](docs/research/alumin
 - The cut list excludes connectors, machining, fasteners, casters, panels, and accessories. It is not order-ready.
 - Beam results cover ideal simply supported deflection only. Joint stiffness, allowable stress, sway, tipping, impact, fatigue, and physical validation remain unresolved.
 - Dragging, snapping, complete procurement BOMs, custom catalogs, and live attach remain roadmap work.
+
+## License and alpha status
+
+ALU remains in alpha preview and active development. Its source is available under the [PolyForm Noncommercial License 1.0.0](LICENSE):
+
+- You may use, modify, and redistribute it for noncommercial purposes, including personal study, research, experimentation, and hobby projects.
+- Any original or derivative distribution must retain the license and its `Required Notice`, credit ALU, and link to this repository.
+- Commercial use requires separate prior written permission from the copyright holder.
+
+Because commercial use is restricted, ALU is source-available rather than open-source software under the OSI definition. Contact OWRIG through GitHub for commercial licensing.
 
 ## Development and docs
 
