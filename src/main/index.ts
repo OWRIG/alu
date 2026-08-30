@@ -238,6 +238,8 @@ function startDesktop(): void {
       launchFilePath: commandLineProjectPath(),
       trustedRendererUrl,
       getLocale,
+      renderPdf: renderReportPdf,
+      reportLogoDataUrl,
     });
 
     const createApplicationWindow = () => {

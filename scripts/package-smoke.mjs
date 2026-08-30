@@ -181,17 +181,17 @@ try {
 
   await expect(page.getByText("设定约束", { exact: true })).toBeVisible();
   await expect.poll(() => page.locator("html").getAttribute("lang")).toBe("zh-CN");
-  await page.getByTestId("language-menu").click();
+  await page.getByTestId("overflow-menu").click();
   await page.getByTestId("locale-en-US").click();
   await expect(page.getByText("Set constraints", { exact: true })).toBeVisible();
 
   const widthInput = page.getByTestId("param-input-obstacleOuterWidth");
   await widthInput.fill("2200");
   await widthInput.press("Enter");
-  await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,330");
-  await expect(page.getByTestId("derived-tabletopWidth")).toContainText("2,246");
+  await expect(page.getByTestId("derived-frameOuterWidth")).toContainText("2,300");
+  await expect(page.getByTestId("derived-tabletopWidth")).toContainText("2,230");
   await page.getByTestId("tab-bom").click();
-  await expect(page.getByTestId("bom-table")).toContainText("2,330 mm");
+  await expect(page.getByTestId("bom-table")).toContainText("2,300 mm");
 
   await page.getByTestId("save-project").click();
   await expect(page.getByText("Saved package-smoke.alu")).toBeVisible();
@@ -203,7 +203,7 @@ try {
 
   await stop(running);
   running = await launch(savePath);
-  await expect(running.page.getByTestId("derived-frameOuterWidth")).toContainText("2,330");
+  await expect(running.page.getByTestId("derived-frameOuterWidth")).toContainText("2,300");
   await expect(running.page.getByText("package-smoke.alu", { exact: true })).toBeVisible();
   if (running.rendererErrors.length > 0) {
     throw new Error(`Renderer errors after reopen: ${running.rendererErrors.join("; ")}`);

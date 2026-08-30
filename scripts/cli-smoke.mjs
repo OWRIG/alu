@@ -76,7 +76,7 @@ try {
     throw new Error("apply did not advance exactly one revision");
   }
   const reopened = assertSuccess(await run(["read", projectPath]), "read");
-  if (reopened.evaluatedParameters.frameOuterWidth !== 2330) {
+  if (reopened.evaluatedParameters.frameOuterWidth !== 2300) {
     throw new Error("readback did not observe the expected derived width");
   }
   const exported = assertSuccess(

@@ -1,7 +1,7 @@
 interface:
   display_name: "Design with ALU"
-  short_description: "Design, validate, and export aluminum frames"
+  short_description: "Design and review aluminum frames safely"
   icon_small: "./assets/alu-mark.svg"
   icon_large: "./assets/alu-mark.svg"
   brand_color: "#1688E8"
-  default_prompt: "Use $design-with-alu to design or inspect this aluminum-extrusion project, validate it, and export the final handoff as Markdown by default."
+  default_prompt: "Use $design-with-alu to design or inspect this aluminum-extrusion project, keep artifacts in review state, and ask before any formal release."

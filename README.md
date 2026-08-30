@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="build/icon.svg" alt="ALU" width="64" valign="middle" /> ALU
+  <img src="build/icon.png" alt="ALU" width="64" valign="middle" /> ALU
 </h1>
 
 <p align="center">
@@ -126,11 +126,11 @@ pnpm dev
 
 内置示例使用通用障碍物包络，不把某一种家具写进产品模型：
 
-1. 把“障碍物最外沿宽”改为 `2200 mm`，左右动态余量各保留 `25 mm`。
-2. ALU 得到 `2250 mm` 结构内净宽、`2330 mm` 框架外宽，以及 `2246 × 416 × 18 mm` 名义平嵌板尺寸。
-3. 选定脚轮后填写实际安装总高；ALU 保持 `750 mm` 完成面不变并重算立柱切长。
-4. 在“选型”页核对 `12 kg` 台面、`30 kg` 均布与 `15 kg` 集中载荷，检查 7 个具体候选的推导与排除原因。
-5. 确认 `NFSL8-4080` 后点击“应用到模型与下料”，再核对 3D、切料、未决检查并保存 `.alu`。
+1. 把“障碍物最外沿宽”改为 `2200 mm`，左右动态余量各保留 `20 mm`。
+2. ALU 得到 `2240 mm` 结构内净宽、`2300 mm` 顶框外宽，以及 `2230 × 390 × 18 mm` 名义平嵌板尺寸。
+3. 默认竖向链按 `113 + 30 + 600 + 90 = 833 mm` 建模；其中脚轮与连接板安装总高 `113 mm` 必须用实物复测值替换。
+4. 在“选型”页核对 `12 kg` 台面、`15 kg` 均布与 `10 kg` 集中载荷，检查 11 个具体候选的推导与排除原因。
+5. 确认 `TXCK-H6-J3090` 后点击“应用到模型与下料”，再核对 3D、`2200 / 600 / 400 mm` 整尺切料、未决检查并保存 `.alu`。
 
 完整步骤见[参数化跨障碍框架图文示例](docs/examples/parametric-clearance-frame.zh-CN.md)。
 
@@ -173,13 +173,14 @@ alu schema command
 alu dry-run frame.alu --input command.json
 alu apply frame.alu --input command.json
 alu validate frame.alu --target order-draft
-alu export frame.alu --output frame-handoff.md --format md --target order-draft
-alu export frame.alu --output frame-handoff.pdf --format pdf --target order-draft
+alu validate frame.alu --target order-ready
+# 人工确认当前 revision 和 designHash 后，才可正式导出：
+alu export frame.alu --output frame-r3-handoff.md --format md --target order-ready
 ```
 
 `read` 返回当前 `revision`、`designHash`、工程、尺寸链、BOM 和检查结果。命令信封必须带上读取时的 `expectedProjectRevision` 与 `expectedDesignHash`；先 `dry-run`，确认 diff 后再 `apply`。所有命令状态都是单行 JSON，失败有稳定错误码和退出码。不要手改 `.alu`。
 
-设计完成后，ALU 先生成 `reportVersion: 1` 的标准交付 JSON，再从同一份数据输出 Markdown 或带 ALU 标识的 A4 PDF。默认使用 Markdown；PDF 按需生成。当前材料清单只包含型材切料，不会猜测连接件、加工、紧固件、脚轮、板材或附件。
+设计过程中默认只保留 `.alu` 和界面预览；如明确需要评审文件，应标注“评审稿 / 不可下单”。`order-ready` 通过只是自动校验，不等于人工批准。只有人明确确认当前 revision 与 design hash 已冻结，才从同一份 `reportVersion: 1` 数据正式输出 Markdown、JSON 或带 ALU 标识的 A4 PDF；之后任何工程修改都会使该确认失效。当前材料清单只包含型材切料，不会猜测连接件、加工、紧固件、脚轮、板材或附件。
 
 从源码使用 CLI 需要 Node.js 22+：
 

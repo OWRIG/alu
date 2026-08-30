@@ -1,13 +1,12 @@
 import {
   Check,
   ChevronDown,
+  FileDown,
   FilePlus2,
-  FolderClock,
   FolderOpen,
-  Languages,
+  MoreHorizontal,
   Redo2,
   Save,
-  SaveAll,
   Undo2,
 } from "lucide-react";
 
@@ -40,6 +39,7 @@ export function TopToolbar() {
   const openRecent = useProjectStore((state) => state.openRecent);
   const save = useProjectStore((state) => state.save);
   const saveAs = useProjectStore((state) => state.saveAs);
+  const exportProject = useProjectStore((state) => state.exportProject);
   const undo = useProjectStore((state) => state.undo);
   const redo = useProjectStore((state) => state.redo);
 
@@ -100,28 +100,25 @@ export function TopToolbar() {
           </div>
         </details>
 
-        <button
-          className="tool-button"
-          data-testid="open-project"
-          type="button"
-          disabled={busy}
-          onClick={() => {
-            if (canReplaceProject()) void open();
-          }}
-        >
-          <FolderOpen size={15} />
-          <span>{t("toolbar.open")}</span>
-        </button>
-
         <details className="menu-popover">
-          <summary
-            className="icon-button"
-            aria-label={t("toolbar.recent")}
-            title={t("toolbar.recent")}
-          >
-            <FolderClock size={16} />
+          <summary className="tool-button" data-testid="open-project-menu">
+            <FolderOpen size={15} />
+            <span>{t("toolbar.open")}</span>
+            <ChevronDown size={13} />
           </summary>
           <div className="popover-panel popover-panel--wide">
+            <button
+              type="button"
+              data-testid="open-project"
+              disabled={busy}
+              onClick={(event) => {
+                if (canReplaceProject()) void open();
+                closeMenu(event.currentTarget);
+              }}
+            >
+              <span>{t("toolbar.open")}</span>
+              <small>⌘O</small>
+            </button>
             <div className="popover-title">{t("toolbar.recent")}</div>
             {recent.length === 0 ? (
               <div className="popover-empty">{t("toolbar.recentEmpty")}</div>
@@ -155,16 +152,51 @@ export function TopToolbar() {
           <Save size={15} />
           <span>{t("toolbar.save")}</span>
         </button>
-        <button
-          className="icon-button"
-          type="button"
-          title={t("toolbar.saveAs")}
-          aria-label={t("toolbar.saveAs")}
-          disabled={busy}
-          onClick={() => void saveAs()}
-        >
-          <SaveAll size={16} />
-        </button>
+
+        <details className="menu-popover">
+          <summary
+            className="tool-button"
+            data-testid="export-project"
+            aria-label={t("toolbar.exportProject")}
+          >
+            <FileDown size={15} />
+            <span>{t("toolbar.export")}</span>
+            <ChevronDown size={13} />
+          </summary>
+          <div className="popover-panel popover-panel--wide">
+            {(["md", "json", "pdf"] as const).map((format) => (
+              <button
+                key={format}
+                type="button"
+                data-testid={`export-${format}`}
+                disabled={busy}
+                onClick={(event) => {
+                  void exportProject(format);
+                  closeMenu(event.currentTarget);
+                }}
+              >
+                <span>
+                  {t(
+                    format === "md"
+                      ? "toolbar.exportMd"
+                      : format === "json"
+                        ? "toolbar.exportJson"
+                        : "toolbar.exportPdf",
+                  )}
+                </span>
+                <small>
+                  {t(
+                    format === "md"
+                      ? "toolbar.exportMdDescription"
+                      : format === "json"
+                        ? "toolbar.exportJsonDescription"
+                        : "toolbar.exportPdfDescription",
+                  )}
+                </small>
+              </button>
+            ))}
+          </div>
+        </details>
 
         <span className="toolbar-divider" />
 
@@ -193,16 +225,30 @@ export function TopToolbar() {
 
         <span className="toolbar-divider" />
 
-        <details className="menu-popover language-menu">
+        <span className="toolbar-divider" />
+
+        <details className="menu-popover">
           <summary
             className="icon-button"
-            data-testid="language-menu"
-            aria-label={t("toolbar.language")}
-            title={t("toolbar.language")}
+            data-testid="overflow-menu"
+            aria-label={t("toolbar.more")}
+            title={t("toolbar.more")}
           >
-            <Languages size={16} />
+            <MoreHorizontal size={16} />
           </summary>
-          <div className="popover-panel popover-panel--language">
+          <div className="popover-panel popover-panel--wide">
+            <button
+              type="button"
+              data-testid="save-as"
+              disabled={busy}
+              onClick={(event) => {
+                void saveAs();
+                closeMenu(event.currentTarget);
+              }}
+            >
+              <span>{t("toolbar.saveAs")}</span>
+              <small>⇧⌘S</small>
+            </button>
             <div className="popover-title">{t("toolbar.language")}</div>
             {supportedLocales.map((item) => (
               <button
@@ -221,11 +267,6 @@ export function TopToolbar() {
             ))}
           </div>
         </details>
-      </div>
-
-      <div className="concept-flag">
-        <span />
-        {t("toolbar.conceptOnly")}
       </div>
     </header>
   );

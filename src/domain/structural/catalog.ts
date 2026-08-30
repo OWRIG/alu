@@ -4,8 +4,77 @@ const MISUMI_3030_SOURCE = "https://www.misumi.com.cn/pdf/fa/2018/p2127.pdf";
 const MISUMI_4040_SOURCE = "https://www.misumi.com.cn/pdf/fa/2018/p2137.pdf";
 const MISUMI_4080_SOURCE = "https://www.misumi.com.cn/pdf/fa/2018/p2139.pdf";
 const MISUMI_EURO_30_SOURCE = "https://www.misumi.com.cn/pdf/vona/P3_202005_04.pdf";
+const JLCFA_EURO_30_SOURCE = "https://static.jlcfa.com/Serial/T01/TXCK/482732153849024513.pdf";
 
-export const DEMO_BEAM_CANDIDATES: BeamCandidate[] = [
+export const STANDARD_BEAM_CANDIDATES: BeamCandidate[] = [
+  {
+    id: "jlcfa.txck-h6-j3030",
+    vendor: "JLCFA",
+    sku: "TXCK-H6-J3030",
+    material: "A6063-T5",
+    sectionWidthMm: 30,
+    sectionHeightMm: 30,
+    massKgPerM: 0.77,
+    inertiaMm4: 2.618e4,
+    orientation: "symmetric",
+    compatibilityGroup: "jlcfa-euro-30-slot-8",
+    source: {
+      title: "JLCFA Euro 30-series TXCK profile catalog",
+      url: JLCFA_EURO_30_SOURCE,
+      catalogPage: "PDF p.4, J3030 row",
+    },
+  },
+  {
+    id: "jlcfa.txck-h6-j3060",
+    vendor: "JLCFA",
+    sku: "TXCK-H6-J3060",
+    material: "A6063-T5",
+    sectionWidthMm: 30,
+    sectionHeightMm: 60,
+    massKgPerM: 1.37,
+    inertiaMm4: 17.944e4,
+    orientation: "strong-axis-vertical",
+    compatibilityGroup: "jlcfa-euro-30-slot-8",
+    source: {
+      title: "JLCFA Euro 30-series TXCK profile catalog",
+      url: JLCFA_EURO_30_SOURCE,
+      catalogPage: "PDF p.4, J3060 row",
+    },
+  },
+  {
+    id: "jlcfa.txck-h6-j3090",
+    vendor: "JLCFA",
+    sku: "TXCK-H6-J3090",
+    material: "A6063-T5",
+    sectionWidthMm: 30,
+    sectionHeightMm: 90,
+    massKgPerM: 1.97,
+    inertiaMm4: 55.694e4,
+    orientation: "strong-axis-vertical",
+    compatibilityGroup: "jlcfa-euro-30-slot-8",
+    source: {
+      title: "JLCFA Euro 30-series TXCK profile catalog",
+      url: JLCFA_EURO_30_SOURCE,
+      catalogPage: "PDF p.4, J3090 row",
+    },
+  },
+  {
+    id: "jlcfa.txck-h6-3090",
+    vendor: "JLCFA",
+    sku: "TXCK-H6-3090",
+    material: "A6063-T5",
+    sectionWidthMm: 30,
+    sectionHeightMm: 90,
+    massKgPerM: 2.19,
+    inertiaMm4: 61.01e4,
+    orientation: "strong-axis-vertical",
+    compatibilityGroup: "jlcfa-euro-30-slot-8",
+    source: {
+      title: "JLCFA Euro 30-series TXCK profile catalog",
+      url: JLCFA_EURO_30_SOURCE,
+      catalogPage: "PDF p.4, 3090 row",
+    },
+  },
   {
     id: "misumi.nefs6-3030",
     vendor: "MISUMI",
@@ -127,6 +196,65 @@ export const DEMO_BEAM_CANDIDATES: BeamCandidate[] = [
   },
 ];
 
+export const STANDARD_CALCULATION_SOURCES = [
+  {
+    id: "misumi.allowable-load-1",
+    title: "MISUMI allowable-load calculation and L/1000 criterion",
+    url: "https://cn.c.misumi.com.cn/book/sh2_2018_msm_fa_01/pdf/2146.pdf",
+  },
+  {
+    id: "misumi.allowable-load-formulas",
+    title: "MISUMI simply supported beam formulas and elastic modulus",
+    url: "https://cn.c.misumi.com.cn/book/sh2_2018_msm_fa_01/pdf/2147.pdf",
+  },
+] as const;
+
+export const STANDARD_ASSUMPTION_IDS = [
+  "ideal-simply-supported",
+  "linear-elastic",
+  "no-panel-composite-action",
+  "connections-excluded",
+] as const;
+
+export type StructuralSizingStudyInput = {
+  beamEntityIds: string[];
+  effectiveSpanParam: string;
+  maximumSectionHeightParam: string;
+  requiredCompatibilityGroup: string | null;
+};
+
+/**
+ * Builds a study from the four decisions a user has to make. Everything else —
+ * candidate catalog, gravity, elastic modulus, deflection criterion and load
+ * shares — comes from the shared standard set so the command stays small.
+ * Loads start at zero and are edited afterwards in the sizing panel.
+ */
+export function createStructuralSizingStudy(input: StructuralSizingStudyInput) {
+  return StructuralSizingStudySchema.parse({
+    version: 1,
+    scope: "user-defined-main-beams",
+    beamEntityIds: input.beamEntityIds,
+    effectiveSpanParam: input.effectiveSpanParam,
+    maximumSectionHeightParam: input.maximumSectionHeightParam,
+    requiredCompatibilityGroup: input.requiredCompatibilityGroup,
+    beamCount: input.beamEntityIds.length,
+    gravityNPerKg: 9.80665,
+    elasticModulusNPerMm2: 69_972,
+    deflectionLimitRatio: 1_000,
+    loads: {
+      panelMassKg: 0,
+      distributedPayloadKg: 0,
+      centerPointPayloadKg: 0,
+      distributedLoadSharePerBeam: 1 / input.beamEntityIds.length,
+      centerPointLoadSharePerBeam: 1,
+    },
+    candidates: STANDARD_BEAM_CANDIDATES,
+    assumptionIds: [...STANDARD_ASSUMPTION_IDS],
+    calculationSources: STANDARD_CALCULATION_SOURCES.map((source) => ({ ...source })),
+    constructionEvidence: [],
+  });
+}
+
 export function createDemoStructuralSizingStudy() {
   return StructuralSizingStudySchema.parse({
     version: 1,
@@ -136,37 +264,21 @@ export function createDemoStructuralSizingStudy() {
     maximumSectionHeightParam: "topBeamMaximumHeight",
     appliedSectionWidthParam: "topBeamWidth",
     appliedSectionHeightParam: "topFrameHeight",
-    requiredCompatibilityGroup: "misumi-jp-series-8",
+    requiredCompatibilityGroup: "jlcfa-euro-30-slot-8",
     beamCount: 2,
     gravityNPerKg: 9.80665,
     elasticModulusNPerMm2: 69_972,
     deflectionLimitRatio: 1_000,
     loads: {
       panelMassKg: 12,
-      distributedPayloadKg: 30,
-      centerPointPayloadKg: 15,
+      distributedPayloadKg: 15,
+      centerPointPayloadKg: 10,
       distributedLoadSharePerBeam: 0.5,
       centerPointLoadSharePerBeam: 1,
     },
-    candidates: DEMO_BEAM_CANDIDATES,
-    assumptionIds: [
-      "ideal-simply-supported",
-      "linear-elastic",
-      "no-panel-composite-action",
-      "connections-excluded",
-    ],
-    calculationSources: [
-      {
-        id: "misumi.allowable-load-1",
-        title: "MISUMI allowable-load calculation and L/1000 criterion",
-        url: "https://cn.c.misumi.com.cn/book/sh2_2018_msm_fa_01/pdf/2146.pdf",
-      },
-      {
-        id: "misumi.allowable-load-formulas",
-        title: "MISUMI simply supported beam formulas and elastic modulus",
-        url: "https://cn.c.misumi.com.cn/book/sh2_2018_msm_fa_01/pdf/2147.pdf",
-      },
-    ],
+    candidates: STANDARD_BEAM_CANDIDATES,
+    assumptionIds: [...STANDARD_ASSUMPTION_IDS],
+    calculationSources: STANDARD_CALCULATION_SOURCES.map((source) => ({ ...source })),
     constructionEvidence: [
       {
         id: "flush-inset-panel",

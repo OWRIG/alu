@@ -24,8 +24,14 @@ import type {
   ProfileInstance,
   ProjectDocumentV1,
 } from "../../../domain/project/schema";
+import type { Joint, ProjectContextPatch } from "../../../domain/project/schema";
 import type { StructuralLoadPatch } from "../../../domain/structural/schema";
-import type { OpenedProject, RecentProject, SavedProject } from "../../../shared/ipc/project";
+import type {
+  ExportFormat,
+  OpenedProject,
+  RecentProject,
+  SavedProject,
+} from "../../../shared/ipc/project";
 import type { MessageKey, MessageValues } from "../i18n/messages";
 
 export type UiError = {
@@ -58,6 +64,19 @@ type ProjectStore = {
   removeParameter: (id: string) => boolean;
   setStructuralLoads: (patch: StructuralLoadPatch) => boolean;
   applyStructuralSelection: () => boolean;
+  createStructuralStudy: (input: {
+    beamEntityIds: string[];
+    effectiveSpanParam: string;
+    maximumSectionHeightParam: string;
+    requiredCompatibilityGroup: string | null;
+  }) => boolean;
+  setProfileDefinition: (entityId: string, definitionId: string) => boolean;
+  setProjectContext: (patch: ProjectContextPatch) => boolean;
+  addJoint: (joint: Joint) => boolean;
+  removeJoint: (jointId: string) => boolean;
+  selectedJointId: string | null;
+  selectJoint: (jointId: string | null) => void;
+  exportProject: (format: ExportFormat) => Promise<boolean>;
   addProfile: () => boolean;
   updateProfile: (entityId: string, patch: UpdateProfilePatch) => boolean;
   removeEntity: (entityId: string) => boolean;
@@ -222,6 +241,45 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
   applyStructuralSelection() {
     return get().dispatch([{ type: "structural-sizing.selection.apply" }]);
+  },
+
+  createStructuralStudy(input) {
+    return get().dispatch([{ type: "structural-sizing.study.create", ...input }]);
+  },
+
+  setProfileDefinition(entityId, definitionId) {
+    const project = get().history.present;
+    const embedded = Object.values(project.embeddedParts).find(
+      (snapshot) => snapshot.definition.id === definitionId,
+    );
+    const generic = GENERIC_PROFILE_DEFINITIONS.find(
+      (definition) => definition.id === definitionId,
+    );
+    const definitionSnapshot = embedded ?? (generic ? snapshotDefinition(generic) : null);
+    if (!definitionSnapshot) return false;
+    return get().dispatch([{ type: "profile.set-definition", entityId, definitionSnapshot }]);
+  },
+
+  setProjectContext(patch) {
+    return get().dispatch([{ type: "context.set", patch }]);
+  },
+
+  selectedJointId: null,
+
+  selectJoint(jointId) {
+    set({ selectedJointId: jointId });
+  },
+
+  addJoint(joint) {
+    const added = get().dispatch([{ type: "joint.add", joint }]);
+    if (added) set({ selectedJointId: joint.id });
+    return added;
+  },
+
+  removeJoint(jointId) {
+    const removed = get().dispatch([{ type: "joint.remove", jointId }]);
+    if (removed && get().selectedJointId === jointId) set({ selectedJointId: null });
+    return removed;
   },
 
   addProfile() {
@@ -411,6 +469,23 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       const saved = response.data;
       set((state) => mergeSavedProject(state, saved));
       await get().refreshRecent();
+      return true;
+    } catch (error) {
+      set({ error: presentError(error) });
+      return false;
+    } finally {
+      set({ busy: false });
+    }
+  },
+
+  async exportProject(format) {
+    if (get().busy) return false;
+    set({ busy: true, error: null });
+    try {
+      const response = await window.alu.project.export(get().history.present, format);
+      if (!response.ok) throw new DomainError(response.error);
+      if (!response.data) return false;
+      set({ notice: { key: "notice.exported", values: { fileName: response.data.fileName } } });
       return true;
     } catch (error) {
       set({ error: presentError(error) });

@@ -8,7 +8,9 @@ export type NativeCopy = {
   discardChanges: string;
   openProject: string;
   saveProject: string;
+  exportProject: string;
   projectFile: string;
+  handoffFile: string;
   missingRecentProject: string;
   untitledProject: string;
   installCodexMenu: string;
@@ -32,7 +34,9 @@ const copy: Record<AppLocale, NativeCopy> = {
     discardChanges: "放弃修改",
     openProject: "打开 ALU 工程",
     saveProject: "保存 ALU 工程",
+    exportProject: "导出交付单",
     projectFile: "ALU 工程",
+    handoffFile: "ALU 交付单",
     missingRecentProject: "最近工程已移动或删除",
     untitledProject: "未命名工程",
     installCodexMenu: "安装 Codex 接入…",
@@ -54,7 +58,9 @@ const copy: Record<AppLocale, NativeCopy> = {
     discardChanges: "Discard changes",
     openProject: "Open ALU project",
     saveProject: "Save ALU project",
+    exportProject: "Export handoff",
     projectFile: "ALU project",
+    handoffFile: "ALU handoff",
     missingRecentProject: "The recent project was moved or deleted",
     untitledProject: "Untitled project",
     installCodexMenu: "Install Codex Integration…",

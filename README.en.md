@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="build/icon.svg" alt="ALU" width="64" valign="middle" /> ALU
+  <img src="build/icon.png" alt="ALU" width="64" valign="middle" /> ALU
 </h1>
 
 <p align="center">
@@ -118,11 +118,11 @@ pnpm dev
 
 The bundled example starts from a generic obstacle envelope instead of a furniture category:
 
-1. Set `Obstacle outer width` to `2200 mm` and keep `25 mm` working clearance on each side.
-2. ALU derives a `2250 mm` clear opening, a `2330 mm` outer frame, and a nominal `2246 × 416 × 18 mm` inset panel.
-3. Enter the measured caster installed height; ALU preserves the `750 mm` finished surface and recalculates upright cut length.
-4. In Sizing, review the `12 kg` panel, `30 kg` distributed, and `15 kg` point load plus the derivation and rejection reason for all seven candidates.
-5. Confirm `NFSL8-4080`, click **Apply to model and cut list**, then review 3D, cut groups, unresolved checks, and save the `.alu` project.
+1. Set `Obstacle outer width` to `2200 mm` and keep `20 mm` working clearance on each side.
+2. ALU derives a `2240 mm` clear opening, a `2300 mm` top-frame width, and a nominal `2230 × 390 × 18 mm` inset panel.
+3. The default vertical chain is `113 + 30 + 600 + 90 = 833 mm`; replace the provisional `113 mm` caster-and-adapter stack with a physical measurement.
+4. In Sizing, review the `12 kg` panel, `15 kg` distributed, and `10 kg` point load plus the derivation and rejection reason for all eleven candidates.
+5. Confirm `TXCK-H6-J3090`, click **Apply to model and cut list**, then review 3D, the `2200 / 600 / 400 mm` cut groups, unresolved checks, and save the `.alu` project.
 
 See the [illustrated parametric clearance-frame example](docs/examples/parametric-clearance-frame.md).
 
@@ -165,13 +165,14 @@ alu schema command
 alu dry-run frame.alu --input command.json
 alu apply frame.alu --input command.json
 alu validate frame.alu --target order-draft
-alu export frame.alu --output frame-handoff.md --format md --target order-draft
-alu export frame.alu --output frame-handoff.pdf --format pdf --target order-draft
+alu validate frame.alu --target order-ready
+# Export formally only after a human confirms the current revision and designHash:
+alu export frame.alu --output frame-r3-handoff.md --format md --target order-ready
 ```
 
 `read` returns the current revision, design hash, project, evaluated dimensions, BOM, and findings. A command envelope must carry the `expectedProjectRevision` and `expectedDesignHash` returned by that read. Run `dry-run` before `apply`. Every invocation emits one JSON line with stable error and exit codes. Do not hand-edit `.alu`.
 
-For the final handoff, ALU builds one `reportVersion: 1` JSON model and renders Markdown or a branded A4 PDF from the same data. Markdown is the default; PDF is optional. The current material list contains profile cuts only and never invents connectors, machining, fasteners, casters, panels, or accessories.
+During design, keep the `.alu` file and in-app preview by default; explicitly requested review files must say `review · not for ordering`. Passing `order-ready` is automated validation, not human approval. Only after a human confirms that the current revision and design hash are frozen may ALU render a formal Markdown, JSON, or branded A4 PDF from the same `reportVersion: 1` data. Any later project edit invalidates that confirmation. The current material list contains profile cuts only and never invents connectors, machining, fasteners, casters, panels, or accessories.
 
 The source CLI still requires Node.js 22+:
 

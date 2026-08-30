@@ -3,17 +3,23 @@ import {
   AlertTriangle,
   Boxes,
   CheckCircle2,
+  Drill,
   ClipboardList,
   Link2,
   Plus,
+  PanelRightClose,
   RefreshCw,
   ShieldAlert,
+  SlidersHorizontal,
   Calculator,
   Trash2,
   Unlink2,
 } from "lucide-react";
 
 import { deriveProfileBom } from "../../../domain/bom/derive";
+import { deriveHardware, deriveMachining } from "../../../domain/joints/machining";
+import type { HardwareItem, MachiningOp } from "../../../domain/joints/schema";
+import { GENERIC_PROFILE_DEFINITIONS } from "../../../domain/project/defaults";
 import { evaluateParameters } from "../../../domain/params/evaluate";
 import { partKey } from "../../../domain/project/parse";
 import { evaluateRules, type RuleFinding } from "../../../domain/rules/evaluate";
@@ -28,11 +34,14 @@ import {
 } from "../i18n/domain-copy";
 import { useI18n } from "../i18n/i18n";
 import type { Translator } from "../i18n/i18n";
+import type { MessageKey } from "../i18n/messages";
+import { useLayoutStore } from "../store/layout-store";
 import { selectCurrentProject, useProjectStore } from "../store/project-store";
 import { NumberField } from "./number-field";
+import { JointsPanel } from "./joints-panel";
 import { StructuralSizingPanel } from "./structural-sizing-panel";
 
-type InspectorTab = "profiles" | "bom" | "sizing" | "rules";
+type InspectorTab = "profiles" | "joints" | "bom" | "sizing" | "rules";
 
 function ProfileList() {
   const { t, formatNumber } = useI18n();
@@ -103,6 +112,7 @@ function ProfileEditor({ profile }: { profile: ProfileInstance }) {
   const setBinding = useProjectStore((state) => state.setBinding);
   const removeBinding = useProjectStore((state) => state.removeBinding);
   const resyncBinding = useProjectStore((state) => state.resyncBinding);
+  const setProfileDefinition = useProjectStore((state) => state.setProfileDefinition);
   const displayedPurpose = localizeProfilePurpose(profile.id, profile.purpose, t);
   const [purpose, setPurpose] = useState(displayedPurpose);
   const values = evaluateParameters(project.parameters);
@@ -111,9 +121,31 @@ function ProfileEditor({ profile }: { profile: ProfileInstance }) {
   );
   const expectedLength = lengthBinding ? values[lengthBinding.param] : undefined;
   const stale = expectedLength !== undefined && Math.abs(profile.lengthMm - expectedLength) > 0.005;
-  const definition =
-    project.embeddedParts[partKey(profile.definitionRef.partId, profile.definitionRef.revision)]
-      ?.definition;
+  // Built-in concept envelopes plus every definition this project already carries,
+  // so an applied vendor SKU stays selectable after the sizing study wrote it in.
+  const definitionOptions = (() => {
+    const byId = new Map<string, string>();
+    for (const generic of GENERIC_PROFILE_DEFINITIONS) {
+      byId.set(
+        generic.id,
+        `${localizeDefinitionName(generic.id, generic.name, t)} · ${t("definition.sectionSuffix", {
+          u: generic.section.envelopeUMm,
+          v: generic.section.envelopeVMm,
+        })}`,
+      );
+    }
+    for (const snapshot of Object.values(project.embeddedParts)) {
+      const embedded = snapshot.definition;
+      byId.set(
+        embedded.id,
+        `${localizeDefinitionName(embedded.id, embedded.name, t)} · ${t(
+          "definition.sectionSuffix",
+          { u: embedded.section.envelopeUMm, v: embedded.section.envelopeVMm },
+        )}`,
+      );
+    }
+    return [...byId].map(([id, label]) => ({ id, label }));
+  })();
 
   useEffect(() => setPurpose(displayedPurpose), [displayedPurpose, locale, profile.id]);
 
@@ -155,15 +187,21 @@ function ProfileEditor({ profile }: { profile: ProfileInstance }) {
         />
       </label>
 
-      <div className="property-field">
+      <label className="select-field">
         <span>{t("profile.definition")}</span>
-        <div className="read-only-value">
-          {definition
-            ? localizeDefinitionName(profile.definitionRef.partId, definition.name, t)
-            : profile.definitionRef.partId}
-          <small>{t("profile.revision", { revision: profile.definitionRef.revision })}</small>
-        </div>
-      </div>
+        <select
+          data-testid="profile-definition"
+          aria-label={t("profile.changeDefinition")}
+          value={profile.definitionRef.partId}
+          onChange={(event) => setProfileDefinition(profile.id, event.target.value)}
+        >
+          {definitionOptions.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <div className="property-grid property-grid--two">
         <label className="select-field">
@@ -295,13 +333,6 @@ function BomPanel() {
         <span>{t("cutList.groups", { count: bom.lines.length })}</span>
         <code>{bom.bomHash.slice(0, 8)}</code>
       </div>
-      <div className="bom-notice">
-        <ShieldAlert size={15} />
-        <div>
-          <strong>{t("cutList.title")}</strong>
-          <span>{t("cutList.warning")}</span>
-        </div>
-      </div>
       {bomDrift && (
         <div className="bom-drift" data-testid="bom-drift">
           <RefreshCw size={13} /> {t("cutList.recomputed")}
@@ -335,7 +366,92 @@ function BomPanel() {
           </div>
         )}
       </div>
+      <HardwareSection />
+      <MachiningSection ops={deriveMachining(project)} />
     </div>
+  );
+}
+
+const hardwareKeys: Record<HardwareItem, MessageKey> = {
+  "corner-bracket": "hardware.cornerBracket",
+  "hidden-connector": "hardware.hiddenConnector",
+  "t-nut": "hardware.tNut",
+  bolt: "hardware.bolt",
+};
+
+function MachiningSection({ ops }: { ops: MachiningOp[] }) {
+  const { t, formatNumber } = useI18n();
+  const project = useProjectStore(selectCurrentProject);
+  const byEntity = new Map<string, MachiningOp[]>();
+  for (const op of ops) {
+    byEntity.set(op.entityId, [...(byEntity.get(op.entityId) ?? []), op]);
+  }
+
+  return (
+    <section data-testid="machining-list">
+      <div className="inspector-section-bar">
+        <span>
+          <Drill size={13} /> {t("machining.title")}
+        </span>
+        <span>{t("machining.count", { count: ops.length })}</span>
+      </div>
+      {ops.length === 0 && <p className="sizing-inline-note">{t("machining.none")}</p>}
+      {[...byEntity.entries()].map(([entityId, entityOps]) => {
+        const profile = project.entities[entityId];
+        return (
+          <div className="machining-group" key={entityId}>
+            <strong>
+              {profile ? localizeProfilePurpose(profile.id, profile.purpose, t) : entityId}
+            </strong>
+            {entityOps.map((op, index) => (
+              <div className="machining-row" key={`${entityId}-${index}`}>
+                <span className={op.kind === "tap" ? "machining-tap" : "machining-through"}>
+                  {op.kind === "tap" ? t("machining.tap") : t("machining.throughHole")}
+                </span>
+                <span className="machining-spec">
+                  Ø{formatNumber(op.diameterMm, 1)}
+                  {op.depthMm === null
+                    ? ` · ${t("machining.depthThrough")}`
+                    : ` · ${formatNumber(op.depthMm, 0)} mm`}
+                </span>
+                <span className="machining-face">{op.face}</span>
+                <small>
+                  {t("machining.fromEndA", { value: formatNumber(op.offsetFromEndAMm) })}
+                </small>
+              </div>
+            ))}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
+function HardwareSection() {
+  const { t } = useI18n();
+  const project = useProjectStore(selectCurrentProject);
+  const lines = deriveHardware(project);
+
+  return (
+    <section data-testid="hardware-list">
+      <div className="inspector-section-bar">
+        <span>
+          <Link2 size={13} /> {t("hardware.title")}
+        </span>
+        <span>{t("hardware.count", { count: lines.length })}</span>
+      </div>
+      {lines.length === 0 && <p className="sizing-inline-note">{t("hardware.empty")}</p>}
+      {lines.map((line) => (
+        <div className="hardware-row" data-testid={`hardware-${line.item}`} key={line.aggregateKey}>
+          <div>
+            <strong>{t(hardwareKeys[line.item])}</strong>
+            <span>{line.specification}</span>
+            <small>{t("hardware.skuPending")}</small>
+          </div>
+          <strong>× {line.quantity}</strong>
+        </div>
+      ))}
+    </section>
   );
 }
 
@@ -345,6 +461,79 @@ function severityLabel(finding: RuleFinding, t: Translator) {
   return t("checks.info");
 }
 
+function ContextEditor() {
+  const { t } = useI18n();
+  const project = useProjectStore(selectCurrentProject);
+  const setProjectContext = useProjectStore((state) => state.setProjectContext);
+  const context = project.context;
+
+  return (
+    <section className="context-editor" data-testid="context-editor">
+      <div className="context-head">
+        <SlidersHorizontal size={13} />
+        <div>
+          <strong>{t("context.title")}</strong>
+          <small>{t("context.help")}</small>
+        </div>
+      </div>
+      <label className="select-field">
+        <span>{t("context.mobility")}</span>
+        <select
+          data-testid="context-mobility"
+          value={context.mobility}
+          onChange={(event) =>
+            setProjectContext({
+              mobility: event.target.value as typeof context.mobility,
+            })
+          }
+        >
+          <option value="unknown">{t("context.mobility.unknown")}</option>
+          <option value="static">{t("context.mobility.static")}</option>
+          <option value="casters">{t("context.mobility.casters")}</option>
+        </select>
+      </label>
+      <label className="select-field">
+        <span>{t("context.floor")}</span>
+        <select
+          data-testid="context-floor"
+          value={context.floor}
+          onChange={(event) =>
+            setProjectContext({ floor: event.target.value as typeof context.floor })
+          }
+        >
+          <option value="unknown">{t("context.floor.unknown")}</option>
+          <option value="wood">{t("context.floor.wood")}</option>
+          <option value="tile">{t("context.floor.tile")}</option>
+          <option value="carpet">{t("context.floor.carpet")}</option>
+          <option value="concrete">{t("context.floor.concrete")}</option>
+        </select>
+      </label>
+      {(
+        [
+          ["humanLoad", "context.humanLoad", "context-human-load"],
+          ["childAccess", "context.childAccess", "context-child-access"],
+        ] as const
+      ).map(([field, labelKey, testId]) => (
+        <label className="select-field" key={field}>
+          <span>{t(labelKey)}</span>
+          <select
+            data-testid={testId}
+            value={String(context[field])}
+            onChange={(event) => {
+              const raw = event.target.value;
+              setProjectContext({ [field]: raw === "unknown" ? "unknown" : raw === "true" });
+            }}
+          >
+            <option value="unknown">{t("context.unknown")}</option>
+            <option value="true">{t("context.yes")}</option>
+            <option value="false">{t("context.no")}</option>
+          </select>
+        </label>
+      ))}
+    </section>
+  );
+}
+
 function RulesPanel() {
   const { t } = useI18n();
   const project = useProjectStore(selectCurrentProject);
@@ -352,6 +541,7 @@ function RulesPanel() {
 
   return (
     <div className="inspector-scroll">
+      <ContextEditor />
       <div className="inspector-section-bar">
         <span>{t("checks.count", { count: findings.length })}</span>
         <span className={findings.some((item) => item.severity === "error") ? "bad" : "good"}>
@@ -415,6 +605,7 @@ export function InspectorPanel() {
   const project = useProjectStore(selectCurrentProject);
   const findings = evaluateRules(project);
   const [tab, setTab] = useState<InspectorTab>("profiles");
+  const toggleCollapsed = useLayoutStore((state) => state.toggleCollapsed);
 
   return (
     <aside className="side-panel inspector-panel">
@@ -429,6 +620,17 @@ export function InspectorPanel() {
         >
           <Boxes size={13} /> {t("inspector.profiles")}
           <span>{Object.keys(project.entities).length}</span>
+        </button>
+        <button
+          className={tab === "joints" ? "is-active" : ""}
+          data-testid="tab-joints"
+          type="button"
+          role="tab"
+          aria-selected={tab === "joints"}
+          onClick={() => setTab("joints")}
+        >
+          <Link2 size={13} /> {t("inspector.joints")}
+          <span>{Object.keys(project.joints ?? {}).length}</span>
         </button>
         <button
           className={tab === "bom" ? "is-active" : ""}
@@ -461,9 +663,20 @@ export function InspectorPanel() {
           <ShieldAlert size={13} /> {t("inspector.checks")}
           {findings.length > 0 && <span className="tab-alert">{findings.length}</span>}
         </button>
+        <button
+          className="inspector-collapse"
+          type="button"
+          aria-label={t("layout.collapseRight")}
+          title={t("layout.collapseRight")}
+          data-testid="collapse-right"
+          onClick={() => toggleCollapsed("right")}
+        >
+          <PanelRightClose size={13} />
+        </button>
       </div>
       <div className="inspector-content">
         {tab === "profiles" && <ProfileList />}
+        {tab === "joints" && <JointsPanel />}
         {tab === "bom" && <BomPanel />}
         {tab === "sizing" && <StructuralSizingPanel />}
         {tab === "rules" && <RulesPanel />}

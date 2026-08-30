@@ -1,8 +1,20 @@
-import { useMemo, useState } from "react";
-import { Canvas, type ThreeEvent } from "@react-three/fiber";
+import { useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, type ThreeEvent } from "@react-three/fiber";
 import { Edges, GizmoHelper, GizmoViewport, Grid, OrbitControls } from "@react-three/drei";
-import { Box, Focus, MousePointer2 } from "lucide-react";
+import { Vector3, type Mesh } from "three";
+import {
+  Box,
+  Drill,
+  Focus,
+  Link2,
+  MousePointer2,
+  PanelLeftOpen,
+  PanelRightOpen,
+  Scissors,
+} from "lucide-react";
 
+import { deriveMachining } from "../../../domain/joints/machining";
+import type { Face, MachiningOp } from "../../../domain/joints/schema";
 import { evaluateParameters } from "../../../domain/params/evaluate";
 import { partKey } from "../../../domain/project/parse";
 import type {
@@ -12,9 +24,13 @@ import type {
 } from "../../../domain/project/schema";
 import { localizeParameterLabel } from "../i18n/domain-copy";
 import { useI18n } from "../i18n/i18n";
+import { useLayoutStore } from "../store/layout-store";
 import { selectCurrentProject, useProjectStore } from "../store/project-store";
 
 const MM_TO_M = 0.001;
+
+/** Reused so the per-frame marker scaling allocates nothing. */
+const SCRATCH = new Vector3();
 
 type Dimensions = [number, number, number];
 type Position = [number, number, number];
@@ -85,6 +101,94 @@ function ProfileMesh({
         threshold={12}
         color={selected ? "#e4f2fd" : "#3a4045"}
         lineWidth={selected ? 1.5 : 0.7}
+      />
+    </mesh>
+  );
+}
+
+/** Outward normal of a world-axis face, in three.js space (Y is domain Z). */
+const FACE_NORMALS: Record<Face, Position> = {
+  "+x": [1, 0, 0],
+  "-x": [-1, 0, 0],
+  "+y": [0, 0, 1],
+  "-y": [0, 0, -1],
+  "+z": [0, 1, 0],
+  "-z": [0, -1, 0],
+};
+
+/**
+ * A hole marker sitting on the face it is drilled into. Tapped holes read as
+ * solid, through holes as open rings, so the two are told apart at a glance.
+ */
+function MachiningMarker({ op, dimmed }: { op: MachiningOp; dimmed: boolean }) {
+  const normal = FACE_NORMALS[op.face];
+  // Lift the disc off the surface so it does not z-fight with the profile.
+  const lift = 0.0015;
+  const position: Position = [
+    op.positionMm.x * MM_TO_M + normal[0] * lift,
+    op.positionMm.z * MM_TO_M + normal[1] * lift,
+    op.positionMm.y * MM_TO_M + normal[2] * lift,
+  ];
+  const radius = (op.diameterMm / 2) * MM_TO_M;
+  const rotation: Position =
+    normal[1] !== 0
+      ? [normal[1] > 0 ? -Math.PI / 2 : Math.PI / 2, 0, 0]
+      : normal[0] !== 0
+        ? [0, normal[0] > 0 ? Math.PI / 2 : -Math.PI / 2, 0]
+        : [0, normal[2] > 0 ? 0 : Math.PI, 0];
+  const tapped = op.kind === "tap";
+  const locator = useRef<Mesh>(null);
+
+  // A real M8 hole is ~7 mm across a 2 m frame, far too small to find at working
+  // zoom. The disc stays true to size; a locator ring around it holds a constant
+  // apparent size so the hole is findable without lying about how big it is.
+  useFrame((state) => {
+    if (!locator.current) return;
+    const distance = state.camera.position.distanceTo(locator.current.getWorldPosition(SCRATCH));
+    locator.current.scale.setScalar(Math.max(1, (distance * 0.011) / radius));
+  });
+
+  return (
+    <group position={position} rotation={rotation} renderOrder={2}>
+      <mesh ref={locator}>
+        <ringGeometry args={[radius * 0.88, radius, 24]} />
+        <meshBasicMaterial
+          color={tapped ? "#e0a33f" : "#7fd3f2"}
+          transparent
+          opacity={dimmed ? 0.2 : 0.75}
+          depthTest={false}
+          side={2}
+        />
+      </mesh>
+      <mesh>
+        {tapped ? (
+          <circleGeometry args={[radius, 20]} />
+        ) : (
+          <ringGeometry args={[radius * 0.62, radius, 20]} />
+        )}
+        <meshBasicMaterial
+          color={tapped ? "#f0be6a" : "#a8e4f8"}
+          transparent
+          opacity={dimmed ? 0.25 : 1}
+          depthTest={false}
+          side={2}
+        />
+      </mesh>
+    </group>
+  );
+}
+
+/** A translucent block standing in for the connector body at a joint. */
+function JointMarker({ position, highlighted }: { position: Position; highlighted: boolean }) {
+  const size = 0.026;
+  return (
+    <mesh position={position} renderOrder={1}>
+      <boxGeometry args={[size, size, size]} />
+      <meshStandardMaterial
+        color={highlighted ? "#8fbde3" : "#5f7f96"}
+        transparent
+        opacity={highlighted ? 0.85 : 0.5}
+        roughness={0.5}
       />
     </mesh>
   );
@@ -200,9 +304,39 @@ function ContextGuides({ project }: { project: ProjectDocumentV1 }) {
   );
 }
 
-function Scene({ project }: { project: ProjectDocumentV1 }) {
+function Scene({
+  project,
+  showMachining,
+  showJoints,
+  isolate,
+  sectionAxis,
+  sectionMm,
+}: {
+  project: ProjectDocumentV1;
+  showMachining: boolean;
+  showJoints: boolean;
+  isolate: boolean;
+  sectionAxis: "off" | "x" | "y" | "z";
+  sectionMm: number;
+}) {
   const selectedEntityId = useProjectStore((state) => state.selectedEntityId);
   const selectEntity = useProjectStore((state) => state.selectEntity);
+  const selectedJointId = useProjectStore((state) => state.selectedJointId);
+  const machining = deriveMachining(project);
+
+  /** The section slider hides everything past the cut plane. */
+  function beyondSection(pointMm: { x: number; y: number; z: number }): boolean {
+    if (sectionAxis === "off") return false;
+    return pointMm[sectionAxis] > sectionMm;
+  }
+
+  const visibleProfiles = Object.values(project.entities).filter((profile) => {
+    if (isolate && selectedEntityId && profile.id !== selectedEntityId) return false;
+    const centre = { ...profile.origin };
+    centre[profile.axis] += profile.lengthMm / 2;
+    return !beyondSection(centre);
+  });
+  const visibleIds = new Set(visibleProfiles.map((profile) => profile.id));
 
   return (
     <>
@@ -219,8 +353,8 @@ function Scene({ project }: { project: ProjectDocumentV1 }) {
       />
       <directionalLight position={[-3, 2, -3]} intensity={0.6} color="#7f9dc4" />
 
-      <ContextGuides project={project} />
-      {Object.values(project.entities).map((profile) => {
+      {!isolate && sectionAxis === "off" && <ContextGuides project={project} />}
+      {visibleProfiles.map((profile) => {
         const definition =
           project.embeddedParts[
             partKey(profile.definitionRef.partId, profile.definitionRef.revision)
@@ -236,6 +370,33 @@ function Scene({ project }: { project: ProjectDocumentV1 }) {
           />
         );
       })}
+
+      {showMachining &&
+        machining
+          .filter((op) => visibleIds.has(op.entityId) && !beyondSection(op.positionMm))
+          .map((op, index) => (
+            <MachiningMarker
+              key={`${op.sourceJointId}-${op.entityId}-${index}`}
+              op={op}
+              dimmed={Boolean(selectedJointId) && op.sourceJointId !== selectedJointId}
+            />
+          ))}
+
+      {showJoints &&
+        Object.values(project.joints ?? {}).map((joint) => {
+          const primary = project.entities[joint.primary.entityId];
+          if (!primary || !visibleIds.has(primary.id)) return null;
+          const point = { ...primary.origin };
+          point[primary.axis] += joint.primary.end === "a" ? 0 : primary.lengthMm;
+          if (beyondSection(point)) return null;
+          return (
+            <JointMarker
+              key={joint.id}
+              position={[point.x * MM_TO_M, point.z * MM_TO_M, point.y * MM_TO_M]}
+              highlighted={joint.id === selectedJointId}
+            />
+          );
+        })}
 
       <Grid
         position={[0, -0.002, 0]}
@@ -274,21 +435,113 @@ const readoutIds = ["frameOuterWidth", "finishedHeight"] as const;
 
 export function ModelViewport() {
   const { t, formatNumber } = useI18n();
+  const leftCollapsed = useLayoutStore((state) => state.leftCollapsed);
+  const rightCollapsed = useLayoutStore((state) => state.rightCollapsed);
+  const toggleCollapsed = useLayoutStore((state) => state.toggleCollapsed);
   const project = useProjectStore(selectCurrentProject);
   const selectEntity = useProjectStore((state) => state.selectEntity);
   const values = evaluateParameters(project.parameters);
   const readouts = readoutIds.filter((id) => values[id] !== undefined);
+  const selectedEntityId = useProjectStore((state) => state.selectedEntityId);
+  const [showMachining, setShowMachining] = useState(true);
+  const [showJoints, setShowJoints] = useState(true);
+  const [isolate, setIsolate] = useState(false);
+  const [sectionAxis, setSectionAxis] = useState<"off" | "x" | "y" | "z">("off");
+  const [sectionMm, setSectionMm] = useState(2_000);
+  const hasJoints = Object.keys(project.joints ?? {}).length > 0;
 
   return (
     <main className="viewport-shell">
       <div className="viewport-topline">
         <div className="view-name">
+          {leftCollapsed && (
+            <button
+              className="viewport-expand"
+              type="button"
+              aria-label={t("layout.expandLeft")}
+              title={t("layout.expandLeft")}
+              data-testid="expand-left"
+              onClick={() => toggleCollapsed("left")}
+            >
+              <PanelLeftOpen size={14} />
+            </button>
+          )}
           <Box size={14} />
           <span className="view-title">{t("viewport.view")}</span>
-          <small>{t("viewport.modelInfo")}</small>
+        </div>
+        <div className="view-toggles">
+          {hasJoints && (
+            <>
+              <button
+                className={showMachining ? "is-on" : ""}
+                type="button"
+                data-testid="toggle-machining"
+                aria-pressed={showMachining}
+                onClick={() => setShowMachining((current) => !current)}
+              >
+                <Drill size={12} /> {t("viewport.showMachining")}
+              </button>
+              <button
+                className={showJoints ? "is-on" : ""}
+                type="button"
+                data-testid="toggle-joints"
+                aria-pressed={showJoints}
+                onClick={() => setShowJoints((current) => !current)}
+              >
+                <Link2 size={12} /> {t("viewport.showJoints")}
+              </button>
+            </>
+          )}
+          <button
+            className={isolate ? "is-on" : ""}
+            type="button"
+            data-testid="toggle-isolate"
+            aria-pressed={isolate}
+            disabled={!selectedEntityId}
+            onClick={() => setIsolate((current) => !current)}
+          >
+            <Focus size={12} /> {t("viewport.isolate")}
+          </button>
+          <label className="view-section">
+            <Scissors size={12} />
+            <select
+              data-testid="section-axis"
+              value={sectionAxis}
+              onChange={(event) => setSectionAxis(event.target.value as "off" | "x" | "y" | "z")}
+            >
+              <option value="off">{t("viewport.sectionOff")}</option>
+              <option value="x">X</option>
+              <option value="y">Y</option>
+              <option value="z">Z</option>
+            </select>
+            {sectionAxis !== "off" && (
+              <input
+                type="range"
+                data-testid="section-position"
+                min={0}
+                max={3000}
+                step={10}
+                value={sectionMm}
+                aria-label={t("viewport.section")}
+                onChange={(event) => setSectionMm(Number(event.target.value))}
+              />
+            )}
+          </label>
         </div>
         <div className="view-help">
           <MousePointer2 size={12} /> {t("viewport.help")}
+          {rightCollapsed && (
+            <button
+              className="viewport-expand"
+              type="button"
+              aria-label={t("layout.expandRight")}
+              title={t("layout.expandRight")}
+              data-testid="expand-right"
+              onClick={() => toggleCollapsed("right")}
+            >
+              <PanelRightOpen size={14} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -305,19 +558,23 @@ export function ModelViewport() {
           gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
           onPointerMissed={() => selectEntity(null)}
         >
-          <Scene project={project} />
+          <Scene
+            project={project}
+            showMachining={showMachining}
+            showJoints={showJoints}
+            isolate={isolate}
+            sectionAxis={sectionAxis}
+            sectionMm={sectionMm}
+          />
         </Canvas>
 
         <div className="viewport-frame" aria-hidden="true" />
 
-        <div className="viewport-stamp">
-          <span>{t("viewport.modelStamp")}</span>
-          <span>
-            {values.panelFitClearance === undefined
-              ? t("viewport.unitStamp")
-              : t("viewport.panelStamp", { gap: formatNumber(values.panelFitClearance) })}
-          </span>
-        </div>
+        {values.panelFitClearance !== undefined && (
+          <div className="viewport-stamp">
+            <span>{t("viewport.panelStamp", { gap: formatNumber(values.panelFitClearance) })}</span>
+          </div>
+        )}
 
         {readouts.length > 0 && (
           <div className="dimension-readout">

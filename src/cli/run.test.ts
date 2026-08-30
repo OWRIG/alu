@@ -77,8 +77,8 @@ describe("headless CLI", () => {
     const readBack = await runCli(["read", projectPath], dependencies);
     expect(successData(readBack.response).evaluatedParameters).toMatchObject({
       obstacleOuterWidth: 2200,
-      innerClearWidth: 2250,
-      frameOuterWidth: 2330,
+      innerClearWidth: 2240,
+      frameOuterWidth: 2300,
     });
   });
 

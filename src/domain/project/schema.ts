@@ -48,6 +48,18 @@ export const ProjectContextSchema = z.strictObject({
   notes: z.string().max(4_000).optional(),
 });
 
+export const ProjectContextPatchSchema = z
+  .strictObject({
+    usage: z.array(z.string().min(1).max(80)).max(32).optional(),
+    humanLoad: z.union([z.boolean(), z.literal("unknown")]).optional(),
+    childAccess: z.union([z.boolean(), z.literal("unknown")]).optional(),
+    mobility: z.enum(["static", "casters", "unknown"]).optional(),
+    floor: z.enum(["wood", "tile", "carpet", "concrete", "unknown"]).optional(),
+    loads: z.array(z.string().min(1).max(80)).max(64).optional(),
+    notes: z.string().max(4_000).optional(),
+  })
+  .refine((patch) => Object.keys(patch).length > 0, "至少修改一个使用条件字段");
+
 export const BoundaryKindSchema = z.enum([
   "obstacle-outer",
   "clearance",
@@ -112,6 +124,29 @@ export const ProfileInstanceSchema = z.strictObject({
   purpose: z.string().min(1).max(160),
   endCutA: EndCutSchema,
   endCutB: EndCutSchema,
+});
+
+/**
+ * Neutral connection types: how two extrusions are held together, not a vendor
+ * part number. Mapping these onto a specific SKU is a later, additive step.
+ */
+export const JointTypeSchema = z.enum(["corner-bracket", "hidden-connector", "butt-screw"]);
+export const BoltSizeSchema = z.union([z.literal(5), z.literal(6), z.literal(8)]);
+export const BoltCountSchema = z.union([z.literal(1), z.literal(2)]);
+
+export const JointSchema = z.strictObject({
+  id: EntityIdSchema,
+  kind: z.literal("joint"),
+  jointType: JointTypeSchema,
+  /** The member whose end face is being attached. */
+  primary: z.strictObject({
+    entityId: EntityIdSchema,
+    end: z.enum(["a", "b"]),
+  }),
+  /** The member the primary end lands against. */
+  secondaryEntityId: EntityIdSchema,
+  boltSizeMm: BoltSizeSchema,
+  boltCount: BoltCountSchema,
 });
 
 export const EvidenceRefSchema = z.strictObject({
@@ -182,6 +217,7 @@ export const ProjectDocumentV1Schema = z
     parameters: ParameterSetSchema,
     bindings: z.array(ParameterBindingSchema).max(10_000),
     entities: z.record(EntityIdSchema, ProfileInstanceSchema),
+    joints: z.record(EntityIdSchema, JointSchema).optional(),
     embeddedParts: z.record(z.string(), EmbeddedProfileSnapshotSchema),
     bomSnapshot: ProfileBomSnapshotSchema.optional(),
     extensions: z.record(z.string(), JsonValueSchema).optional(),
@@ -216,10 +252,23 @@ export const ProjectDocumentV1Schema = z
         });
       }
     }
+    for (const [id, joint] of Object.entries(project.joints ?? {})) {
+      if (joint.id !== id) {
+        context.addIssue({
+          code: "custom",
+          message: "连接 record key 必须与连接 id 一致",
+          path: ["joints", id, "id"],
+        });
+      }
+    }
   });
 
 export type Vec3Mm = z.infer<typeof Vec3MmSchema>;
+export type JointType = z.infer<typeof JointTypeSchema>;
+export type BoltSize = z.infer<typeof BoltSizeSchema>;
+export type Joint = z.infer<typeof JointSchema>;
 export type ProjectContext = z.infer<typeof ProjectContextSchema>;
+export type ProjectContextPatch = z.infer<typeof ProjectContextPatchSchema>;
 export type ParameterInput = z.infer<typeof ParameterInputSchema>;
 export type DerivedParameter = z.infer<typeof DerivedParameterSchema>;
 export type ParameterSet = z.infer<typeof ParameterSetSchema>;
