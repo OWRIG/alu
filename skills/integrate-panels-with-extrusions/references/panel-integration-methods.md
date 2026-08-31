@@ -57,15 +57,6 @@ Order an error-sensitive panel only after the frame is assembled, squared, tight
 | Aluminum sheet / composite panel / honeycomb | Skin thickness, edge finish, local denting, insert pull-out, unsupported span, dissimilar-metal fasteners in wet service.                                           |
 | Glass                                        | Tempering and edge finish, rated clips or setting blocks, impact and human-contact requirements; do not drill tempered glass in the field.                          |
 
-## 2026 field evidence
-
-- A March 2026 豪佳铝业 wood-panel post credits 益善工坊阿沐 for the original footage. In the comments, the publisher answered a panel-thickness question for an inverted 3030 shelf support by telling the user to measure the actual depth. Keep those roles separate: the original footage teaches the method, while the purchased geometry determines the cut.
-- 益善工坊阿沐's October 2025 panel tutorial visually separates groove capture, flush inset support, and external attachment. In a May 2026 coffee-cabinet reply, the creator maps a thicker flush panel to shelf supports and a thicker external panel to support brackets. This supports the method-first decision tree; it does not define a universal panel thickness.
-- A pinned correction on that panel tutorial identifies a reversed field in an attached list, and the creator confirms the error. Treat creator drawings and BOM screenshots as reviewable inputs rather than supplier specifications.
-- A June 2026 three-method shelf comparison produced a useful alternative in its discussion: cut a panel to the frame's outside dimensions, notch its four corners, and rest it on the extrusion top. It hides top grooves but consumes different space and is not a flush inset. Builders also reported mixing hidden hardware on visible faces with stronger visible hardware elsewhere.
-- An August 2026 cabinet example publishes a 15 mm top board fixed with two-way brackets, a 70 mm installed caster height, and M4 × 8 slide fasteners. The author also says the absence of a cross-member limits heavy loading. These values describe one build, not a reusable rating.
-- A cabinet revision shown as one day old on 2026-08-11 retained a 2–3 mm perimeter gap around bins to make installation possible. Treat that as task-specific assembly evidence, not a universal panel gap.
-
 ## Sources
 
 - [嘉立创 FA `TPEV` shelf-support drawing](https://static.jlcfa.com/Serial/T02/TPEV/538956682999234561.pdf).
@@ -73,9 +64,3 @@ Order an error-sensitive panel only after the frame is assembled, squared, tight
 - [item Quick Multiblock 8](https://www.item24.com/en-de/quick-multiblock-8-with-securing-pin-zn-grey-60341).
 - [80/20 20 Series reduction T-slot cover and panel gasket](https://8020.net/12004.html).
 - [嘉立创 FA 欧标 30 profile ecosystem](https://www.jlcfa.com/serial/1874267829433.html?codeModel=TXCK-H6-J3060), showing current panel and support categories.
-- [小红书：益善工坊阿沐板材连接篇](https://www.xiaohongshu.com/explore/68fc70630000000003037ffb), original low-level field evidence, 2025-10-25.
-- [小红书：益善工坊阿沐咖啡柜](https://www.xiaohongshu.com/explore/69ff3b92000000001b0210f1), low-level field evidence and author replies, shown as 2026-05-09 on review.
-- [小红书：豪佳铝业木板连接教程](https://www.xiaohongshu.com/explore/69c698bf00000000220266fc), republished low-level field evidence with credit to the original creator, 2026-03-27.
-- [小红书：三选一选择层板固定件](https://www.xiaohongshu.com/explore/6a3e6215000000000f028b25), low-level field evidence, edited 2026-06-30.
-- [小红书：收纳柜完整尺寸标注](https://www.xiaohongshu.com/explore/6a7149ef0000000005031cb6), low-level field evidence, shown as 2026-08-04 / seven days old on review.
-- [小红书：三层收纳柜清单](https://www.xiaohongshu.com/explore/6a78882e0000000022031498), low-level field evidence, shown as one day old on 2026-08-11.

@@ -94,6 +94,7 @@ export function computeDesignHash(project: ProjectDocumentV1): string {
       parameters: project.parameters,
       bindings: project.bindings,
       entities: project.entities,
+      joints: project.joints ?? null,
       embeddedParts: project.embeddedParts,
       extensions: project.extensions,
     }),

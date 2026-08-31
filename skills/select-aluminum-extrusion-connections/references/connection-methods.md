@@ -37,22 +37,9 @@ Checked 2026-08-11. Names vary by supplier; map each method to an exact current 
 - Do not invent torque. Use the connector or fastener supplier's value for the exact joint, or leave it unresolved.
 - Record spare or service access separately from initial assembly access.
 
-## 2026 field evidence
-
-- A March 2026 nine-method comparison using 3030 欧标 profiles reports that external brackets are easy and broadly applicable but interfere with inset panels; internal set-screw connectors look cleaner but may leave gaps; coplanar plates are better treated as reinforcement than a sole joint. These are useful construction observations, not rated-load evidence.
-- A cabinet revision posted one day before the 2026-08-11 review removed tapping and holes from drawer supports by switching to internal brackets. It demonstrates a real fabrication-cost and assembly tradeoff, not proof that the revised node has equivalent strength.
-- 豪佳铝业 continued publishing connection tutorials in July and August 2026. Their videos are useful for part recognition and assembly sequence; numeric capacity still requires the exact supplier data or a test.
-- In a May 2026 益善工坊阿沐 coffee-cabinet discussion, a roughly 1500 mm upright was assembled from 815, 505, and 200 mm segments. The creator says the wall-backed case was adequate for that build while explicitly acknowledging that one continuous member is structurally steadier. Preserve continuity by default; if a split is necessary, model the splice and the claimed wall restraint instead of copying “adequate.”
-- An August 2026 drawer tutorial separates the slide's inner and outer members before attaching them to the moving box and fixed frame. Store those as different interfaces with their own datum, fasteners, travel, removal direction, and access checks. The video does not supply a slide rating or universal side clearance.
-
 ## Sources
 
 - [MISUMI N-Series profile page: bracket versus blind-joint characteristics and machining](https://th.misumi-ec.com/en/vona2/detail/110311092599/).
 - [MISUMI blind-joint parts](https://uk.misumi-ec.com/vona2/mech/M1500000000/M1501000000/M1501030000/M1501030400/).
 - [Bosch Rexroth Aluminum Framing 9.0 catalog](https://apps.boschrexroth.com/DCUS/2023/08.25.AT_Uploads/R999001283_2020-09_media-1.pdf), joining plates at catalog page 3-65.
 - [嘉立创 FA 型材配件目录](https://www.jlcfa.com/catalog/T/T02), checked 2026-08-11.
-- [小红书：9 种直角连接方式详解](https://www.xiaohongshu.com/explore/6996ea30000000000a02e121), low-level field evidence, 2026-03-01.
-- [小红书：三层铝型材收纳柜清单分享](https://www.xiaohongshu.com/explore/6a78882e0000000022031498), low-level field evidence, shown as one day old on 2026-08-11.
-- [小红书：豪佳铝业连接教程](https://www.xiaohongshu.com/explore/6a79be8a000000003301c346), low-level video evidence, shown as the previous day on 2026-08-11.
-- [小红书：益善工坊阿沐咖啡柜](https://www.xiaohongshu.com/explore/69ff3b92000000001b0210f1), low-level field evidence and author replies, shown as 2026-05-09 on review.
-- [小红书：益善工坊阿沐五种抽屉方案](https://www.xiaohongshu.com/explore/6a75749d0000000022014216), low-level assembly evidence, shown as three days old on 2026-08-11.

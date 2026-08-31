@@ -4,6 +4,7 @@
   "private": true,
   "description": "ALU — agent-friendly industrial aluminum-extrusion design workspace",
   "homepage": "https://github.com/OWRIG/alu",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "author": "OWRIG",
   "repository": {
     "type": "git",

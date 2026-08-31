@@ -3,11 +3,20 @@ import { existsSync } from "node:fs";
 
 import { dialog, ipcMain } from "electron";
 
+import {
+  buildProjectHandoff,
+  renderProjectHandoffHtml,
+  renderProjectHandoffMarkdown,
+} from "../../../domain/report/handoff";
 import { asDomainError, DomainError } from "../../../domain/project/error";
 import type { ProjectDocumentV1 } from "../../../domain/project/schema";
+import { writeOutputFileAtomic } from "../../../node/output-file";
 import { readProjectFile, replaceProjectFileAtomic } from "../../../node/project-file";
 import type { AppLocale } from "../../../shared/i18n/locale";
 import {
+  ExportProjectRequestSchema,
+  ExportProjectResponseSchema,
+  type ExportFormat,
   OpenRecentRequestSchema,
   OpenedProjectSchema,
   OpenProjectResponseSchema,
@@ -47,11 +56,15 @@ function safeDefaultFileName(projectName: string, fallbackName: string): string 
   return `${sanitized || fallbackName}.alu`;
 }
 
+const EXPORT_EXTENSIONS: Record<ExportFormat, string> = { md: "md", json: "json", pdf: "pdf" };
+
 export function registerProjectIpc(options: {
   userDataPath: string;
   launchFilePath?: string;
   trustedRendererUrl: string;
   getLocale: () => AppLocale;
+  renderPdf?: (input: { html: string; title: string; footerText: string }) => Promise<Uint8Array>;
+  reportLogoDataUrl?: () => Promise<string>;
 }): void {
   const recent = new RecentProjectsStore(options.userDataPath);
   let currentFilePath: string | null = null;
@@ -107,6 +120,73 @@ export function registerProjectIpc(options: {
     await recordRecentBestEffort(targetPath);
     return SavedProjectSchema.parse({ ...saved, fileName: path.basename(targetPath) });
   }
+
+  async function exportProject(project: ProjectDocumentV1, format: ExportFormat) {
+    const copy = getNativeCopy(options.getLocale());
+    const extension = EXPORT_EXTENSIONS[format];
+    let targetPath: string | null = null;
+    if (process.env.ALU_E2E === "1" && process.env.ALU_E2E_EXPORT_PATH) {
+      targetPath = process.env.ALU_E2E_EXPORT_PATH;
+    } else {
+      const result = await dialog.showSaveDialog({
+        title: copy.exportProject,
+        defaultPath: safeDefaultFileName(project.meta.name, copy.untitledProject).replace(
+          /\.alu$/,
+          `.${extension}`,
+        ),
+        filters: [{ name: copy.handoffFile, extensions: [extension] }],
+        properties: ["showOverwriteConfirmation", "createDirectory"],
+      });
+      if (result.canceled || !result.filePath) return null;
+      targetPath = result.filePath.toLowerCase().endsWith(`.${extension}`)
+        ? result.filePath
+        : `${result.filePath}.${extension}`;
+    }
+    if (currentFilePath && path.resolve(targetPath) === path.resolve(currentFilePath)) {
+      throw new DomainError({
+        code: "report.output-conflicts-project",
+        message: "交付文件不能覆盖源 .alu 工程",
+        suggestion: "换一个文件名",
+      });
+    }
+
+    // Same builder the headless CLI uses, so GUI and CLI exports stay identical.
+    const report = buildProjectHandoff(project, "order-draft");
+    let contents: string | Uint8Array;
+    if (format === "json") {
+      contents = `${JSON.stringify(report, null, 2)}\n`;
+    } else if (format === "md") {
+      contents = renderProjectHandoffMarkdown(report);
+    } else {
+      if (!options.renderPdf || !options.reportLogoDataUrl) {
+        throw new DomainError({
+          code: "report.pdf-unavailable",
+          message: "当前运行时不支持 PDF 导出",
+          suggestion: "改用 Markdown 或 JSON 导出",
+        });
+      }
+      contents = await options.renderPdf({
+        html: renderProjectHandoffHtml(report, { logoDataUrl: await options.reportLogoDataUrl() }),
+        title: `${report.project.name} · ALU 工程交付单`,
+        footerText: `ALU · ${report.project.name}`,
+      });
+    }
+    await writeOutputFileAtomic(targetPath, contents);
+    return { fileName: path.basename(targetPath), format, bomHash: report.bomHash };
+  }
+
+  ipcMain.handle(PROJECT_IPC.export, async (event, input: unknown) => {
+    try {
+      assertTrustedIpcSender(event, options.trustedRendererUrl);
+      const request = ExportProjectRequestSchema.parse(input);
+      return ExportProjectResponseSchema.parse({
+        ok: true,
+        data: await exportProject(request.project, request.format),
+      });
+    } catch (error) {
+      return ExportProjectResponseSchema.parse(errorResponse(error));
+    }
+  });
 
   ipcMain.handle(PROJECT_IPC.getLaunch, async (event) => {
     try {

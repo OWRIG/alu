@@ -43,6 +43,18 @@ function resultSchema<T extends z.ZodType>(data: T) {
 export const OpenProjectResponseSchema = resultSchema(OpenedProjectSchema.nullable());
 export const RecentProjectsResponseSchema = resultSchema(z.array(RecentProjectSchema));
 export const SaveProjectResponseSchema = resultSchema(SavedProjectSchema.nullable());
+export const ExportFormatSchema = z.enum(["md", "json", "pdf"]);
+export const ExportProjectRequestSchema = z.strictObject({
+  project: ProjectDocumentV1Schema,
+  format: ExportFormatSchema,
+});
+export const ExportedProjectSchema = z.strictObject({
+  fileName: z.string().min(1),
+  format: ExportFormatSchema,
+  bomHash: z.string().min(1),
+});
+export const ExportProjectResponseSchema = resultSchema(ExportedProjectSchema.nullable());
+
 export const OpenRecentRequestSchema = z.strictObject({ id: z.string().regex(/^[a-f0-9]{64}$/) });
 export const SaveProjectRequestSchema = z.strictObject({
   project: ProjectDocumentV1Schema,
@@ -56,6 +68,9 @@ export type SavedProject = z.infer<typeof SavedProjectSchema>;
 export type OpenProjectResponse = z.infer<typeof OpenProjectResponseSchema>;
 export type RecentProjectsResponse = z.infer<typeof RecentProjectsResponseSchema>;
 export type SaveProjectResponse = z.infer<typeof SaveProjectResponseSchema>;
+export type ExportFormat = z.infer<typeof ExportFormatSchema>;
+export type ExportedProject = z.infer<typeof ExportedProjectSchema>;
+export type ExportProjectResponse = z.infer<typeof ExportProjectResponseSchema>;
 
 export type AluDesktopApi = {
   project: {
@@ -65,6 +80,7 @@ export type AluDesktopApi = {
     recent(): Promise<RecentProjectsResponse>;
     save(project: ProjectDocumentV1, expectedFileHash: string): Promise<SaveProjectResponse>;
     saveAs(project: ProjectDocumentV1): Promise<SaveProjectResponse>;
+    export(project: ProjectDocumentV1, format: ExportFormat): Promise<ExportProjectResponse>;
   };
   settings: SettingsApi;
 };

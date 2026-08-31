@@ -12,7 +12,9 @@ import { DomainError } from "../project/error";
 import { computeDesignHash } from "../project/hash";
 import { evaluateRules } from "../rules/evaluate";
 import { loadOverbedFixture } from "../../test-support/fixture";
+import { evaluateStructuralSizing } from "../structural/evaluate";
 import { applyCommandEnvelope, createCommandEnvelope } from "./apply";
+import type { DomainCommand } from "./schema";
 
 describe("domain commands", () => {
   it("C-add-profile and C-profile-axis-orientation create one explicit model entity", () => {
@@ -236,7 +238,7 @@ describe("domain commands", () => {
 
     expect(next.revision).toBe(project.revision + 1);
     expect(next.extensions?.structuralSizing).toMatchObject({
-      loads: { centerPointPayloadKg: 20, distributedPayloadKg: 30 },
+      loads: { centerPointPayloadKg: 20, distributedPayloadKg: 15 },
     });
   });
 
@@ -295,15 +297,16 @@ describe("domain commands", () => {
     );
     const values = evaluateParameters(next.parameters);
 
-    expect(values.uprightLength).toBe(570);
-    expect(values.baseRailCenterZ).toBe(120);
-    expect(values.topBeamCenterZ).toBe(710);
+    expect(values.uprightLength).toBe(613);
+    expect(values.uprightStartZ).toBe(130);
+    expect(values.baseRailCenterZ).toBe(115);
+    expect(values.topBeamCenterZ).toBe(788);
     expect(next.entities["profile.upright-left-front"]).toMatchObject({
-      origin: { z: 100 },
-      lengthMm: 570,
+      origin: { z: 130 },
+      lengthMm: 613,
     });
-    expect(next.entities["profile.base-left"].origin.z).toBe(120);
-    expect(next.entities["profile.top-front"].origin.z).toBe(710);
+    expect(next.entities["profile.base-left"].origin.z).toBe(115);
+    expect(next.entities["profile.top-front"].origin.z).toBe(788);
   });
 
   it("C-sizing-apply-to-model-and-bom writes the selected SKU into the design truth", () => {
@@ -320,11 +323,284 @@ describe("domain commands", () => {
     );
 
     expect(snapshot.definition.procurement).toMatchObject({
-      vendor: "MISUMI",
-      sku: "NFSL8-4080",
+      vendor: "JLCFA",
+      sku: "TXCK-H6-J3090",
     });
-    expect(snapshot.definition.section).toMatchObject({ envelopeUMm: 40, envelopeVMm: 80 });
+    expect(snapshot.definition.section).toMatchObject({ envelopeUMm: 30, envelopeVMm: 90 });
     expect(next.entities["profile.top-rear"].definitionRef).toEqual(front.definitionRef);
-    expect(beamLine?.definitionName).toBe("MISUMI NFSL8-4080");
+    expect(beamLine?.definitionName).toBe("JLCFA TXCK-H6-J3090");
+  });
+
+  it("C-definition-picker-blank-project switches a member to another profile definition", () => {
+    const project = seedProfile("project.definition-picker");
+    const target = GENERIC_PROFILE_DEFINITIONS[3];
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [
+        {
+          type: "profile.set-definition",
+          entityId: "profile.seed",
+          definitionSnapshot: snapshotDefinition(target),
+        },
+      ]),
+    );
+
+    expect(next.entities["profile.seed"].definitionRef).toEqual({
+      partId: target.id,
+      revision: target.revision,
+    });
+    expect(next.embeddedParts[`${target.id}@${target.revision}`].definition.section).toMatchObject({
+      envelopeUMm: 40,
+      envelopeVMm: 80,
+    });
+    expect(deriveProfileBom(next).lines[0].definitionName).toBe(target.name);
+    expect(next.revision).toBe(project.revision + 1);
+  });
+
+  it("C-definition-snapshot-integrity drops the definition no member references any more", () => {
+    const project = seedProfile("project.definition-prune");
+    const previous = GENERIC_PROFILE_DEFINITIONS[2];
+    const target = GENERIC_PROFILE_DEFINITIONS[0];
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [
+        {
+          type: "profile.set-definition",
+          entityId: "profile.seed",
+          definitionSnapshot: snapshotDefinition(target),
+        },
+      ]),
+    );
+
+    expect(Object.keys(next.embeddedParts)).toEqual([`${target.id}@${target.revision}`]);
+    expect(next.embeddedParts[`${previous.id}@${previous.revision}`]).toBeUndefined();
+  });
+
+  it("C-definition-snapshot-integrity rejects a snapshot whose hash does not match", () => {
+    const project = seedProfile("project.definition-hash");
+    const target = GENERIC_PROFILE_DEFINITIONS[1];
+
+    expect(() =>
+      applyCommandEnvelope(
+        project,
+        createCommandEnvelope(project, [
+          {
+            type: "profile.set-definition",
+            entityId: "profile.seed",
+            definitionSnapshot: {
+              definition: target,
+              definitionHash: "0".repeat(64),
+            },
+          },
+        ]),
+      ),
+    ).toThrowError(
+      expect.objectContaining({ code: "catalog.definition-hash-mismatch" }) as unknown as Error,
+    );
+  });
+
+  it("C-study-create-blank-project builds a usable study from four decisions", () => {
+    const project = seedSizableProject("project.study-create");
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [
+        {
+          type: "structural-sizing.study.create",
+          beamEntityIds: ["profile.beam-a", "profile.beam-b"],
+          effectiveSpanParam: "span",
+          maximumSectionHeightParam: "maxHeight",
+          requiredCompatibilityGroup: null,
+        },
+      ]),
+    );
+
+    const result = evaluateStructuralSizing(next);
+    expect(result).not.toBeNull();
+    expect(result?.study.beamCount).toBe(2);
+    expect(result?.study.loads).toMatchObject({
+      panelMassKg: 0,
+      distributedPayloadKg: 0,
+      centerPointPayloadKg: 0,
+      distributedLoadSharePerBeam: 0.5,
+    });
+    expect(result?.study.constructionEvidence).toEqual([]);
+    expect(result?.candidates.length).toBeGreaterThan(0);
+    expect(result?.selected).not.toBeNull();
+  });
+
+  it("C-study-create-rejects-duplicate leaves an existing study untouched", () => {
+    const project = createParametricClearanceFrameDemo();
+
+    expect(() =>
+      applyCommandEnvelope(
+        project,
+        createCommandEnvelope(project, [
+          {
+            type: "structural-sizing.study.create",
+            beamEntityIds: ["profile.top-front"],
+            effectiveSpanParam: "topBeamEffectiveSpan",
+            maximumSectionHeightParam: "topBeamMaximumHeight",
+            requiredCompatibilityGroup: null,
+          },
+        ]),
+      ),
+    ).toThrowError(
+      expect.objectContaining({ code: "structure.sizing-study-exists" }) as unknown as Error,
+    );
+  });
+
+  it("C-study-create-validates-refs rejects unknown members and parameters", () => {
+    const project = seedSizableProject("project.study-refs");
+
+    expect(() =>
+      applyCommandEnvelope(
+        project,
+        createCommandEnvelope(project, [
+          {
+            type: "structural-sizing.study.create",
+            beamEntityIds: ["profile.missing"],
+            effectiveSpanParam: "span",
+            maximumSectionHeightParam: "maxHeight",
+            requiredCompatibilityGroup: null,
+          },
+        ]),
+      ),
+    ).toThrowError(expect.objectContaining({ code: "ref.entity-missing" }) as unknown as Error);
+
+    expect(() =>
+      applyCommandEnvelope(
+        project,
+        createCommandEnvelope(project, [
+          {
+            type: "structural-sizing.study.create",
+            beamEntityIds: ["profile.beam-a"],
+            effectiveSpanParam: "nope",
+            maximumSectionHeightParam: "maxHeight",
+            requiredCompatibilityGroup: null,
+          },
+        ]),
+      ),
+    ).toThrowError(expect.objectContaining({ code: "ref.parameter-missing" }) as unknown as Error);
+  });
+
+  it("C-context-editable-from-ui turns caster rules on and off through context.set", () => {
+    const project = seedProfile("project.context-toggle");
+    expect(project.context.mobility).toBe("unknown");
+    expect(ruleIds(project)).not.toContain("structure.mobile-side-sway");
+
+    const mobile = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [{ type: "context.set", patch: { mobility: "casters" } }]),
+    );
+    expect(ruleIds(mobile)).toContain("structure.mobile-side-sway");
+
+    const parked = applyCommandEnvelope(
+      mobile,
+      createCommandEnvelope(mobile, [{ type: "context.set", patch: { mobility: "static" } }]),
+    );
+    expect(ruleIds(parked)).not.toContain("structure.mobile-side-sway");
+  });
+
+  it("C-context-set-rejects-empty-patch keeps the project unchanged", () => {
+    const project = seedProfile("project.context-empty");
+
+    expect(() =>
+      applyCommandEnvelope(
+        project,
+        createCommandEnvelope(project, [
+          { type: "context.set", patch: {} } as unknown as DomainCommand,
+        ]),
+      ),
+    ).toThrowError(expect.objectContaining({ code: "command.schema-invalid" }) as unknown as Error);
+  });
+
+  it("C-human-load-rule-reachable makes the human-load review reachable from the UI", () => {
+    const project = seedProfile("project.human-load");
+    expect(ruleIds(project)).not.toContain("safety.human-load-review");
+
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [{ type: "context.set", patch: { humanLoad: true } }]),
+    );
+    expect(ruleIds(next)).toContain("safety.human-load-review");
+  });
+
+  it("C-cable-rule-removed no longer fires on free-text load descriptions", () => {
+    const project = seedProfile("project.cable");
+    const next = applyCommandEnvelope(
+      project,
+      createCommandEnvelope(project, [
+        { type: "context.set", patch: { mobility: "casters", loads: ["投影仪"] } },
+      ]),
+    );
+
+    expect(ruleIds(next)).not.toContain("motion.cable-routing-safe");
   });
 });
+
+function seedProfile(projectId: string) {
+  const project = createBlankProject({ projectId, now: "2026-08-30T00:00:00.000Z" });
+  const definition = GENERIC_PROFILE_DEFINITIONS[2];
+  return applyCommandEnvelope(
+    project,
+    createCommandEnvelope(project, [
+      {
+        type: "profile.add",
+        definitionSnapshot: snapshotDefinition(definition),
+        profile: {
+          id: "profile.seed",
+          kind: "profile",
+          definitionRef: { partId: definition.id, revision: definition.revision },
+          origin: { x: 0, y: 0, z: 0 },
+          axis: "x",
+          lengthMm: 800,
+          rotationAroundAxisDeg: 0,
+          purpose: "seed",
+          endCutA: { kind: "square" },
+          endCutB: { kind: "square" },
+        },
+      },
+    ]),
+  );
+}
+
+function seedSizableProject(projectId: string) {
+  let project = createBlankProject({ projectId, now: "2026-08-30T00:00:00.000Z" });
+  const definition = GENERIC_PROFILE_DEFINITIONS[3];
+  project = applyCommandEnvelope(
+    project,
+    createCommandEnvelope(project, [
+      {
+        type: "parameter.input.upsert",
+        id: "span",
+        definition: { valueMm: 1_800, boundaryKind: "generic" },
+      },
+      {
+        type: "parameter.input.upsert",
+        id: "maxHeight",
+        definition: { valueMm: 90, boundaryKind: "generic" },
+      },
+      ...(["profile.beam-a", "profile.beam-b"] as const).map((id) => ({
+        type: "profile.add" as const,
+        definitionSnapshot: snapshotDefinition(definition),
+        profile: {
+          id,
+          kind: "profile" as const,
+          definitionRef: { partId: definition.id, revision: definition.revision },
+          origin: { x: 0, y: 0, z: 0 },
+          axis: "x" as const,
+          lengthMm: 1_800,
+          rotationAroundAxisDeg: 0 as const,
+          purpose: id,
+          endCutA: { kind: "square" as const },
+          endCutB: { kind: "square" as const },
+        },
+      })),
+    ]),
+  );
+  return project;
+}
+
+function ruleIds(project: Parameters<typeof evaluateRules>[0]) {
+  return evaluateRules(project).map((finding) => finding.ruleId);
+}

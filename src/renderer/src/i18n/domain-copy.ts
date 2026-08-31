@@ -17,6 +17,8 @@ const parameterKeys: Record<string, MessageKey> = {
   casterInstalledHeight: "parameter.casterInstalledHeight",
   topBeamEffectiveSpan: "parameter.topBeamEffectiveSpan",
   topFrameOuterDepth: "parameter.topFrameOuterDepth",
+  baseOuterDepth: "parameter.baseOuterDepth",
+  baseFrameHeight: "parameter.baseFrameHeight",
   panelFitClearance: "parameter.panelFitClearance",
   tabletopThickness: "parameter.tabletopThickness",
   finishedHeight: "parameter.finishedHeight",
@@ -30,6 +32,7 @@ const parameterKeys: Record<string, MessageKey> = {
   clearanceAboveMattress: "parameter.clearanceAboveObstacle",
   beamUndersideClearance: "parameter.beamUndersideClearance",
   uprightLength: "parameter.uprightLength",
+  uprightStartZ: "parameter.uprightStartZ",
   topBeamCenterZ: "parameter.topBeamCenterZ",
   topSideRailCenterZ: "parameter.topSideRailCenterZ",
   leftUprightCenterX: "parameter.leftUprightCenterX",
@@ -39,6 +42,7 @@ const parameterKeys: Record<string, MessageKey> = {
   frontUprightCenterY: "parameter.frontUprightCenterY",
   rearUprightCenterY: "parameter.rearUprightCenterY",
   topSideRailStartY: "parameter.topSideRailStartY",
+  baseRailStartY: "parameter.baseRailStartY",
   baseRailCenterZ: "parameter.baseRailCenterZ",
 };
 
@@ -265,9 +269,22 @@ export function localizeFinding(
       };
     case "structure.mobile-side-sway":
       return {
-        message: t("rule.sideSway.message"),
+        message: t(
+          Object.keys(project.joints ?? {}).length > 0
+            ? "rule.sideSway.messageJointed"
+            : "rule.sideSway.message",
+        ),
         rationale: t("rule.sideSway.rationale"),
         suggestedActions: [t("rule.sideSway.action1"), t("rule.sideSway.action2")],
+      };
+    case "project.order-data-incomplete":
+      return {
+        message: t("rule.orderDataIncomplete.message"),
+        rationale: t("rule.orderDataIncomplete.rationale"),
+        suggestedActions: [
+          t("rule.orderDataIncomplete.action1"),
+          t("rule.orderDataIncomplete.action2"),
+        ],
       };
     case "caster.wood-floor-soft-tread":
       return {
@@ -280,12 +297,6 @@ export function localizeFinding(
         message: t("rule.casterHeight.message"),
         rationale: t("rule.casterHeight.rationale"),
         suggestedActions: [t("rule.casterHeight.action1"), t("rule.casterHeight.action2")],
-      };
-    case "motion.cable-routing-safe":
-      return {
-        message: t("rule.cable.message"),
-        rationale: t("rule.cable.rationale"),
-        suggestedActions: [t("rule.cable.action1"), t("rule.cable.action2")],
       };
     case "safety.human-load-review":
       return {

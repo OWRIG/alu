@@ -2,77 +2,82 @@
 
 [简体中文](parametric-clearance-frame.zh-CN.md)
 
-> ALU starts in Simplified Chinese on a new local profile. Click the globe icon in the top toolbar and choose `English`; use the same menu to return to `简体中文`. The saved choice also controls native file dialogs.
+> ALU starts in Simplified Chinese on a new local profile. Use the globe menu to switch to `English` and back to `简体中文`.
 
-This walkthrough uses the bundled example to show ALU's core loop: capture measured constraints, derive a frame, inspect deterministic outputs, and hand off the unresolved work. The obstacle can represent equipment, furniture, storage, or any other keep-out envelope.
+This example shows ALU's core loop: capture measured constraints, adapt production cuts to convenient dimensions, recalculate the long beam, and keep unresolved work explicit. It remains a review model, not an order file.
 
 ![Parametric Clearance Frame in ALU](../images/editor-en.png)
 
 ## 1. Enter measured constraints
 
-| Input                    |    Value | Meaning                                              |
-| ------------------------ | -------: | ---------------------------------------------------- |
-| Obstacle outer width     | 2,200 mm | Widest measured keep-out envelope                    |
-| Left working clearance   |    25 mm | Motion, skew, and measurement allowance              |
-| Right working clearance  |    25 mm | Kept independent instead of assuming symmetry        |
-| Obstacle top height      |   500 mm | Reference for vertical clearance                     |
-| Finished surface height  |   750 mm | Target top face                                      |
-| Frame and upright width  |    40 mm | Concept envelope, not a vendor-specific section      |
-| Top-frame profile height |    80 mm | Affects upright length and clearance below the beam  |
-| Top-frame outer depth    |   500 mm | Overall front-to-back envelope                       |
-| Panel gap per side       |     2 mm | Nominal; measure the assembled pocket before cutting |
-| Panel thickness          |    18 mm | Sets the support level and top-face relationship     |
+| Input                               |      Value | Meaning                                                      |
+| ----------------------------------- | ---------: | ------------------------------------------------------------ |
+| Obstacle outer width                |   2,100 mm | Widest measured keep-out envelope                            |
+| Left / right working clearance      | 20 / 20 mm | Motion, bedding, and measurement allowance                   |
+| Obstacle top height                 |     500 mm | Reference for vertical clearance                             |
+| Nominal finished surface height     |     833 mm | 17 mm below the 850 mm target, inside the ±30 mm tolerance   |
+| Frame and upright width             |      30 mm | JLCFA Euro 30 slot-8 interface                               |
+| Top-beam height                     |      90 mm | J3090 with its strong axis vertical                          |
+| Top-frame outer depth               |     460 mm | Produces a 400 mm clear pocket depth                         |
+| Base support depth                  |     600 mm | Flat 3060 members retain the anti-tip baseline               |
+| Caster and adapter installed height |     113 mm | 103 mm caster plus provisional 10 mm adapter; measure it     |
+| Nominal panel gap per side          |       5 mm | Quotation placeholder; measure the squared pocket before cut |
+| Panel thickness                     |      18 mm | Sets the support level and top-face relationship             |
 
 ## 2. Follow the dimension chain
 
-ALU preserves the inputs and formulas instead of baking them into geometry:
-
 ```text
-obstacle outer width 2200
-+ left clearance 25 + right clearance 25
-= clear structural width 2250
-+ two profile widths 2 × 40
-= frame outer width 2330 mm
+obstacle outer width 2100
++ left clearance 20 + right clearance 20
+= clear structural width 2140
++ two profile widths 2 × 30
+= top-frame outer width 2200 mm
 ```
 
-The inset panel comes from the pocket, not the outer frame:
+The front and rear beams leave `460 − 2 × 30 = 400 mm` inside. With a nominal 5 mm gap on each edge, the quotation placeholder is:
 
 ```text
-2250 − 2 × 2 = 2246 mm
+panel = 2130 × 390 × 18 mm
 ```
-
-The nominal panel is `2246 × 416 × 18 mm`. Its top face is flush with the four-sided frame, and the inner support geometry remains conceptual until real hardware is selected.
 
 ![Flush inset-panel dimension chain](../images/flush-panel-fit.svg)
 
+Continuous ledges or verified shelf supports must carry the panel. Assemble, square, and measure the frame at multiple locations before the final panel order. The 5 mm gap is a manufacturing-friendly starting allowance, not proof of the final cut.
+
+The vertical chain keeps extrusion cuts on simple dimensions:
+
+```text
+caster and adapter installed height 113 (measure before cutting)
++ flat 3060 base height 30
++ 3030 upright cut 600
++ J3090 beam height 90
+= nominal finished surface height 833 mm
+```
+
 ## 3. Size the long beam from an explicit load case
 
-The Sizing tab does not infer a profile from the words “long span.” It evaluates exact vendor SKUs with a structured demonstration load case:
-
-- `12 kg` panel mass and `30 kg` distributed payload, each shared 50/50 by two beams;
-- `15 kg` midspan point payload assigned 100% to the worst beam;
+- `12 kg` panel mass and `15 kg` distributed payload, each shared 50/50 by two beams;
+- `10 kg` midspan point payload assigned 100% to the worst beam;
 - candidate self-weight;
-- `2,290 mm` effective support span after the width edit, rather than the `2,330 mm` cut length;
-- the MISUMI `L/1000` deflection criterion, an `80 mm` section-height constraint, and the current Japanese 8-series interface family.
+- `2,170 mm` effective support span rather than the `2,200 mm` cut length;
+- `L/1000 = 2.17 mm`, a 90 mm height limit, and the JLCFA Euro 30 slot-8 interface.
 
 ![Editable loads and calculation model](../images/example-sizing-en.png)
 
-`NEFS6-3030`, `LCF8-3060`, and `NEFS8-4040` fail the deflection screen. `LCF8-3090` meets deflection but exceeds the height envelope and belongs to the incompatible Euro accessory system. `NFSL8-4080` calculates to about `2.07 mm` against a `2.29 mm` limit and is the lowest-mass eligible candidate; standard `NEFS8-4080` also passes but is heavier.
+JLCFA `TXCK-H6-J3030` and `TXCK-H6-J3060` fail the deflection screen. Lightweight `TXCK-H6-J3090` calculates to about `1.131 mm` against a `2.17 mm` limit and is the lowest-mass eligible compatible candidate. Standard `TXCK-H6-3090` also passes but is heavier.
 
 ![Mass-sorted candidate results and rejection reasons](../images/example-sizing-comparison-en.png)
 
-This is an ideal simply supported beam screen, not a frame load rating. See the [calculation model, formulas, complete candidate table, and source links](../engineering/structural-sizing.md).
+This is an ideal simply supported beam screen, not a frame load rating. See the [calculation model, complete candidate table, and source links](../engineering/structural-sizing.md).
 
 ## 4. Verify reproducible outputs
 
-After the width edit, the model, bound members, and cut list update together. The profile-only cut list contains four groups and ten source members:
-
-| Purpose             | Cut length | Quantity |
-| ------------------- | ---------: | -------: |
-| Long-span top beam  |   2,330 mm |        2 |
-| Top-frame side rail |     420 mm |        2 |
-| Upright             |     670 mm |        4 |
-| Base side rail      |     500 mm |        2 |
+| Purpose             | Exact SKU     | Cut length | Quantity |
+| ------------------- | ------------- | ---------: | -------: |
+| Long-span top beam  | TXCK-H6-J3090 |   2,200 mm |        2 |
+| Top-frame side rail | TXCK-H6-J3030 |     400 mm |        2 |
+| Upright             | TXCK-H6-J3030 |     600 mm |        4 |
+| Flat base rail      | TXCK-H6-J3060 |     600 mm |        2 |
 
 ![Deterministic profile cut list](../images/example-cut-list-en.png)
 
@@ -80,18 +85,11 @@ This list excludes connectors, machining, fasteners, casters, the panel, and acc
 
 ## 5. Keep uncertainty explicit
 
-The Checks tab records the calculated beam-screen result instead of a generic long-span heuristic. It still keeps side sway, verified casters, safe cable routing, joints, tipping, and physical validation unresolved.
-
 ![Explainable engineering checks](../images/example-checks-en.png)
 
-An agent handoff should return:
+- Verify the 20 mm per-side clearance with the bedding at its widest.
+- The 113 mm caster-and-adapter height still includes a provisional value.
+- Joints, sway, tipping, supports, brakes, and physical proof testing remain unresolved.
+- During review, keep the `.alu`, in-app preview, and summary only. Formal renders or engineering handoffs require passing `order-ready` and explicit human confirmation of the current revision/designHash.
 
-1. measured obstacle envelope and selected clearances;
-2. derived frame and inset-panel dimensions;
-3. nominal panel gap and the requirement to measure after assembly;
-4. grouped profile cuts with source-member counts;
-5. load inputs, effective span, required interface family, candidate comparison, selected SKU, and calculation boundary;
-6. every unresolved finding and the evidence still required;
-7. the saved `.alu` path.
-
-The `.alu` file is inspectable JSON, but do not edit it directly. Apply changes through the desktop app or headless CLI so schema validation, revision/design-hash checks, bindings, and derived projections remain intact.
+Inspect `.alu` files, but do not edit their JSON directly. Use the desktop app or Headless CLI so schema validation, revision/designHash checks, bindings, and derived results remain consistent.

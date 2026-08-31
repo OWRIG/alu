@@ -149,7 +149,7 @@ BrowserWindow 默认：
 
 ## Agent Skill
 
-当前仓库版本化 `skills/design-with-alu/`，默认编排 CLI 的 read → dry-run → apply → validate → export 闭环：先收集现场约束与载荷，建立参数与构件，复核具体 SKU，再把确认结果写回模型与切料，最后从同一份 report JSON 输出 Markdown 或品牌 PDF。Skill 明确禁止手改 `.alu`，并要求把具体连接、加工、脚轮采购、板材、整机稳定与实物验证作为未决项交接。
+当前仓库版本化 `skills/design-with-alu/`，默认编排 CLI 的 read → dry-run → apply → validate → human release → export 闭环：先收集现场约束与载荷，建立参数与构件，复核具体 SKU，再把确认结果写回模型与切料。设计阶段默认停在 `.alu` 与界面预览；`order-ready` 通过后仍须人工确认当前 revision/designHash，才从同一份 report JSON 输出正式 Markdown、JSON 或品牌 PDF。Skill 明确禁止手改 `.alu`、把评审稿冒充发布稿，或在工程修改后复用旧确认，并要求把具体连接、加工、脚轮采购、板材、整机稳定与实物验证作为未决项交接。
 
 当前已支持 Headless CLI 和桌面保存时的外部修改冲突保护；不提供 MCP server、运行中主动重载提示或 live attach。CLI 与 UI 共享领域内核，不是第二套业务入口。
 

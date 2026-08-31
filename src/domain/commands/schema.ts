@@ -9,9 +9,11 @@ import {
   ParameterInputSchema,
   PositiveMmSchema,
   ProfileInstanceSchema,
+  JointSchema,
+  ProjectContextPatchSchema,
   Vec3MmSchema,
 } from "../project/schema";
-import { StructuralLoadPatchSchema } from "../structural/schema";
+import { ProfileCompatibilityGroupSchema, StructuralLoadPatchSchema } from "../structural/schema";
 
 export const SetParametersCommandSchema = z.strictObject({
   type: z.literal("parameters.set"),
@@ -92,6 +94,35 @@ export const ApplyStructuralSizingSelectionCommandSchema = z.strictObject({
   type: z.literal("structural-sizing.selection.apply"),
 });
 
+export const SetProfileDefinitionCommandSchema = z.strictObject({
+  type: z.literal("profile.set-definition"),
+  entityId: EntityIdSchema,
+  definitionSnapshot: EmbeddedProfileSnapshotSchema,
+});
+
+export const CreateStructuralSizingStudyCommandSchema = z.strictObject({
+  type: z.literal("structural-sizing.study.create"),
+  beamEntityIds: z.array(EntityIdSchema).min(1).max(16),
+  effectiveSpanParam: EntityIdSchema,
+  maximumSectionHeightParam: EntityIdSchema,
+  requiredCompatibilityGroup: ProfileCompatibilityGroupSchema.nullable(),
+});
+
+export const SetProjectContextCommandSchema = z.strictObject({
+  type: z.literal("context.set"),
+  patch: ProjectContextPatchSchema,
+});
+
+export const AddJointCommandSchema = z.strictObject({
+  type: z.literal("joint.add"),
+  joint: JointSchema,
+});
+
+export const RemoveJointCommandSchema = z.strictObject({
+  type: z.literal("joint.remove"),
+  jointId: EntityIdSchema,
+});
+
 export const DomainCommandSchema = z.discriminatedUnion("type", [
   SetParametersCommandSchema,
   UpsertInputParameterCommandSchema,
@@ -99,12 +130,17 @@ export const DomainCommandSchema = z.discriminatedUnion("type", [
   RemoveParameterCommandSchema,
   AddProfileCommandSchema,
   UpdateProfileCommandSchema,
+  SetProfileDefinitionCommandSchema,
   RemoveEntityCommandSchema,
   BindFieldCommandSchema,
   UnbindFieldCommandSchema,
   ResyncBindingCommandSchema,
   SetStructuralSizingLoadsCommandSchema,
   ApplyStructuralSizingSelectionCommandSchema,
+  CreateStructuralSizingStudyCommandSchema,
+  SetProjectContextCommandSchema,
+  AddJointCommandSchema,
+  RemoveJointCommandSchema,
 ]);
 
 export const CommandEnvelopeSchema = z.strictObject({

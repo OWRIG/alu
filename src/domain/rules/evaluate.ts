@@ -208,13 +208,13 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
     if (!sizedEntityIds.has(profile.id)) {
       findings.push({
         ruleId: "structure.long-span-review",
-        severity: "warning",
+        severity: "info",
         blocks: [],
         entityIds: [profile.id],
-        message: `${profile.purpose} 跨度 ${profile.lengthMm.toFixed(0)} mm，需要挠度复核。`,
-        rationale: "1500 mm 是低置信度提醒阈值，不代表额定承载或结构不合格。",
+        message: `${profile.purpose} 跨度 ${profile.lengthMm.toFixed(0)} mm，还没有建立选型研究。`,
+        rationale: "1500 mm 只是提醒阈值。要知道这根梁够不够粗，需要一次带载荷的挠度计算。",
         evidence: FIELD_GUIDE_EVIDENCE,
-        suggestedActions: ["核对厂家截面惯性矩", "考虑增加截面高度、双梁或中间支撑"],
+        suggestedActions: ["为这根梁创建选型研究", "或考虑增加截面高度、双梁或中间支撑"],
         details: { lengthMm: profile.lengthMm },
       });
     }
@@ -237,16 +237,38 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
     }
   }
 
+  if (project.extensions?.notForOrdering === true) {
+    findings.push({
+      ruleId: "project.order-data-incomplete",
+      severity: "warning",
+      blocks: ["order-ready"],
+      entityIds: allEntityIds,
+      message: "当前工程仍是设计稿，订单数据尚未补齐。",
+      rationale: "型材切料不等于完整订单；连接件、加工、紧固件、脚轮实测、板材与托承接口仍需确认。",
+      evidence: [],
+      suggestedActions: [
+        "实测脚轮与连接板安装总高并复核立柱切长",
+        "补齐节点、加工、紧固件、板材和托承清单后再解除 notForOrdering",
+      ],
+    });
+  }
+
+  const hasJoints = Object.keys(project.joints ?? {}).length > 0;
   if (project.context.mobility === "casters") {
     findings.push({
       ruleId: "structure.mobile-side-sway",
       severity: "warning",
       blocks: [],
       entityIds: allEntityIds,
-      message: "当前模型尚未验证移动结构的节点刚度与抗侧摆路径。",
-      rationale: "现有型材实体不包含连接拓扑，构件用途名称不能证明抗侧摆能力。",
+      message: hasJoints
+        ? "抗侧摆没有被计算：连接已建模，但节点刚度还没有算。"
+        : "移动结构的抗侧摆没有被计算，因为当前模型还没有连接。",
+      rationale: "连接方式不能替代刚度计算；需要侧推验证。",
       evidence: FIELD_GUIDE_EVIDENCE,
-      suggestedActions: ["增加三角撑、大角板或横向中梁", "完成后做锁轮侧推测试"],
+      suggestedActions: [
+        "装配前预留三角撑、大角板或横向中梁的位置",
+        "装配后做锁轮侧推测试并记录结论",
+      ],
     });
   }
 
@@ -275,23 +297,7 @@ export function evaluateRules(project: ProjectDocumentV1): RuleFinding[] {
       message: "木地板移动结构应优先选择软质聚氨酯或橡胶轮面。",
       rationale: "硬尼龙小轮更容易压伤地板，也更难跨越地板缝。",
       evidence: FIELD_GUIDE_EVIDENCE,
-      suggestedActions: ["P2 选择脚轮时记录轮面、轮径和安装总高"],
-    });
-  }
-
-  if (
-    project.context.mobility === "casters" &&
-    project.context.loads.some((load) => /projector|投影|electrical|电器/i.test(load))
-  ) {
-    findings.push({
-      ruleId: "motion.cable-routing-safe",
-      severity: "info",
-      blocks: [],
-      entityIds: [],
-      message: "移动桌上的电器线缆需要避开脚轮行程。",
-      rationale: "未固定的电线可能被脚轮碾压或拖拽设备跌落。",
-      evidence: FIELD_GUIDE_EVIDENCE,
-      suggestedActions: ["预留线缆挂点或拖链", "全行程检查插座与线缆余量"],
+      suggestedActions: ["核对已选脚轮的轮面、轮径和实物安装总高"],
     });
   }
 

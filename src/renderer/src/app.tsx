@@ -3,15 +3,21 @@ import { AlertCircle, CheckCircle2, LoaderCircle, X } from "lucide-react";
 
 import { InspectorPanel } from "./components/inspector-panel";
 import { ModelViewport } from "./components/model-viewport";
+import { PanelResizer } from "./components/panel-resizer";
 import { ParameterPanel } from "./components/parameter-panel";
 import { StatusBar } from "./components/status-bar";
 import { TopToolbar } from "./components/top-toolbar";
 import { localizeError } from "./i18n/domain-copy";
 import { useI18n } from "./i18n/i18n";
+import { useLayoutStore } from "./store/layout-store";
 import { selectIsDirty, useProjectStore } from "./store/project-store";
 
 export function App() {
   const { locale, t } = useI18n();
+  const leftWidth = useLayoutStore((state) => state.leftWidth);
+  const rightWidth = useLayoutStore((state) => state.rightWidth);
+  const leftCollapsed = useLayoutStore((state) => state.leftCollapsed);
+  const rightCollapsed = useLayoutStore((state) => state.rightCollapsed);
   const loadInitial = useProjectStore((state) => state.loadInitial);
   const error = useProjectStore((state) => state.error);
   const notice = useProjectStore((state) => state.notice);
@@ -85,10 +91,23 @@ export function App() {
   return (
     <div className="app-shell">
       <TopToolbar />
-      <div className="workspace">
-        <ParameterPanel />
+      <div
+        className="workspace"
+        style={{
+          gridTemplateColumns: [
+            leftCollapsed ? "0px" : `${leftWidth}px`,
+            "5px",
+            "minmax(320px, 1fr)",
+            "5px",
+            rightCollapsed ? "0px" : `${rightWidth}px`,
+          ].join(" "),
+        }}
+      >
+        {leftCollapsed ? <div className="panel-collapsed" /> : <ParameterPanel />}
+        <PanelResizer side="left" />
         <ModelViewport />
-        <InspectorPanel />
+        <PanelResizer side="right" />
+        {rightCollapsed ? <div className="panel-collapsed" /> : <InspectorPanel />}
       </div>
       <StatusBar />
 

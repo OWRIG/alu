@@ -35,6 +35,8 @@ CLI 与桌面端共用 `<project>.alu.lock`。锁记录 PID、时间和随机 to
 
 默认格式按输出扩展名推断：`.json`、`.pdf`，其他扩展名默认 Markdown。调用方必须提供 `--output`，且输出路径不能与源 `.alu` 相同。独立 Node CLI 支持 JSON/Markdown；PDF 必须通过已安装应用的 Skill 启动器执行。
 
+`export` 是机械报告渲染，不持久化也不代表人工批准；`order-ready` 仅表示规则没有阻断该目标。`design-with-alu` 在正式输出前负责展示当前 revision/designHash、等待人明确冻结、再次核对身份，并在导出后记录 BOM hash。当前版本尚无 release 命令、批准人字段或自动作废旧文件的机制；工程一旦修改，调用方必须撤销旧确认并停止把旧输出当作当前版本。
+
 ## 退出码
 
 | Code | 含义                              |

@@ -9,7 +9,7 @@
 - macOS 开发环境与本地 Chromium/Electron 经验。
 - `keel` 提供了 electron-vite、Tailwind 4、三进程边界、Vitest/Playwright 和 electron-builder 的可运行参考。
 - 已有跨床桌真实需求，适合作为第一个 golden fixture。
-- 已沉淀豪佳铝业教程中的选型、连接、面板、脚轮和装配经验。
+- 已整理型材选型、连接、面板、脚轮和装配的工程边界。
 
 ### 尚缺
 

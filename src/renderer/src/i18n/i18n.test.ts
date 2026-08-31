@@ -66,7 +66,7 @@ describe("renderer i18n", () => {
     );
     expect(finding).toBeDefined();
     expect(localizeFinding(finding!, project, t).message).toBe(
-      "At a 2190 mm effective span, NFSL8-4080 is the lowest-mass candidate that meets every sizing constraint.",
+      "At a 2170 mm effective span, TXCK-H6-J3090 is the lowest-mass candidate that meets every sizing constraint.",
     );
   });
 

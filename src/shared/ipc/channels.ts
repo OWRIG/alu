@@ -5,6 +5,7 @@ export const PROJECT_IPC = {
   recent: "alu:project:recent",
   save: "alu:project:save",
   saveAs: "alu:project:save-as",
+  export: "alu:project:export",
 } as const;
 
 export const SETTINGS_IPC = {

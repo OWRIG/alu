@@ -1,11 +1,20 @@
 import { useState } from "react";
-import { ChevronRight, FunctionSquare, Pencil, Plus, Ruler, Trash2, X } from "lucide-react";
+import {
+  ChevronRight,
+  FunctionSquare,
+  PanelLeftClose,
+  Pencil,
+  Plus,
+  Ruler,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import { evaluateParameters } from "../../../domain/params/evaluate";
 import type { ParameterInput } from "../../../domain/project/schema";
 import { localizeBoundary, localizeParameterLabel } from "../i18n/domain-copy";
 import { useI18n } from "../i18n/i18n";
-import type { MessageKey } from "../i18n/messages";
+import { useLayoutStore } from "../store/layout-store";
 import { selectCurrentProject, useProjectStore } from "../store/project-store";
 import { NumberField } from "./number-field";
 
@@ -15,43 +24,6 @@ const keyDimensionIds = [
   "tabletopWidth",
   "beamUndersideClearance",
 ] as const;
-
-const inputGroupDefinitions: Array<{
-  title: MessageKey;
-  help: MessageKey;
-  ids: string[];
-}> = [
-  {
-    title: "parameters.group.space",
-    help: "parameters.group.spaceHelp",
-    ids: [
-      "obstacleOuterWidth",
-      "bedOuterWidth",
-      "obstacleTopHeight",
-      "mattressTopHeight",
-      "clearanceLeft",
-      "clearanceRight",
-      "finishedHeight",
-      "casterInstalledHeight",
-    ],
-  },
-  {
-    title: "parameters.group.frame",
-    help: "parameters.group.frameHelp",
-    ids: [
-      "uprightWidthX",
-      "topBeamWidth",
-      "topFrameHeight",
-      "topBeamMaximumHeight",
-      "topFrameOuterDepth",
-    ],
-  },
-  {
-    title: "parameters.group.panel",
-    help: "parameters.group.panelHelp",
-    ids: ["panelFitClearance", "tabletopThickness"],
-  },
-];
 
 type BoundaryKind = NonNullable<ParameterInput["boundaryKind"]>;
 type DraftTerm = { param: string; coef: string };
@@ -83,6 +55,26 @@ const boundaryKinds: BoundaryKind[] = [
   "generic",
 ];
 
+/** Renders a derived parameter as the sum users can check by hand: `= 2100 + 20 + 40×2`. */
+function formatFormula(
+  definition: { constantMm: number; terms: Array<{ param: string; coef: number }> },
+  values: Record<string, number>,
+): string {
+  const parts: string[] = [];
+  if (definition.constantMm !== 0 || definition.terms.length === 0) {
+    parts.push(String(definition.constantMm));
+  }
+  for (const term of definition.terms) {
+    const value = values[term.param];
+    if (value === undefined) continue;
+    const magnitude = Math.abs(term.coef);
+    const piece = magnitude === 1 ? `${Math.abs(value)}` : `${Math.abs(value)}×${magnitude}`;
+    const sign = term.coef * value < 0 ? "−" : "+";
+    parts.push(parts.length === 0 ? `${sign === "−" ? "−" : ""}${piece}` : `${sign} ${piece}`);
+  }
+  return `= ${parts.join(" ")}`;
+}
+
 function newInputDraft(): ParameterDraft {
   return {
     kind: "input",
@@ -112,6 +104,7 @@ export function ParameterPanel() {
   const upsertInputParameter = useProjectStore((state) => state.upsertInputParameter);
   const upsertDerivedParameter = useProjectStore((state) => state.upsertDerivedParameter);
   const removeParameter = useProjectStore((state) => state.removeParameter);
+  const toggleCollapsed = useLayoutStore((state) => state.toggleCollapsed);
   const [draft, setDraft] = useState<ParameterDraft | null>(null);
   const values = evaluateParameters(project.parameters);
   const inputs = project.parameters.inputs;
@@ -119,18 +112,16 @@ export function ParameterPanel() {
   const parameterIds = [...Object.keys(inputs), ...Object.keys(project.parameters.derived)].sort(
     (left, right) => left.localeCompare(right, "en"),
   );
-  const assignedIds = new Set(inputGroupDefinitions.flatMap((group) => group.ids));
-  const groups = [
-    ...inputGroupDefinitions.map((group) => ({
-      ...group,
-      entries: group.ids.flatMap((id) => (inputs[id] ? ([[id, inputs[id]]] as const) : [])),
-    })),
-    {
-      title: "parameters.group.other" as const,
-      help: "parameters.group.otherHelp" as const,
-      entries: Object.entries(inputs).filter(([id]) => !assignedIds.has(id)),
-    },
-  ].filter((group) => group.entries.length > 0);
+  // Grouping comes from the project's own boundaryKind field, so a blank project
+  // groups exactly like the built-in example instead of falling into one bucket.
+  const groups = boundaryKinds
+    .map((kind) => ({
+      kind,
+      entries: Object.entries(inputs).filter(
+        ([, input]) => (input.boundaryKind ?? "generic") === kind,
+      ),
+    }))
+    .filter((group) => group.entries.length > 0);
   const inputCount = Object.keys(inputs).length;
 
   function editInput(id: string) {
@@ -188,9 +179,7 @@ export function ParameterPanel() {
   return (
     <aside className="side-panel parameter-panel">
       <div className="module-head">
-        <span className="module-index">01</span>
         <div className="module-copy">
-          <span className="kicker">{t("parameters.step")}</span>
           <h2>{t("parameters.title")}</h2>
         </div>
         <span className="module-value">{t("parameters.count", { count: inputCount })}</span>
@@ -203,6 +192,16 @@ export function ParameterPanel() {
           onClick={() => setDraft(newInputDraft())}
         >
           <Plus size={14} />
+        </button>
+        <button
+          className="module-action"
+          type="button"
+          aria-label={t("layout.collapseLeft")}
+          title={t("layout.collapseLeft")}
+          data-testid="collapse-left"
+          onClick={() => toggleCollapsed("left")}
+        >
+          <PanelLeftClose size={14} />
         </button>
       </div>
 
@@ -406,10 +405,10 @@ export function ParameterPanel() {
 
           <div className="parameter-groups">
             {groups.map((group) => (
-              <section className="parameter-group" key={group.title}>
+              <section className="parameter-group" key={group.kind}>
                 <div className="parameter-group-head">
-                  <strong>{t(group.title)}</strong>
-                  <small>{t(group.help)}</small>
+                  <strong>{localizeBoundary(group.kind, t)}</strong>
+                  <small>{t("parameters.count", { count: group.entries.length })}</small>
                 </div>
                 {group.entries.map(([id, input]) => {
                   const label = localizeParameterLabel(id, input.label, t);
@@ -417,9 +416,7 @@ export function ParameterPanel() {
                     <div className="parameter-row" key={id}>
                       <div className="parameter-copy">
                         <label htmlFor={`parameter-${id}`}>{label}</label>
-                        <span>
-                          {localizeBoundary(input.boundaryKind, t)} · {id}
-                        </span>
+                        <span>{id}</span>
                       </div>
                       <div className="parameter-row-actions">
                         <NumberField
@@ -457,7 +454,7 @@ export function ParameterPanel() {
                   <div className="derived-row" data-testid={`derived-definition-${id}`} key={id}>
                     <div>
                       <span>{localizeParameterLabel(id, definition.label, t)}</span>
-                      <small>{id}</small>
+                      <small className="derived-formula">{formatFormula(definition, values)}</small>
                     </div>
                     <div className="derived-row-value">
                       <strong>{formatNumber(values[id])} mm</strong>

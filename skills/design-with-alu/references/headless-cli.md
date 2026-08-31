@@ -74,14 +74,26 @@ On exit code `4`, read the project again. If the new design already contains the
 
 `project.stale-lock` means the previous writer exited without releasing `<project>.alu.lock`. Confirm the PID named in that lock is no longer running before deleting that exact lock file. The CLI deliberately does not auto-delete stale locks because check-then-delete can admit two concurrent writers.
 
-## Standard handoff
+## Review previews and formal release
 
-ALU first builds one `reportVersion: 1` JSON model, then renders JSON, Markdown, or PDF from it. Default to Markdown. Do not recreate the material table or findings in free-form prose.
+ALU first builds one `reportVersion: 1` JSON model, then renders JSON, Markdown, or PDF from it. When a report is authorized, default to Markdown. Do not recreate the material table or findings in free-form prose.
+
+Do not export as a routine final step after `apply` or `validate`. During design, keep the `.alu` file and summarize the result in chat. Only when the user explicitly requests a review file may you create an `order-draft` artifact; its filename and presentation must say `review` or `concept · not for ordering`:
 
 ```bash
-alu export frame.alu --output frame-handoff.md --format md --target order-draft
-alu export frame.alu --output frame-handoff.json --format json --target order-draft
-alu export frame.alu --output frame-handoff.pdf --format pdf --target order-draft
+alu export frame.alu --output frame-review.md --format md --target order-draft
 ```
+
+For a formal release, first validate `order-ready`. Show the current revision and design hash to the human, summarize unresolved warnings and the capability boundary, and pause for explicit confirmation of that exact version. Re-read or revalidate immediately after confirmation; any identity change invalidates it. Then export with `--target order-ready` and record the returned BOM hash:
+
+```bash
+alu validate frame.alu --target order-ready
+# Human confirms the current revision and design hash for formal release.
+alu export frame.alu --output frame-r3-handoff.md --format md --target order-ready
+alu export frame.alu --output frame-r3-handoff.json --format json --target order-ready
+alu export frame.alu --output frame-r3-handoff.pdf --format pdf --target order-ready
+```
+
+The comment above is a workflow pause, not a shell command or an approval stored by ALU. A passing validation alone is insufficient. ALU v0.2 has no persisted human-release state, so never infer approval, silently overwrite a prior release, or reuse it after the project changes.
 
 PDF rendering is provided by the installed `ALU.app` launcher. The standalone Node CLI supports JSON and Markdown but returns `report.pdf-unavailable` for PDF. Every handoff states that the current material list contains profile cuts only; never infer missing connectors, machining, fasteners, casters, panels, or accessories.

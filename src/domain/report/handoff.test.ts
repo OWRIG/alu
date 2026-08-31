@@ -1,5 +1,6 @@
-import { createParametricClearanceFrameDemo } from "../project/defaults";
 import { describe, expect, it } from "vitest";
+
+import { createParametricClearanceFrameDemo } from "../project/defaults";
 import {
   buildProjectHandoff,
   renderProjectHandoffHtml,
@@ -29,5 +30,22 @@ describe("project handoff", () => {
     expect(html).toContain(report.project.designHash);
     expect(html).toContain(report.bomHash);
     expect(html).toContain("当前材料清单只包含型材切料");
+  });
+
+  it("C-export-parity-with-cli keeps everything but validation independent of the target", () => {
+    // The desktop export builds with "order-draft"; the CLI defaults to "edit".
+    // Only the validation block may differ, so the two exports stay comparable.
+    const project = createParametricClearanceFrameDemo();
+    const desktop = buildProjectHandoff(project, "order-draft");
+    const cli = buildProjectHandoff(project, "edit");
+
+    expect(desktop.validation.target).toBe("order-draft");
+    expect(cli.validation.target).toBe("edit");
+
+    const { validation: _desktopValidation, ...desktopRest } = desktop;
+    const { validation: _cliValidation, ...cliRest } = cli;
+    expect(desktopRest).toEqual(cliRest);
+    expect(desktop.bomHash).toBe(cli.bomHash);
+    expect(desktop.reportVersion).toBe(cli.reportVersion);
   });
 });

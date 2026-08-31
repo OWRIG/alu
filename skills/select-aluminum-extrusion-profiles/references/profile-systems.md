@@ -82,9 +82,9 @@ geometry / interface / machining eligibility
 connector and stability checks still open
 ```
 
-## Field-evidence boundary
+## Selection boundary
 
-A March 2026 小红书 post titled “做铝型材还在死磕承重？90%的人都选错了！” maps 2020, 3030, and 4040 to broad use cases using cost, appearance, and perceived stability. It provides no span, support, section properties, load distribution, deflection target, or node data. Use it only as evidence of a common shopping heuristic that this skill must replace.
+Labels such as 2020, 3030, and 4040 are search terms, not engineering selections. Without an exact SKU, span, support condition, section properties, load distribution, deflection target, and node data, keep the result at concept level.
 
 ## Sources
 
@@ -92,4 +92,3 @@ A March 2026 小红书 post titled “做铝型材还在死磕承重？90%的人
 - [MISUMI: Aluminum Extrusion Profiles — Shapes, Types, Series, & Best Practices](https://us.misumi-ec.com/blog/aluminum-extrusion-profiles-shapes-types-series-best-practices/), published 2026-05-19.
 - [MISUMI extrusion load-capacity calculations](https://us.misumi-ec.com/pdf/fa/2010/p2431.pdf), current official calculation sheet found 2026-08-11.
 - [80/20 beam deflection calculator](https://8020.net/deflection-calculator), current official calculator checked 2026-08-11.
-- [小红书：做铝型材还在死磕承重？90%的人都选错了！](https://www.xiaohongshu.com/explore/69a563e80000000022032000), low-level field evidence, post date shown as 2026-03-02 in the current-year search context.

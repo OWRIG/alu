@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import { PROJECT_IPC, SETTINGS_IPC } from "../shared/ipc/channels";
 import type {
   AluDesktopApi,
+  ExportProjectResponse,
   OpenProjectResponse,
   RecentProjectsResponse,
   SaveProjectResponse,
@@ -33,6 +34,12 @@ const api: AluDesktopApi = {
         project,
         expectedFileHash: null,
       }) as Promise<SaveProjectResponse>;
+    },
+    async export(project, format) {
+      return ipcRenderer.invoke(PROJECT_IPC.export, {
+        project,
+        format,
+      }) as Promise<ExportProjectResponse>;
     },
   },
   settings: {

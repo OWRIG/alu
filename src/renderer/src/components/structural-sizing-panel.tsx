@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AlertTriangle,
   BookOpen,
@@ -8,10 +9,13 @@ import {
   XCircle,
 } from "lucide-react";
 
+import { evaluateParameters } from "../../../domain/params/evaluate";
+import { STANDARD_BEAM_CANDIDATES } from "../../../domain/structural/catalog";
 import { evaluateStructuralSizing } from "../../../domain/structural/evaluate";
 import type { ProfileCompatibilityGroup } from "../../../domain/structural/schema";
 import { useI18n, type Translator } from "../i18n/i18n";
 import type { MessageKey } from "../i18n/messages";
+import { localizeParameterLabel, localizeProfilePurpose } from "../i18n/domain-copy";
 import { selectCurrentProject, useProjectStore } from "../store/project-store";
 import { NumberField } from "./number-field";
 
@@ -26,6 +30,7 @@ const compatibilityKeys: Partial<Record<ProfileCompatibilityGroup, MessageKey>> 
   "misumi-jp-series-6": "sizing.compatibility.jp6",
   "misumi-jp-series-8": "sizing.compatibility.jp8",
   "misumi-euro-slot-8": "sizing.compatibility.euro8",
+  "jlcfa-euro-30-slot-8": "sizing.compatibility.jlcfaEuro30",
 };
 
 function compatibilityLabel(group: ProfileCompatibilityGroup | null, t: Translator) {
@@ -40,6 +45,155 @@ function calculationSourceLabel(id: string, t: Translator) {
   return id;
 }
 
+const COMPATIBILITY_OPTIONS = [
+  ...new Set(STANDARD_BEAM_CANDIDATES.map((c) => c.compatibilityGroup)),
+];
+
+function CreateStudyForm() {
+  const { t, formatNumber } = useI18n();
+  const project = useProjectStore(selectCurrentProject);
+  const createStructuralStudy = useProjectStore((state) => state.createStructuralStudy);
+
+  // Longest members first: those are the ones a span study is usually about.
+  const beams = Object.values(project.entities)
+    .filter((profile) => profile.axis !== "z")
+    .sort((left, right) => right.lengthMm - left.lengthMm);
+  const parameterIds = Object.keys(evaluateParameters(project.parameters)).sort((left, right) =>
+    left.localeCompare(right, "en"),
+  );
+
+  const [beamIds, setBeamIds] = useState<string[]>([]);
+  const [spanParam, setSpanParam] = useState("");
+  const [heightParam, setHeightParam] = useState("");
+  const [group, setGroup] = useState("");
+
+  const ready = beamIds.length > 0 && spanParam !== "" && heightParam !== "";
+
+  return (
+    <div className="inspector-scroll">
+      <section className="sizing-section" data-testid="sizing-create-form">
+        <div className="sizing-section-head">
+          <Calculator size={13} />
+          <div>
+            <strong>{t("sizing.create.title")}</strong>
+            <small>{t("sizing.create.help")}</small>
+          </div>
+        </div>
+
+        {beams.length === 0 && (
+          <p className="sizing-inline-note">{t("sizing.create.needsBeams")}</p>
+        )}
+        {beams.length > 0 && parameterIds.length === 0 && (
+          <p className="sizing-inline-note">{t("sizing.create.needsParameters")}</p>
+        )}
+
+        {beams.length > 0 && parameterIds.length > 0 && (
+          <>
+            <div className="study-field">
+              <label htmlFor="study-beams">{t("sizing.create.beams")}</label>
+              <small>{t("sizing.create.beamsHelp")}</small>
+              <div className="study-beam-list" id="study-beams">
+                {beams.map((profile) => (
+                  <label className="study-beam" key={profile.id}>
+                    <input
+                      type="checkbox"
+                      data-testid={`study-beam-${profile.id}`}
+                      checked={beamIds.includes(profile.id)}
+                      onChange={(event) =>
+                        setBeamIds((current) =>
+                          event.target.checked
+                            ? [...current, profile.id]
+                            : current.filter((id) => id !== profile.id),
+                        )
+                      }
+                    />
+                    <span>{localizeProfilePurpose(profile.id, profile.purpose, t)}</span>
+                    <small>{formatNumber(profile.lengthMm)} mm</small>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {(
+              [
+                [
+                  "sizing.create.span",
+                  "sizing.create.spanHelp",
+                  spanParam,
+                  setSpanParam,
+                  "study-span",
+                ],
+                [
+                  "sizing.create.maxHeight",
+                  "sizing.create.maxHeightHelp",
+                  heightParam,
+                  setHeightParam,
+                  "study-max-height",
+                ],
+              ] as const
+            ).map(([labelKey, helpKey, value, setValue, testId]) => (
+              <label className="study-field" key={testId}>
+                <span>{t(labelKey)}</span>
+                <small>{t(helpKey)}</small>
+                <select
+                  data-testid={testId}
+                  value={value}
+                  onChange={(event) => setValue(event.target.value)}
+                >
+                  <option value="">{t("parameters.selectParameter")}</option>
+                  {parameterIds.map((id) => (
+                    <option key={id} value={id}>
+                      {localizeParameterLabel(
+                        id,
+                        project.parameters.inputs[id]?.label ??
+                          project.parameters.derived[id]?.label,
+                        t,
+                      )}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ))}
+
+            <label className="study-field">
+              <span>{t("sizing.create.compatibility")}</span>
+              <select
+                data-testid="study-compatibility"
+                value={group}
+                onChange={(event) => setGroup(event.target.value)}
+              >
+                <option value="">{t("sizing.compatibility.any")}</option>
+                {COMPATIBILITY_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {compatibilityLabel(option, t)}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <button
+              className="study-submit"
+              type="button"
+              data-testid="study-create"
+              disabled={!ready}
+              onClick={() =>
+                createStructuralStudy({
+                  beamEntityIds: beamIds,
+                  effectiveSpanParam: spanParam,
+                  maximumSectionHeightParam: heightParam,
+                  requiredCompatibilityGroup: group === "" ? null : group,
+                })
+              }
+            >
+              <Calculator size={14} /> {t("sizing.create.submit")}
+            </button>
+          </>
+        )}
+      </section>
+    </div>
+  );
+}
+
 export function StructuralSizingPanel() {
   const { t, formatNumber } = useI18n();
   const project = useProjectStore(selectCurrentProject);
@@ -47,15 +201,7 @@ export function StructuralSizingPanel() {
   const applyStructuralSelection = useProjectStore((state) => state.applyStructuralSelection);
   const result = evaluateStructuralSizing(project);
 
-  if (!result) {
-    return (
-      <div className="empty-state">
-        <Calculator size={24} />
-        <strong>{t("sizing.emptyTitle")}</strong>
-        <p>{t("sizing.emptyHelp")}</p>
-      </div>
-    );
-  }
+  if (!result) return <CreateStudyForm />;
 
   const { study, selected } = result;
   const selectionApplied = Boolean(
@@ -88,13 +234,28 @@ export function StructuralSizingPanel() {
           </div>
         </div>
         {selected && (
-          <p>
-            {t("sizing.selectionReason", {
-              sku: selected.candidate.sku,
-              height: formatNumber(result.maximumSectionHeightMm, 0),
-              system: compatibilityLabel(study.requiredCompatibilityGroup, t),
-            })}
-          </p>
+          <>
+            <p>{t("sizing.selectionReason", { count: result.candidates.length })}</p>
+            <ul className="sizing-reason">
+              <li>
+                {t("sizing.reason.deflection", {
+                  value: formatNumber(selected.deflectionMm, 2),
+                  limit: formatNumber(selected.deflectionLimitMm, 2),
+                })}
+              </li>
+              <li>
+                {t("sizing.reason.height", {
+                  value: formatNumber(selected.candidate.sectionHeightMm, 0),
+                  limit: formatNumber(result.maximumSectionHeightMm, 0),
+                })}
+              </li>
+              <li>
+                {t("sizing.reason.system", {
+                  system: compatibilityLabel(study.requiredCompatibilityGroup, t),
+                })}
+              </li>
+            </ul>
+          </>
         )}
         {selected && (
           <button
@@ -402,6 +563,10 @@ export function StructuralSizingPanel() {
         <div>
           <strong>{t("sizing.boundary.title")}</strong>
           <span>{t("sizing.boundary.body")}</span>
+          <details data-testid="sizing-boundary-details">
+            <summary>{t("sizing.boundary.expand")}</summary>
+            <p>{t("sizing.boundary.details")}</p>
+          </details>
         </div>
       </div>
     </div>

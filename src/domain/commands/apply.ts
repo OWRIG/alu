@@ -7,12 +7,14 @@ import {
   ProfileInstanceSchema,
   ProjectDocumentV1Schema,
   type BindingField,
+  type Joint,
   type JsonValue,
   type ParameterSet,
   type ProfileDefinition,
   type ProfileInstance,
   type ProjectDocumentV1,
 } from "../project/schema";
+import { createStructuralSizingStudy } from "../structural/catalog";
 import { evaluateStructuralSizing } from "../structural/evaluate";
 import {
   getStructuralSizingStudy,
@@ -188,6 +190,91 @@ function candidateDefinition(candidate: BeamCandidate): ProfileDefinition {
   };
 }
 
+function assertSnapshotIntegrity(
+  project: ProjectDocumentV1,
+  snapshot: { definition: ProfileDefinition; definitionHash: string },
+  entityIds: string[],
+): void {
+  if (computeDefinitionHash(snapshot.definition) !== snapshot.definitionHash) {
+    throw new DomainError({
+      code: "catalog.definition-hash-mismatch",
+      message: "definitionHash 不匹配",
+      entityIds,
+    });
+  }
+  const key = partKey(snapshot.definition.id, snapshot.definition.revision);
+  const existing = project.embeddedParts[key];
+  if (existing && existing.definitionHash !== snapshot.definitionHash) {
+    throw new DomainError({
+      code: "catalog.definition-conflict",
+      message: `definition ${key} 与工程内快照冲突`,
+      path: `/embeddedParts/${key}`,
+      entityIds,
+    });
+  }
+}
+
+function applySetProfileDefinition(
+  project: ProjectDocumentV1,
+  entityId: string,
+  snapshot: { definition: ProfileDefinition; definitionHash: string },
+): ProjectDocumentV1 {
+  const profile = requireProfile(project, entityId);
+  assertSnapshotIntegrity(project, snapshot, [entityId]);
+  const definition = snapshot.definition;
+  const entities = {
+    ...project.entities,
+    [entityId]: ProfileInstanceSchema.parse({
+      ...profile,
+      definitionRef: { partId: definition.id, revision: definition.revision },
+    }),
+  };
+  const key = partKey(definition.id, definition.revision);
+  const embeddedParts = pruneEmbeddedParts(entities, {
+    ...project.embeddedParts,
+    [key]: snapshot,
+  });
+  return { ...project, entities, embeddedParts };
+}
+
+function applyCreateStructuralSizingStudy(
+  project: ProjectDocumentV1,
+  command: {
+    beamEntityIds: string[];
+    effectiveSpanParam: string;
+    maximumSectionHeightParam: string;
+    requiredCompatibilityGroup: string | null;
+  },
+): ProjectDocumentV1 {
+  if (getStructuralSizingStudy(project)) {
+    throw new DomainError({
+      code: "structure.sizing-study-exists",
+      message: "当前工程已经有梁选型研究",
+      path: `/extensions/${STRUCTURAL_SIZING_EXTENSION_KEY}`,
+      suggestion: "先修改现有研究，或移除后重新创建",
+    });
+  }
+  for (const entityId of command.beamEntityIds) requireProfile(project, entityId);
+  const values = evaluateParameters(project.parameters);
+  for (const param of [command.effectiveSpanParam, command.maximumSectionHeightParam]) {
+    if (!(param in values)) {
+      throw new DomainError({
+        code: "ref.parameter-missing",
+        message: `找不到参数 ${param}`,
+        path: `/parameters/${param}`,
+      });
+    }
+  }
+  const study = createStructuralSizingStudy(command);
+  return {
+    ...project,
+    extensions: {
+      ...project.extensions,
+      [STRUCTURAL_SIZING_EXTENSION_KEY]: study as unknown as JsonValue,
+    },
+  };
+}
+
 function applyStructuralSizingSelection(project: ProjectDocumentV1): ProjectDocumentV1 {
   const result = evaluateStructuralSizing(project);
   if (!result) {
@@ -263,6 +350,54 @@ function applyStructuralSizingSelection(project: ProjectDocumentV1): ProjectDocu
   });
   next = { ...next, entities, embeddedParts };
   return next;
+}
+
+function applyAddJoint(project: ProjectDocumentV1, joint: Joint): ProjectDocumentV1 {
+  if (project.joints?.[joint.id]) {
+    throw new DomainError({
+      code: "joint.id-conflict",
+      message: `连接 ID 已存在：${joint.id}`,
+      path: `/joints/${joint.id}`,
+    });
+  }
+  if (joint.primary.entityId === joint.secondaryEntityId) {
+    throw new DomainError({
+      code: "joint.self-reference",
+      message: "连接的两端不能是同一根型材",
+      path: `/joints/${joint.id}/secondaryEntityId`,
+      entityIds: [joint.primary.entityId],
+    });
+  }
+  requireProfile(project, joint.primary.entityId);
+  requireProfile(project, joint.secondaryEntityId);
+  for (const existing of Object.values(project.joints ?? {})) {
+    if (
+      existing.primary.entityId === joint.primary.entityId &&
+      existing.primary.end === joint.primary.end
+    ) {
+      throw new DomainError({
+        code: "joint.end-already-connected",
+        message: `${joint.primary.entityId} 的 ${joint.primary.end} 端已经有连接了`,
+        path: `/joints/${existing.id}`,
+        entityIds: [joint.primary.entityId],
+        suggestion: "先移除已有连接，或改用另一端",
+      });
+    }
+  }
+  return { ...project, joints: { ...project.joints, [joint.id]: joint } };
+}
+
+/** Joints cannot outlive the members they reference. */
+function pruneJoints(
+  entities: ProjectDocumentV1["entities"],
+  joints: ProjectDocumentV1["joints"],
+): ProjectDocumentV1["joints"] {
+  if (!joints) return joints;
+  return Object.fromEntries(
+    Object.entries(joints).filter(
+      ([, joint]) => entities[joint.primary.entityId] && entities[joint.secondaryEntityId],
+    ),
+  );
 }
 
 function applySingle(project: ProjectDocumentV1, command: DomainCommand): ProjectDocumentV1 {
@@ -396,6 +531,8 @@ function applySingle(project: ProjectDocumentV1, command: DomainCommand): Projec
       });
       return { ...project, entities: { ...project.entities, [command.entityId]: updated } };
     }
+    case "profile.set-definition":
+      return applySetProfileDefinition(project, command.entityId, command.definitionSnapshot);
     case "entity.remove": {
       requireProfile(project, command.entityId);
       const entities = { ...project.entities };
@@ -405,6 +542,7 @@ function applySingle(project: ProjectDocumentV1, command: DomainCommand): Projec
         ...project,
         entities,
         embeddedParts,
+        joints: pruneJoints(entities, project.joints),
         bindings: project.bindings.filter((binding) => binding.entityId !== command.entityId),
       };
     }
@@ -485,6 +623,24 @@ function applySingle(project: ProjectDocumentV1, command: DomainCommand): Projec
     }
     case "structural-sizing.selection.apply":
       return applyStructuralSizingSelection(project);
+    case "structural-sizing.study.create":
+      return applyCreateStructuralSizingStudy(project, command);
+    case "context.set":
+      return { ...project, context: { ...project.context, ...command.patch } };
+    case "joint.add":
+      return applyAddJoint(project, command.joint);
+    case "joint.remove": {
+      if (!project.joints?.[command.jointId]) {
+        throw new DomainError({
+          code: "ref.joint-missing",
+          message: `找不到连接 ${command.jointId}`,
+          path: `/joints/${command.jointId}`,
+        });
+      }
+      const joints = { ...project.joints };
+      delete joints[command.jointId];
+      return { ...project, joints };
+    }
   }
 }
 

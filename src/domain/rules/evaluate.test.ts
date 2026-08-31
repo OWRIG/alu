@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { loadOverbedFixture } from "../../test-support/fixture";
 import { createParametricClearanceFrameDemo } from "../project/defaults";
-import { evaluateRules } from "./evaluate";
+import { canProceed, evaluateRules } from "./evaluate";
 
 describe("P1 engineering rules", () => {
   it("matches the golden fixture rule set", () => {
@@ -13,11 +13,12 @@ describe("P1 engineering rules", () => {
         "structure.mobile-side-sway",
         "caster.installed-height-required",
         "caster.wood-floor-soft-tread",
-        "motion.cable-routing-safe",
       ]),
     );
     expect(ids.has("connection.main-node-strength")).toBe(false);
     expect(ids.has("caster.brake-accessibility")).toBe(false);
+    // Removed in 2026-08-30-context-and-rule-scope: it fired off a free-text regex.
+    expect(ids.has("motion.cable-routing-safe")).toBe(false);
   });
 
   it("never emits a certified load or safety claim", () => {
@@ -37,6 +38,7 @@ describe("P1 engineering rules", () => {
 
   it("C-caster-height-required blocks ordering until the installed height is explicit", () => {
     const project = createParametricClearanceFrameDemo();
+    project.parameters.inputs.casterInstalledHeight.valueMm = 0;
     const finding = evaluateRules(project).find(
       (item) => item.ruleId === "caster.installed-height-required",
     );
@@ -49,6 +51,18 @@ describe("P1 engineering rules", () => {
     expect(
       evaluateRules(project).some((item) => item.ruleId === "caster.installed-height-required"),
     ).toBe(false);
+  });
+
+  it("C-not-for-ordering blocks order-ready but keeps draft handoff available", () => {
+    const findings = evaluateRules(createParametricClearanceFrameDemo());
+    const finding = findings.find((item) => item.ruleId === "project.order-data-incomplete");
+
+    expect(finding).toMatchObject({
+      severity: "warning",
+      blocks: ["order-ready"],
+    });
+    expect(canProceed(findings, "order-draft")).toBe(true);
+    expect(canProceed(findings, "order-ready")).toBe(false);
   });
 
   it("C-section-parameter-consistency detects a physical-section mismatch", () => {
